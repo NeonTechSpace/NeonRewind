@@ -1,0 +1,23 @@
+{
+  "name": "@neonrewind/typescript",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "pnpm --recursive --if-present build",
+    "check": "pnpm --recursive --if-present check",
+    "test": "pnpm --recursive --if-present test"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.x",
+      "onFail": "download"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "24.19.0",
+      "onFail": "download"
+    }
+  },
+  "devDependencies": {}
+}
