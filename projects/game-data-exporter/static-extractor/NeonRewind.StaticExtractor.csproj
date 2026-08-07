@@ -7,6 +7,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <InvariantGlobalization>true</InvariantGlobalization>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <Cue4ParseVersion>1.2.2.202607</Cue4ParseVersion>
     <AssemblyName>NeonRewind.StaticExtractor</AssemblyName>
     <RootNamespace>NeonRewind.StaticExtractor</RootNamespace>
     <Version>0.0.1</Version>
@@ -17,7 +18,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CUE4Parse" Version="1.2.2.202607" />
+    <AssemblyMetadata Include="Cue4ParsePackageVersion" Value="$(Cue4ParseVersion)" />
+    <AssemblyMetadata Include="ExtractorVersion" Value="$(Version)" />
+    <PackageReference Include="CUE4Parse" Version="$(Cue4ParseVersion)" />
     <!-- Overrides IndexRange 1.1.0's vulnerable Microsoft.Bcl.Memory 9.0.0 floor. -->
     <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.18" />
   </ItemGroup>

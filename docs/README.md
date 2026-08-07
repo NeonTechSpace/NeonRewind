@@ -23,6 +23,20 @@ dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.Sta
 The probe uses the configured Unreal Engine 5.4 profile and reports container, file, and Unreal package counts.
 It does not extract or normalize game data.
 
+Generate a versioned build manifest from an installed Steam build.
+
+```powershell
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.StaticExtractor.csproj -- manifest --steam-manifest <path> --executable <path> --package <path> --output <path>
+```
+
+```bash
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.StaticExtractor.csproj -- manifest --steam-manifest '<path>' --executable '<path>' --package '<path>' --output '<path>'
+```
+
+Repeat `--package <path>` when a build uses multiple package-container files.
+The output records Steam build identity, executable and package hashes, the configured engine profile, and extractor versions.
+The command leaves an identical existing manifest unchanged and refuses to overwrite different content.
+
 ## License
 
 Original NeonRewind source code is licensed under the [Apache License 2.0](LICENSE).
