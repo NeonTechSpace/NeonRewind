@@ -1,7 +1,5 @@
 using System.Diagnostics;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -14,7 +12,6 @@ internal static partial class BuildManifestCommand
     private const int OutputConflictExitCode = 7;
     private const int SchemaVersion = 1;
 
-    private static readonly UTF8Encoding Utf8WithoutBom = new(false);
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -40,7 +37,8 @@ internal static partial class BuildManifestCommand
         {
             var manifest = CreateManifest(options);
             var json = JsonSerializer.Serialize(manifest, JsonOptions) + "\n";
-            return WriteManifest(options.OutputPath, json);
+            var writeStatus = ImmutableArtifactWriter.Write(options.OutputPath, json, "Build manifest");
+            return writeStatus == ArtifactWriteStatus.Conflict ? OutputConflictExitCode : 0;
         }
         catch (IOException exception)
         {
@@ -73,9 +71,9 @@ internal static partial class BuildManifestCommand
         var steamFieldsBeforeHashing = ReadSteamBuildFields(options.SteamManifestPath);
         var executableInfo = FileVersionInfo.GetVersionInfo(Path.GetFullPath(options.ExecutablePath));
         var reportedGameVersion = FirstNonEmpty(executableInfo.ProductVersion, executableInfo.FileVersion);
-        var executableIdentity = CreateFileIdentity(options.ExecutablePath);
+        var executableIdentity = FileIdentityFactory.Create(options.ExecutablePath);
         var packageIdentities = options.PackagePaths
-            .Select(CreateFileIdentity)
+            .Select(FileIdentityFactory.Create)
             .OrderBy(identity => identity.FileName, StringComparer.Ordinal)
             .ToArray();
         var steamFieldsAfterHashing = ReadSteamBuildFields(options.SteamManifestPath);
@@ -102,48 +100,6 @@ internal static partial class BuildManifestCommand
                 Name: "NeonRewind.StaticExtractor",
                 Version: ReadAssemblyMetadata("ExtractorVersion"),
                 Cue4ParseVersion: ReadAssemblyMetadata("Cue4ParsePackageVersion")));
-    }
-
-    private static int WriteManifest(string outputPath, string json)
-    {
-        var resolvedOutputPath = Path.GetFullPath(outputPath);
-        var outputDirectory = Path.GetDirectoryName(resolvedOutputPath);
-
-        if (string.IsNullOrEmpty(outputDirectory) || !Directory.Exists(outputDirectory))
-        {
-            throw new IOException($"Output directory does not exist: {outputDirectory}");
-        }
-
-        if (File.Exists(resolvedOutputPath))
-        {
-            var existingJson = File.ReadAllText(resolvedOutputPath, Encoding.UTF8);
-            if (string.Equals(existingJson, json, StringComparison.Ordinal))
-            {
-                Console.WriteLine($"Build manifest is unchanged: {resolvedOutputPath}");
-                return 0;
-            }
-
-            Console.Error.WriteLine($"Refusing to overwrite a different build manifest: {resolvedOutputPath}");
-            return OutputConflictExitCode;
-        }
-
-        var temporaryPath = resolvedOutputPath + $".{Environment.ProcessId}.{Guid.NewGuid():N}.tmp";
-
-        try
-        {
-            File.WriteAllText(temporaryPath, json, Utf8WithoutBom);
-            File.Move(temporaryPath, resolvedOutputPath);
-        }
-        finally
-        {
-            if (File.Exists(temporaryPath))
-            {
-                File.Delete(temporaryPath);
-            }
-        }
-
-        Console.WriteLine($"Wrote build manifest: {resolvedOutputPath}");
-        return 0;
     }
 
     private static Dictionary<string, string> ReadSteamBuildFields(string manifestPath)
@@ -198,18 +154,6 @@ internal static partial class BuildManifestCommand
         }
 
         return fields;
-    }
-
-    private static FileIdentity CreateFileIdentity(string path)
-    {
-        var file = new FileInfo(Path.GetFullPath(path));
-        using var stream = file.OpenRead();
-        var hash = SHA256.HashData(stream);
-
-        return new FileIdentity(
-            FileName: file.Name,
-            SizeBytes: file.Length,
-            Sha256: Convert.ToHexStringLower(hash));
     }
 
     private static void EnsureInputFileExists(string path, string description)

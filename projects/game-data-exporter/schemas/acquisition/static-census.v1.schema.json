@@ -1,0 +1,273 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonrewind:schema:acquisition:static-census:1",
+  "title": "NeonRewind static census",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "schemaVersion",
+    "build",
+    "engine",
+    "extractor",
+    "totals",
+    "files",
+    "packages",
+    "exportClasses",
+    "failureTypes"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "static-census"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "build": {
+      "$ref": "#/$defs/buildReference"
+    },
+    "engine": {
+      "$ref": "#/$defs/engineIdentity"
+    },
+    "extractor": {
+      "$ref": "#/$defs/extractorIdentity"
+    },
+    "totals": {
+      "$ref": "#/$defs/totals"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fileRecord"
+      }
+    },
+    "packages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/packageRecord"
+      }
+    },
+    "exportClasses": {
+      "$ref": "#/$defs/counts"
+    },
+    "failureTypes": {
+      "$ref": "#/$defs/counts"
+    }
+  },
+  "$defs": {
+    "engineIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "properties": {
+        "version": {
+          "const": "5.4"
+        },
+        "cue4ParseProfile": {
+          "const": "GAME_UE5_4"
+        },
+        "source": {
+          "const": "configured"
+        },
+        "confidence": {
+          "const": "probable"
+        }
+      }
+    },
+    "extractorIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "cue4ParseVersion"],
+      "properties": {
+        "name": {
+          "const": "NeonRewind.StaticExtractor"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cue4ParseVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "buildReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "properties": {
+        "manifestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "manifestSchemaVersion": {
+          "const": 1
+        },
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileCount", "packageCount", "parsedPackageCount", "failedPackageCount", "importCount", "exportCount"],
+      "properties": {
+        "fileCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "packageCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parsedPackageCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failedPackageCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "importCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exportCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "fileRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sizeBytes", "extension", "kind", "encrypted"],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/virtualPath"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "extension": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": ["file", "package", "payload"]
+        },
+        "encrypted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "packageRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "status", "format", "importCount", "exportCount", "exportClasses", "errorType"],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/virtualPath"
+        },
+        "status": {
+          "enum": ["parsed", "failed"]
+        },
+        "format": {
+          "type": ["string", "null"]
+        },
+        "importCount": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "exportCount": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "exportClasses": {
+          "$ref": "#/$defs/counts"
+        },
+        "errorType": {
+          "type": ["string", "null"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "parsed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "format": {
+                "enum": ["legacy", "io-store"]
+              },
+              "importCount": {
+                "type": "integer"
+              },
+              "exportCount": {
+                "type": "integer"
+              },
+              "errorType": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "format": {
+                "type": "null"
+              },
+              "importCount": {
+                "type": "null"
+              },
+              "exportCount": {
+                "type": "null"
+              },
+              "exportClasses": {
+                "maxItems": 0
+              },
+              "errorType": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "counts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "count"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "virtualPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\\\]+$"
+    }
+  }
+}
