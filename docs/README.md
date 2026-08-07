@@ -37,6 +37,18 @@ Repeat `--package <path>` when a build uses multiple package-container files.
 The output records Steam build identity, executable and package hashes, the configured engine profile, and extractor versions.
 The command leaves an identical existing manifest unchanged and refuses to overwrite different content.
 
+Generate a deterministic file, package, and export-class census for a build manifest.
+
+```powershell
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRetroRewind.StaticExtractor.csproj -- census --build-manifest <path> --package-directory <path> --output <path>
+```
+
+```bash
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRetroRewind.StaticExtractor.csproj -- census --build-manifest '<path>' --package-directory '<path>' --output '<path>'
+```
+
+The census verifies package hashes before and after scanning and records package parse failures without local paths or exception messages.
+
 ## License
 
 Original NeonRetroRewind source code is licensed under the [Apache License 2.0](LICENSE).

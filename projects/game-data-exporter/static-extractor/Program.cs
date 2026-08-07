@@ -17,6 +17,11 @@ internal static class Program
             return BuildManifestCommand.Run(manifestArguments);
         }
 
+        if (args is ["census", .. var censusArguments])
+        {
+            return StaticCensusCommand.Run(censusArguments);
+        }
+
         if (args is [var packageDirectory] &&
             !packageDirectory.StartsWith("-", StringComparison.Ordinal))
         {
@@ -33,8 +38,10 @@ internal static class Program
         writer.WriteLine("Usage:");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor <package-directory>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor manifest --steam-manifest <path> --executable <path> --package <path> [--package <path> ...] --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor census --build-manifest <path> --package-directory <path> --output <path>");
         writer.WriteLine();
         writer.WriteLine("The package probe scans one directory using the configured UE 5.4 profile.");
         writer.WriteLine("The manifest command writes versioned build identity without local paths or Steam account data.");
+        writer.WriteLine("The census command writes deterministic file, package, and export-class metadata.");
     }
 }
