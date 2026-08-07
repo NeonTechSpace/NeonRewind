@@ -1,0 +1,469 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonretrorewind:schema:acquisition:structured-asset-index:1",
+  "title": "NeonRetroRewind structured asset index",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "schemaVersion",
+    "build",
+    "staticCensus",
+    "mappings",
+    "engine",
+    "extractor",
+    "totals",
+    "packages",
+    "failureTypes"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "structured-asset-index"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "build": {
+      "$ref": "#/$defs/buildReference"
+    },
+    "staticCensus": {
+      "$ref": "#/$defs/staticCensusIdentity"
+    },
+    "mappings": {
+      "$ref": "#/$defs/mappingIdentity"
+    },
+    "engine": {
+      "$ref": "#/$defs/engineIdentity"
+    },
+    "extractor": {
+      "$ref": "#/$defs/extractorIdentity"
+    },
+    "totals": {
+      "$ref": "#/$defs/totals"
+    },
+    "packages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/packageRecord"
+      }
+    },
+    "failureTypes": {
+      "$ref": "#/$defs/counts"
+    }
+  },
+  "$defs": {
+    "buildReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "properties": {
+        "manifestSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "manifestSchemaVersion": {
+          "const": 1
+        },
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      }
+    },
+    "staticCensusIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion"],
+      "properties": {
+        "fileName": {
+          "$ref": "#/$defs/fileName"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "schemaVersion": {
+          "const": 1
+        }
+      }
+    },
+    "mappingIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "properties": {
+        "fileName": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileName"
+            },
+            {
+              "pattern": "\\.usmap$"
+            }
+          ]
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 16
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "formatVersion": {
+          "const": 4
+        }
+      }
+    },
+    "engineIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "properties": {
+        "version": {
+          "const": "5.4"
+        },
+        "cue4ParseProfile": {
+          "const": "GAME_UE5_4"
+        },
+        "source": {
+          "const": "configured"
+        },
+        "confidence": {
+          "const": "probable"
+        }
+      }
+    },
+    "extractorIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "cue4ParseVersion"],
+      "properties": {
+        "name": {
+          "const": "NeonRetroRewind.StaticExtractor"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cue4ParseVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidatePackageCount",
+        "parsedPackageCount",
+        "failedPackageCount",
+        "exportCount",
+        "exportPropertyCount",
+        "dataAssetCount",
+        "dataTableCount",
+        "dataTableRowCount",
+        "dataTableRowPropertyCount",
+        "stringTableCount",
+        "stringTableEntryCount"
+      ],
+      "properties": {
+        "candidatePackageCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "parsedPackageCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "failedPackageCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "exportCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "exportPropertyCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "dataAssetCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "dataTableCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "dataTableRowCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "dataTableRowPropertyCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "stringTableCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "stringTableEntryCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        }
+      }
+    },
+    "packageRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "status",
+        "candidateClasses",
+        "exportCount",
+        "exportPropertyCount",
+        "assets",
+        "errorType"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\\\]+\\.(uasset|umap)$"
+        },
+        "status": {
+          "enum": ["parsed", "failed"]
+        },
+        "candidateClasses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "CompositeDataTable",
+              "CurveTable",
+              "DataAsset",
+              "DataTable",
+              "PrimaryDataAsset",
+              "StringTable"
+            ]
+          }
+        },
+        "exportCount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonNegativeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "exportPropertyCount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonNegativeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assetRecord"
+          }
+        },
+        "errorType": {
+          "type": ["string", "null"],
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "parsed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "exportCount": {
+                "$ref": "#/$defs/nonNegativeInteger"
+              },
+              "exportPropertyCount": {
+                "$ref": "#/$defs/nonNegativeInteger"
+              },
+              "errorType": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "exportCount": {
+                "type": "null"
+              },
+              "exportPropertyCount": {
+                "type": "null"
+              },
+              "assets": {
+                "maxItems": 0
+              },
+              "errorType": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "assetRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "type", "kind", "exportPropertyCount", "entryCount", "entryPropertyCount", "rowStruct"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": ["data-asset", "data-table", "string-table"]
+        },
+        "exportPropertyCount": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "entryCount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonNegativeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entryPropertyCount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/nonNegativeInteger"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rowStruct": {
+          "type": ["string", "null"],
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "string-table"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "rowStruct": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "data-asset"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "entryCount": {
+                "type": "null"
+              },
+              "entryPropertyCount": {
+                "type": "null"
+              },
+              "rowStruct": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "entryCount": {
+                "$ref": "#/$defs/nonNegativeInteger"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "data-table"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "entryPropertyCount": {
+                "$ref": "#/$defs/nonNegativeInteger"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "entryPropertyCount": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "counts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "count"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

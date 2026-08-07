@@ -49,6 +49,18 @@ dotnet run --project projects/game-data-exporter/static-extractor/NeonRetroRewin
 
 The census verifies package hashes before and after scanning and records package parse failures without local paths or exception messages.
 
+Generate a mapped index of DataTables, StringTables, and direct data-asset candidates from a static census.
+
+```powershell
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRetroRewind.StaticExtractor.csproj -- structured-index --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>
+```
+
+```bash
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRetroRewind.StaticExtractor.csproj -- structured-index --build-manifest '<path>' --static-census '<path>' --mappings '<path>' --package-directory '<path>' --output '<path>'
+```
+
+The structured index verifies every input before and after parsing, fully deserializes candidate packages, and records table entry counts and failures without copying row values.
+
 ## License
 
 Original NeonRetroRewind source code is licensed under the [Apache License 2.0](LICENSE).
