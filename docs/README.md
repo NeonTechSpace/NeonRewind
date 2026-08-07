@@ -4,8 +4,24 @@ NeonRewind is an unofficial, open-source project for *Retro Rewind: Video Store 
 
 ## Repository
 
-- `projects/game-data-exporter` contains the game-data tooling project scaffold.
+- `projects/game-data-exporter/static-extractor` contains a .NET 10 and CUE4Parse package-access probe.
+- `projects/game-data-exporter/runtime-exporter` and `projects/game-data-exporter/schemas` are scaffolds.
 - `projects/typescript` is a pnpm workspace containing `core`, `data-compiler`, and `validator` packages.
+
+## Static extractor
+
+Run the probe with a directory containing the game's `.pak` or `.utoc` files.
+
+```powershell
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.StaticExtractor.csproj -- <package-directory>
+```
+
+```bash
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.StaticExtractor.csproj -- '<package-directory>'
+```
+
+The probe uses the configured Unreal Engine 5.4 profile and reports container, file, and Unreal package counts.
+It does not extract or normalize game data.
 
 ## License
 
