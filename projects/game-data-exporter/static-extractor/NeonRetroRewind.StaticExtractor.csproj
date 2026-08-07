@@ -23,5 +23,6 @@
     <PackageReference Include="CUE4Parse" Version="$(Cue4ParseVersion)" />
     <!-- Overrides IndexRange 1.1.0's vulnerable Microsoft.Bcl.Memory 9.0.0 floor. -->
     <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.18" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 </Project>
