@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text.Json;
 using CUE4Parse.FileProvider;
 using CUE4Parse.MappingsProvider.Usmap;
@@ -51,14 +50,14 @@ internal static class StructuredAssetIndexCommand
 
         try
         {
-            var manifest = ReadJson<BuildManifest>(options.BuildManifestPath, "build manifest");
-            ValidateManifest(manifest);
-            var census = ReadJson<StaticCensus>(options.StaticCensusPath, "static census");
+            var manifest = AcquisitionValidator.ReadJson<BuildManifest>(options.BuildManifestPath, "build manifest");
+            AcquisitionValidator.ValidateManifest(manifest);
+            var census = AcquisitionValidator.ReadJson<StaticCensus>(options.StaticCensusPath, "static census");
             var manifestIdentity = FileIdentityFactory.Create(options.BuildManifestPath);
             var censusIdentity = FileIdentityFactory.Create(options.StaticCensusPath);
-            var mappingIdentity = ReadMappingIdentity(options.MappingsPath);
+            var mappingIdentity = AcquisitionValidator.ReadMappingIdentity(options.MappingsPath);
             ValidateCensus(census, manifest, manifestIdentity.Sha256);
-            var packagePaths = VerifyPackageFiles(manifest, options.PackageDirectory);
+            var packagePaths = AcquisitionValidator.VerifyPackageFiles(manifest, options.PackageDirectory);
 
             var index = CreateIndex(
                 manifest,
@@ -69,10 +68,10 @@ internal static class StructuredAssetIndexCommand
                 options.MappingsPath,
                 options.PackageDirectory);
 
-            VerifyPackageFiles(manifest, options.PackageDirectory, packagePaths);
-            VerifyUnchanged(options.BuildManifestPath, manifestIdentity, "Build manifest");
-            VerifyUnchanged(options.StaticCensusPath, censusIdentity, "Static census");
-            VerifyUnchanged(options.MappingsPath, mappingIdentity, "Mappings");
+            AcquisitionValidator.VerifyPackageFiles(manifest, options.PackageDirectory, packagePaths);
+            AcquisitionValidator.VerifyUnchanged(options.BuildManifestPath, manifestIdentity, "Build manifest");
+            AcquisitionValidator.VerifyUnchanged(options.StaticCensusPath, censusIdentity, "Static census");
+            AcquisitionValidator.VerifyUnchanged(options.MappingsPath, mappingIdentity, "Mappings");
 
             var json = JsonSerializer.Serialize(index, JsonOptions) + "\n";
             var writeStatus = ImmutableArtifactWriter.Write(options.OutputPath, json, "Structured asset index");
@@ -180,8 +179,8 @@ internal static class StructuredAssetIndexCommand
             Engine: manifest.Engine,
             Extractor: new ExtractorIdentity(
                 Name: "NeonRewind.StaticExtractor",
-                Version: ReadAssemblyMetadata("ExtractorVersion"),
-                Cue4ParseVersion: ReadAssemblyMetadata("Cue4ParsePackageVersion")),
+                Version: AcquisitionValidator.ReadAssemblyMetadata("ExtractorVersion"),
+                Cue4ParseVersion: AcquisitionValidator.ReadAssemblyMetadata("Cue4ParsePackageVersion")),
             Totals: new StructuredIndexTotals(
                 CandidatePackageCount: packageRecords.Count,
                 ParsedPackageCount: parsed.Length,
@@ -271,35 +270,6 @@ internal static class StructuredAssetIndexCommand
             _ => null,
         };
 
-    private static T ReadJson<T>(string path, string description)
-    {
-        if (!File.Exists(path))
-        {
-            throw new IOException($"{description} does not exist: {path}");
-        }
-
-        return JsonSerializer.Deserialize<T>(File.ReadAllText(path), JsonOptions) ??
-            throw new InvalidDataException($"{description} is empty.");
-    }
-
-    private static void ValidateManifest(BuildManifest manifest)
-    {
-        if (manifest.ArtifactType != "build-manifest" || manifest.SchemaVersion != 1)
-        {
-            throw new InvalidDataException("Expected build-manifest schema version 1.");
-        }
-
-        if (manifest.Steam is null ||
-            string.IsNullOrWhiteSpace(manifest.Steam.AppId) ||
-            string.IsNullOrWhiteSpace(manifest.Steam.BuildId) ||
-            manifest.Engine is not { Version: "5.4", Cue4ParseProfile: "GAME_UE5_4" } ||
-            manifest.Packages is null ||
-            manifest.Packages.Count == 0)
-        {
-            throw new InvalidDataException("Build manifest is incomplete or unsupported.");
-        }
-    }
-
     private static void ValidateCensus(
         StaticCensus census,
         BuildManifest manifest,
@@ -308,6 +278,14 @@ internal static class StructuredAssetIndexCommand
         if (census.ArtifactType != "static-census" || census.SchemaVersion != 1)
         {
             throw new InvalidDataException("Expected static-census schema version 1.");
+        }
+
+        if (census.Build is null ||
+            census.Totals is null ||
+            census.Packages is null ||
+            census.Packages.Any(package => package is null || package.ExportClasses is null))
+        {
+            throw new InvalidDataException("Static census is incomplete.");
         }
 
         if (!string.Equals(census.Build.ManifestSha256, manifestSha256, StringComparison.Ordinal) ||
@@ -321,91 +299,6 @@ internal static class StructuredAssetIndexCommand
         {
             throw new InvalidDataException("Static census contains package failures.");
         }
-    }
-
-    private static IReadOnlyDictionary<string, string> VerifyPackageFiles(
-        BuildManifest manifest,
-        string packageDirectory,
-        IReadOnlyDictionary<string, string>? expectedPaths = null)
-    {
-        if (!Directory.Exists(packageDirectory))
-        {
-            throw new IOException($"Package directory does not exist: {packageDirectory}");
-        }
-
-        var paths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var expected in manifest.Packages)
-        {
-            if (!string.Equals(expected.FileName, Path.GetFileName(expected.FileName), StringComparison.Ordinal))
-            {
-                throw new InvalidDataException("Build manifest contains a package path instead of a file name.");
-            }
-
-            var path = expectedPaths?.GetValueOrDefault(expected.FileName) ??
-                Path.Combine(Path.GetFullPath(packageDirectory), expected.FileName);
-            var actual = FileIdentityFactory.Create(path);
-            if (actual.SizeBytes != expected.SizeBytes ||
-                !string.Equals(actual.Sha256, expected.Sha256, StringComparison.Ordinal))
-            {
-                throw new InvalidDataException($"Package identity does not match the build manifest: {expected.FileName}");
-            }
-
-            paths.Add(expected.FileName, path);
-        }
-
-        return paths;
-    }
-
-    private static MappingIdentity ReadMappingIdentity(string path)
-    {
-        if (!File.Exists(path))
-        {
-            throw new IOException($"Mappings do not exist: {path}");
-        }
-
-        using var stream = File.OpenRead(path);
-        using var reader = new BinaryReader(stream);
-        if (stream.Length < 16 || reader.ReadUInt16() != 0x30C4)
-        {
-            throw new InvalidDataException("Mappings are not a supported .usmap file.");
-        }
-
-        var formatVersion = reader.ReadByte();
-        if (formatVersion != 4)
-        {
-            throw new InvalidDataException($"Expected .usmap format version 4, found {formatVersion}.");
-        }
-
-        var identity = FileIdentityFactory.Create(path);
-        return new MappingIdentity(identity.FileName, identity.SizeBytes, identity.Sha256, formatVersion);
-    }
-
-    private static void VerifyUnchanged(string path, FileIdentity expected, string description)
-    {
-        var actual = FileIdentityFactory.Create(path);
-        if (actual.SizeBytes != expected.SizeBytes || !string.Equals(actual.Sha256, expected.Sha256, StringComparison.Ordinal))
-        {
-            throw new InvalidDataException($"{description} changed while the structured index was running.");
-        }
-    }
-
-    private static void VerifyUnchanged(string path, MappingIdentity expected, string description)
-    {
-        var actual = FileIdentityFactory.Create(path);
-        if (actual.SizeBytes != expected.SizeBytes || !string.Equals(actual.Sha256, expected.Sha256, StringComparison.Ordinal))
-        {
-            throw new InvalidDataException($"{description} changed while the structured index was running.");
-        }
-    }
-
-    private static string ReadAssemblyMetadata(string key)
-    {
-        var value = typeof(StructuredAssetIndexCommand).Assembly
-            .GetCustomAttributes<AssemblyMetadataAttribute>()
-            .SingleOrDefault(attribute => string.Equals(attribute.Key, key, StringComparison.Ordinal))
-            ?.Value;
-
-        return value ?? throw new InvalidDataException($"Extractor assembly metadata is missing '{key}'.");
     }
 
     private static bool TryParseArguments(

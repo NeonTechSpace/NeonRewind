@@ -35,6 +35,12 @@
         "resolved": "9.0.18",
         "contentHash": "D6ygTjzk2Um7aT93f4N+q3+jCvY7VgTRVtU9qTKxEjubrpPoxEvRTTSLFJf27QP01LUj81xlPTTC7AVjrX3p+Q=="
       },
+      "Newtonsoft.Json": {
+        "type": "Direct",
+        "requested": "[13.0.4, )",
+        "resolved": "13.0.4",
+        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
+      },
       "Blake3": {
         "type": "Transitive",
         "resolved": "2.2.1",
@@ -146,11 +152,6 @@
         "dependencies": {
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
-      },
-      "Newtonsoft.Json": {
-        "type": "Transitive",
-        "resolved": "13.0.4",
-        "contentHash": "pdgNNMai3zv51W5aq268sujXUyx7SNdE2bj1wZcWjAQrKMFZV260lbqYop1d2GM67JI1huLRwxo9ZqnfF/lC6A=="
       },
       "OffiUtils": {
         "type": "Transitive",

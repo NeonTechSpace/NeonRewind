@@ -61,6 +61,18 @@ dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.Sta
 
 The structured index verifies every input before and after parsing, fully deserializes candidate packages, and records table entry counts and failures without copying row values.
 
+Generate deterministic DataTable rows and StringTable entries from a structured index.
+
+```powershell
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.StaticExtractor.csproj -- structured-values --build-manifest <path> --structured-index <path> --mappings <path> --package-directory <path> --output <path>
+```
+
+```bash
+dotnet run --project projects/game-data-exporter/static-extractor/NeonRewind.StaticExtractor.csproj -- structured-values --build-manifest '<path>' --structured-index '<path>' --mappings '<path>' --package-directory '<path>' --output '<path>'
+```
+
+The structured-values artifact remains private under the ignored local acquisition directory because it contains extracted game text and table values.
+
 ## License
 
 Original NeonRewind source code is licensed under the [Apache License 2.0](LICENSE).

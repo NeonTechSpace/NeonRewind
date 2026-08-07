@@ -27,6 +27,11 @@ internal static class Program
             return StructuredAssetIndexCommand.Run(structuredIndexArguments);
         }
 
+        if (args is ["structured-values", .. var structuredValuesArguments])
+        {
+            return StructuredValuesCommand.Run(structuredValuesArguments);
+        }
+
         if (args is [var packageDirectory] &&
             !packageDirectory.StartsWith("-", StringComparison.Ordinal))
         {
@@ -45,10 +50,12 @@ internal static class Program
         writer.WriteLine("  NeonRewind.StaticExtractor manifest --steam-manifest <path> --executable <path> --package <path> [--package <path> ...] --output <path>");
         writer.WriteLine("  NeonRewind.StaticExtractor census --build-manifest <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRewind.StaticExtractor structured-index --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRewind.StaticExtractor structured-values --build-manifest <path> --structured-index <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine();
         writer.WriteLine("The package probe scans one directory using the configured UE 5.4 profile.");
         writer.WriteLine("The manifest command writes versioned build identity without local paths or Steam account data.");
         writer.WriteLine("The census command writes deterministic file, package, and export-class metadata.");
         writer.WriteLine("The structured-index command validates mapped property deserialization for structured assets.");
+        writer.WriteLine("The structured-values command writes normalized DataTable rows and StringTable entries for local use.");
     }
 }
