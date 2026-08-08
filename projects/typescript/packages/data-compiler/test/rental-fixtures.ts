@@ -261,7 +261,7 @@ function createFunction(name: string, bytecodeExpressionCount: number) {
   };
 }
 
-function createBuild() {
+export function createBuild() {
   return {
     manifestSha256: "c".repeat(64),
     manifestSchemaVersion: 1 as const,
@@ -270,7 +270,7 @@ function createBuild() {
   };
 }
 
-function createMappings() {
+export function createMappings() {
   return {
     fileName: "mapping.usmap",
     sizeBytes: 100,

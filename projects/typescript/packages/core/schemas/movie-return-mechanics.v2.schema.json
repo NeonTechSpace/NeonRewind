@@ -1,0 +1,537 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonretrorewind:schema:domain:movie-return-mechanics:2",
+  "title": "NeonRetroRewind movie return mechanics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "schemaVersion",
+    "build",
+    "sources",
+    "scope",
+    "evidenceLevel",
+    "runtimeValidation",
+    "readiness",
+    "selection"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "movie-return-mechanics"
+    },
+    "schemaVersion": {
+      "const": 2
+    },
+    "build": {
+      "$ref": "#/$defs/build"
+    },
+    "sources": {
+      "$ref": "#/$defs/sources"
+    },
+    "scope": {
+      "const": "movie-return-readiness-and-selection"
+    },
+    "evidenceLevel": {
+      "const": "decompiled-blueprint"
+    },
+    "runtimeValidation": {
+      "const": "not-run"
+    },
+    "readiness": {
+      "$ref": "#/$defs/readiness"
+    },
+    "selection": {
+      "$ref": "#/$defs/selection"
+    }
+  },
+  "$defs": {
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steamAppId", "steamBuildId"],
+      "properties": {
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rentalEvidence",
+        "rentalBlueprintBodies",
+        "blueprintCallSites",
+        "blueprintCallerBodies"
+      ],
+      "properties": {
+        "rentalEvidence": {
+          "$ref": "#/$defs/rentalEvidenceSource"
+        },
+        "rentalBlueprintBodies": {
+          "$ref": "#/$defs/rentalBlueprintBodiesSource"
+        },
+        "blueprintCallSites": {
+          "$ref": "#/$defs/blueprintCallSitesSource"
+        },
+        "blueprintCallerBodies": {
+          "$ref": "#/$defs/blueprintCallerBodiesSource"
+        }
+      }
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sha256", "sizeBytes", "artifactType", "schemaVersion"],
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/\\\\]+\\.json$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactType": {
+          "enum": [
+            "rental-evidence",
+            "rental-blueprint-bodies",
+            "blueprint-call-sites",
+            "blueprint-caller-bodies"
+          ]
+        },
+        "schemaVersion": {
+          "const": 1
+        }
+      }
+    },
+    "rentalEvidenceSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "rental-evidence"
+            }
+          }
+        }
+      ]
+    },
+    "rentalBlueprintBodiesSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "rental-blueprint-bodies"
+            }
+          }
+        }
+      ]
+    },
+    "blueprintCallSitesSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "blueprint-call-sites"
+            }
+          }
+        }
+      ]
+    },
+    "blueprintCallerBodiesSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "blueprint-caller-bodies"
+            }
+          }
+        }
+      ]
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "source", "destination", "transfer", "clearsSource", "evidence"],
+      "properties": {
+        "trigger": {
+          "const": "new-day-event"
+        },
+        "source": {
+          "$ref": "#/$defs/rentedQueue"
+        },
+        "destination": {
+          "$ref": "#/$defs/readyQueue"
+        },
+        "transfer": {
+          "const": "append-all"
+        },
+        "clearsSource": {
+          "const": true
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["newDayHandler", "readinessHandler", "dispatcher"],
+          "properties": {
+            "newDayHandler": {
+              "$ref": "#/$defs/entrypointEvidence"
+            },
+            "readinessHandler": {
+              "$ref": "#/$defs/entrypointEvidence"
+            },
+            "dispatcher": {
+              "$ref": "#/$defs/functionEvidence"
+            }
+          }
+        }
+      }
+    },
+    "rentedQueue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["queue", "evidence"],
+      "properties": {
+        "queue": {
+          "const": "rented"
+        },
+        "evidence": {
+          "$ref": "#/$defs/classFieldEvidence"
+        }
+      }
+    },
+    "readyQueue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["queue", "evidence"],
+      "properties": {
+        "queue": {
+          "const": "ready-to-return"
+        },
+        "evidence": {
+          "$ref": "#/$defs/classFieldEvidence"
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "callerSearch",
+        "candidateQueue",
+        "maximumUniqueMovies",
+        "firstAttempt",
+        "additionalAttemptProbability",
+        "randomDecision",
+        "candidateChoice",
+        "deduplication",
+        "outcomes",
+        "evidence",
+        "customerFlow"
+      ],
+      "properties": {
+        "callerSearch": {
+          "$ref": "#/$defs/callerSearch"
+        },
+        "candidateQueue": {
+          "const": "ready-to-return"
+        },
+        "maximumUniqueMovies": {
+          "const": 4
+        },
+        "firstAttempt": {
+          "$ref": "#/$defs/firstAttempt"
+        },
+        "additionalAttemptProbability": {
+          "$ref": "#/$defs/probabilityWithEvidence"
+        },
+        "randomDecision": {
+          "const": "weighted-boolean-per-attempt"
+        },
+        "candidateChoice": {
+          "const": "uniform-random"
+        },
+        "deduplication": {
+          "const": "add-unique"
+        },
+        "outcomes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "weightedFailureWithNoSelection",
+            "weightedFailureWithSelection",
+            "missingCandidate"
+          ],
+          "properties": {
+            "weightedFailureWithNoSelection": {
+              "const": "not-found-empty"
+            },
+            "weightedFailureWithSelection": {
+              "const": "found-selected"
+            },
+            "missingCandidate": {
+              "const": "not-found-empty"
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/functionEvidence"
+        },
+        "customerFlow": {
+          "$ref": "#/$defs/customerFlow"
+        }
+      }
+    },
+    "callerSearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage",
+        "candidatePackageCount",
+        "scannedPackageCount",
+        "failedPackageCount",
+        "callerFound",
+        "callSiteCount"
+      ],
+      "properties": {
+        "coverage": {
+          "const": "all-parsed-blueprint-function-packages"
+        },
+        "candidatePackageCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "scannedPackageCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failedPackageCount": {
+          "const": 0
+        },
+        "callerFound": {
+          "const": true
+        },
+        "callSiteCount": {
+          "const": 2
+        }
+      }
+    },
+    "customerFlow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "callerClass",
+        "callerFunction",
+        "productPriority",
+        "movieSelectionWhen",
+        "selectorCallCount",
+        "selectorNotFound",
+        "selectedMovies",
+        "evidence"
+      ],
+      "properties": {
+        "callerClass": {
+          "const": "ExampleActor_C"
+        },
+        "callerFunction": {
+          "const": "Initialize Example Return"
+        },
+        "productPriority": {
+          "const": "ready-console-before-movies"
+        },
+        "movieSelectionWhen": {
+          "const": "no-ready-console-found"
+        },
+        "selectorCallCount": {
+          "const": 2
+        },
+        "selectorNotFound": {
+          "const": "return-without-product"
+        },
+        "selectedMovies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["iteration", "destination", "removesFromCandidateQueue"],
+          "properties": {
+            "iteration": {
+              "const": "all-returned-movies"
+            },
+            "destination": {
+              "const": "customer-inventory"
+            },
+            "removesFromCandidateQueue": {
+              "const": true
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/callerFunctionEvidence"
+        }
+      }
+    },
+    "firstAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defaultProbability", "override"],
+      "properties": {
+        "defaultProbability": {
+          "$ref": "#/$defs/probabilityWithEvidence"
+        },
+        "override": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["whenQueue", "minimumLength", "probability"],
+          "properties": {
+            "whenQueue": {
+              "const": "rented"
+            },
+            "minimumLength": {
+              "const": 3
+            },
+            "probability": {
+              "const": 0.95
+            }
+          }
+        }
+      }
+    },
+    "probabilityWithEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "evidence"],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "$ref": "#/$defs/defaultEvidence"
+        }
+      }
+    },
+    "classFieldEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "classPath", "fieldName"],
+      "properties": {
+        "artifactType": {
+          "const": "rental-evidence"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fieldName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "defaultEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "classPath", "propertyName"],
+      "properties": {
+        "artifactType": {
+          "const": "rental-evidence"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "propertyName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "entrypointEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "classPath", "functionName", "entryPoint"],
+      "properties": {
+        "artifactType": {
+          "const": "rental-blueprint-bodies"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "functionName": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "entryPoint": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "functionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "classPath", "functionName"],
+      "properties": {
+        "artifactType": {
+          "const": "rental-blueprint-bodies"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "functionName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "callerFunctionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "classPath", "functionName", "statementIndexes"],
+      "properties": {
+        "artifactType": {
+          "const": "blueprint-caller-bodies"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "functionName": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "statementIndexes": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

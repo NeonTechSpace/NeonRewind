@@ -1,7 +1,7 @@
 # NeonRetroRewind
 
 NeonRetroRewind is an unofficial, open-source project for *Retro Rewind: Video Store Simulator*.
-It currently reads data from an installed Steam copy of the game, converts the film tables into a consistent JSON catalog, and compiles the first rental mechanic facts.
+It currently reads data from an installed Steam copy of the game, converts the film tables into a consistent JSON catalog, and compiles normalized rental, fee, and return mechanics.
 The public guide, calculators, and website have not been built yet.
 
 ## Data and distribution boundary
@@ -36,7 +36,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Blueprint caller bodies | `blueprint-caller-bodies.movie-return.v1.json` | Decompiles the exact functions found by the movie-return call-site scan |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
-| Movie return mechanics | `movie-return-mechanics.v1.json` | Separates new-day movie readiness from weighted return selection and records caller coverage |
+| Movie return mechanics | `movie-return-mechanics.v2.json` | Normalizes movie readiness, weighted selection, and the confirmed customer caller flow |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRetroRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -458,11 +458,11 @@ The output contains normalized game rules and remains private and uncommitted.
 
 ## 13. Compile the movie-return mechanics
 
-This step uses the same two private rental artifacts as the other mechanic compilers.
+This step uses the two private rental artifacts, the complete movie-selector call-site artifact, and the extracted caller-body artifact.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
 It separately records the weighted selector's configured probabilities, override condition, four-item limit, candidate queue, and result behavior.
-The current rental Blueprint artifact contains the selector definition but no caller, so this artifact does not claim that its weights are the confirmed nightly return probabilities.
-The separate Blueprint call-site and caller-body artifacts locate and decompile callers outside that four-class rental artifact, but this compiler does not yet consume them.
+It records complete caller-search coverage, the console-first customer branch, both selector calls, and movement of selected cartridges from the ready queue into customer inventory.
+Version 2 requires all four matching acquisition artifacts and rejects partial caller-search coverage or changed caller control flow.
 The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
 
 Move into the TypeScript workspace if you are not already there.
@@ -485,7 +485,11 @@ pnpm movie-return-mechanics `
   --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" `
   --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" `
   --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" `
-  --output ".local/domain/current/movie-return-mechanics.v1.json"
+  --call-sites "../game-data-exporter/.local/acquisition/current/blueprint-call-sites.movie-return.v1.json" `
+  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.v1.schema.json" `
+  --caller-bodies "../game-data-exporter/.local/acquisition/current/blueprint-caller-bodies.movie-return.v1.json" `
+  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" `
+  --output ".local/domain/current/movie-return-mechanics.v2.json"
 ```
 
 ```bash
@@ -494,7 +498,11 @@ pnpm movie-return-mechanics \
   --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" \
   --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" \
   --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" \
-  --output ".local/domain/current/movie-return-mechanics.v1.json"
+  --call-sites "../game-data-exporter/.local/acquisition/current/blueprint-call-sites.movie-return.v1.json" \
+  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.v1.schema.json" \
+  --caller-bodies "../game-data-exporter/.local/acquisition/current/blueprint-caller-bodies.movie-return.v1.json" \
+  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" \
+  --output ".local/domain/current/movie-return-mechanics.v2.json"
 ```
 
 Return to the repository root when the command finishes.

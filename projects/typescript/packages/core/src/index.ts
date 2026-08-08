@@ -22,6 +22,8 @@ export type {
 } from "./membership-fee-mechanics.ts";
 
 export type {
+  BlueprintCallerFunctionEvidence,
   BlueprintEntrypointEvidence,
+  MovieReturnCallerArtifactIdentity,
   MovieReturnMechanics,
 } from "./movie-return-mechanics.ts";

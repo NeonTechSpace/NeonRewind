@@ -4,14 +4,22 @@ import { basename } from "node:path";
 
 import type {
   AcquisitionArtifactIdentity,
+  MovieReturnCallerArtifactIdentity,
   RentalArtifactIdentity,
 } from "@neonretrorewind/core";
 
+import type {
+  BlueprintCallerBodiesArtifact,
+  BlueprintCallSitesArtifact,
+} from "./blueprint-caller-inputs.ts";
 import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import { compileMembershipFeeMechanics } from "./membership-fee-mechanics.ts";
-import { compileMovieReturnMechanics } from "./movie-return-mechanics.ts";
+import {
+  compileMovieReturnMechanics,
+  type MovieReturnSources,
+} from "./movie-return-mechanics.ts";
 import { validateJsonSchema } from "./schema-validation.ts";
 import type {
   RentalBlueprintBodiesArtifact,
@@ -36,6 +44,13 @@ interface ConsoleReturnOptions {
   readonly blueprintBodiesPath: string;
   readonly blueprintBodiesSchemaPath: string;
   readonly outputPath: string;
+}
+
+interface MovieReturnOptions extends ConsoleReturnOptions {
+  readonly callSitesPath: string;
+  readonly callSitesSchemaPath: string;
+  readonly callerBodiesPath: string;
+  readonly callerBodiesSchemaPath: string;
 }
 
 interface RentalMechanicCommand {
@@ -78,12 +93,7 @@ async function main(arguments_: readonly string[]): Promise<void> {
   }
 
   if (arguments_[0] === "movie-return-mechanics") {
-    await runRentalMechanic(arguments_.slice(1), {
-      name: "movie-return-mechanics",
-      outputLabel: "Movie return mechanics",
-      failureLabel: "Movie-return-mechanics compilation",
-      compile: compileMovieReturnMechanics,
-    });
+    await runMovieReturnMechanic(arguments_.slice(1));
     return;
   }
 
@@ -219,6 +229,102 @@ async function runRentalMechanic(
   }
 }
 
+async function runMovieReturnMechanic(arguments_: readonly string[]): Promise<void> {
+  const options = parseRentalMechanicOptions(
+    arguments_,
+    "movie-return-mechanics",
+    true,
+  );
+  if (typeof options === "string") {
+    console.error(options);
+    writeUsage(process.stderr);
+    process.exitCode = invalidArgumentsExitCode;
+    return;
+  }
+
+  try {
+    const rentalBytes = await readFile(options.rentalEvidencePath);
+    const bodyBytes = await readFile(options.blueprintBodiesPath);
+    const callSiteBytes = await readFile(options.callSitesPath);
+    const callerBodyBytes = await readFile(options.callerBodiesPath);
+    const rentalHash = sha256(rentalBytes);
+    const bodyHash = sha256(bodyBytes);
+    const callSiteHash = sha256(callSiteBytes);
+    const callerBodyHash = sha256(callerBodyBytes);
+    const rentalInput = parseJson(rentalBytes, "Rental-evidence input");
+    const bodyInput = parseJson(bodyBytes, "Rental Blueprint-body input");
+    const callSiteInput = parseJson(callSiteBytes, "Blueprint call-site input");
+    const callerBodyInput = parseJson(callerBodyBytes, "Blueprint caller-body input");
+    const inputs = [
+      [rentalInput, options.rentalEvidenceSchemaPath, "Rental-evidence"],
+      [bodyInput, options.blueprintBodiesSchemaPath, "Rental Blueprint-body"],
+      [callSiteInput, options.callSitesSchemaPath, "Blueprint call-site"],
+      [callerBodyInput, options.callerBodiesSchemaPath, "Blueprint caller-body"],
+    ] as const;
+    for (const [input, schemaPath, label] of inputs) {
+      const schema = parseJson(await readFile(schemaPath), `${label} schema`);
+      assertObject(schema, `${label} schema`);
+      validateJsonSchema(input, schema, `${label} input`);
+    }
+
+    const sources: MovieReturnSources = {
+      rentalEvidence: createRentalIdentity(
+        options.rentalEvidencePath,
+        rentalBytes,
+        rentalHash,
+        "rental-evidence",
+      ),
+      rentalBlueprintBodies: createRentalIdentity(
+        options.blueprintBodiesPath,
+        bodyBytes,
+        bodyHash,
+        "rental-blueprint-bodies",
+      ),
+      blueprintCallSites: createCallerIdentity(
+        options.callSitesPath,
+        callSiteBytes,
+        callSiteHash,
+        "blueprint-call-sites",
+      ),
+      blueprintCallerBodies: createCallerIdentity(
+        options.callerBodiesPath,
+        callerBodyBytes,
+        callerBodyHash,
+        "blueprint-caller-bodies",
+      ),
+    };
+    const mechanics = compileMovieReturnMechanics(
+      rentalInput as RentalEvidenceArtifact,
+      bodyInput as RentalBlueprintBodiesArtifact,
+      callSiteInput as BlueprintCallSitesArtifact,
+      callerBodyInput as BlueprintCallerBodiesArtifact,
+      sources,
+    );
+    const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
+
+    await Promise.all([
+      assertFileUnchanged(options.rentalEvidencePath, rentalBytes.length, rentalHash),
+      assertFileUnchanged(options.blueprintBodiesPath, bodyBytes.length, bodyHash),
+      assertFileUnchanged(options.callSitesPath, callSiteBytes.length, callSiteHash),
+      assertFileUnchanged(options.callerBodiesPath, callerBodyBytes.length, callerBodyHash),
+    ]);
+
+    const status = await writeImmutableArtifact(options.outputPath, output);
+    if (status === "conflict") {
+      console.error(`Movie return mechanics conflict with existing output: ${options.outputPath}`);
+      process.exitCode = outputConflictExitCode;
+      return;
+    }
+
+    const verb = status === "created" ? "wrote" : "is unchanged";
+    console.log(`Movie return mechanics ${verb}: ${options.outputPath}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown failure.";
+    console.error(`Movie-return-mechanics compilation failed: ${message}`);
+    process.exitCode = inputFailureExitCode;
+  }
+}
+
 function parseFilmCatalogOptions(
   arguments_: readonly string[],
 ): FilmCatalogOptions | string {
@@ -254,7 +360,18 @@ function parseFilmCatalogOptions(
 function parseRentalMechanicOptions(
   arguments_: readonly string[],
   commandName: string,
-): ConsoleReturnOptions | string {
+  callerInputs: true,
+): MovieReturnOptions | string;
+function parseRentalMechanicOptions(
+  arguments_: readonly string[],
+  commandName: string,
+  callerInputs?: false,
+): ConsoleReturnOptions | string;
+function parseRentalMechanicOptions(
+  arguments_: readonly string[],
+  commandName: string,
+  callerInputs = false,
+): ConsoleReturnOptions | MovieReturnOptions | string {
   const values = new Map<string, string>();
   const allowed = new Set([
     "--rental-evidence",
@@ -263,6 +380,12 @@ function parseRentalMechanicOptions(
     "--blueprint-bodies-schema",
     "--output",
   ]);
+  if (callerInputs) {
+    allowed.add("--call-sites");
+    allowed.add("--call-sites-schema");
+    allowed.add("--caller-bodies");
+    allowed.add("--caller-bodies-schema");
+  }
 
   for (let index = 0; index < arguments_.length; index += 2) {
     const name = arguments_[index];
@@ -283,24 +406,44 @@ function parseRentalMechanicOptions(
   const rentalEvidenceSchemaPath = values.get("--rental-evidence-schema");
   const blueprintBodiesPath = values.get("--blueprint-bodies");
   const blueprintBodiesSchemaPath = values.get("--blueprint-bodies-schema");
+  const callSitesPath = values.get("--call-sites");
+  const callSitesSchemaPath = values.get("--call-sites-schema");
+  const callerBodiesPath = values.get("--caller-bodies");
+  const callerBodiesSchemaPath = values.get("--caller-bodies-schema");
   const outputPath = values.get("--output");
   if (
     rentalEvidencePath === undefined ||
     rentalEvidenceSchemaPath === undefined ||
     blueprintBodiesPath === undefined ||
     blueprintBodiesSchemaPath === undefined ||
-    outputPath === undefined
+    outputPath === undefined ||
+    (callerInputs &&
+      (callSitesPath === undefined ||
+        callSitesSchemaPath === undefined ||
+        callerBodiesPath === undefined ||
+        callerBodiesSchemaPath === undefined))
   ) {
-    return "Expected both rental inputs, both schemas, and --output.";
+    return callerInputs
+      ? "Expected both rental inputs, both caller inputs, their four schemas, and --output."
+      : "Expected both rental inputs, both schemas, and --output.";
   }
 
-  return {
+  const rentalOptions: ConsoleReturnOptions = {
     rentalEvidencePath,
     rentalEvidenceSchemaPath,
     blueprintBodiesPath,
     blueprintBodiesSchemaPath,
     outputPath,
   };
+  return callerInputs
+    ? {
+        ...rentalOptions,
+        callSitesPath: callSitesPath!,
+        callSitesSchemaPath: callSitesSchemaPath!,
+        callerBodiesPath: callerBodiesPath!,
+        callerBodiesSchemaPath: callerBodiesSchemaPath!,
+      }
+    : rentalOptions;
 }
 
 function createRentalIdentity(
@@ -309,6 +452,23 @@ function createRentalIdentity(
   hash: string,
   artifactType: RentalArtifactIdentity["artifactType"],
 ): RentalArtifactIdentity {
+  return {
+    fileName: basename(path),
+    sha256: hash,
+    sizeBytes: bytes.length,
+    artifactType,
+    schemaVersion: 1,
+  };
+}
+
+function createCallerIdentity<
+  ArtifactType extends MovieReturnCallerArtifactIdentity["artifactType"],
+>(
+  path: string,
+  bytes: Uint8Array,
+  hash: string,
+  artifactType: ArtifactType,
+): MovieReturnCallerArtifactIdentity<ArtifactType> {
   return {
     fileName: basename(path),
     sha256: hash,
@@ -359,6 +519,6 @@ function writeUsage(stream: NodeJS.WritableStream): void {
     "  neonretrorewind-data-compiler membership-fee-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
   );
   stream.write(
-    "  neonretrorewind-data-compiler movie-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler movie-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --call-sites <path> --call-sites-schema <schema> --caller-bodies <path> --caller-bodies-schema <schema> --output <path>\n",
   );
 }

@@ -1,5 +1,12 @@
-import type { MovieReturnMechanics } from "@neonretrorewind/core";
+import type {
+  MovieReturnCallerArtifactIdentity,
+  MovieReturnMechanics,
+} from "@neonretrorewind/core";
 
+import type {
+  BlueprintCallerBodiesArtifact,
+  BlueprintCallSitesArtifact,
+} from "./blueprint-caller-inputs.ts";
 import type {
   RentalBlueprintBodiesArtifact,
   RentalEvidenceArtifact,
@@ -21,17 +28,31 @@ const newDayFunction = "Example Period Event";
 const readinessFunction = "Prepare Example Items";
 const dispatcherFunction = "ExecuteExampleGraph_ExampleQueueSystem";
 const selectionFunction = "Select Example Items";
+const callerPackagePath =
+  "ExampleGame/Content/ExampleProject/core/ai/pawn/ExampleActor.uasset";
+const callerClassName = "ExampleActor_C";
+const callerClassPath =
+  "ExampleGame/Content/ExampleProject/core/ai/pawn/ExampleActor.ExampleActor_C";
+const callerFunction = "Initialize Example Return";
+const callerFunctionPath = `${callerClassPath}:${callerFunction}`;
+const callerStatementIndexes = [465, 519] as const;
 const newDayEntryPoint = 1792;
 const readinessEntryPoint = 2592;
 
-export type MovieReturnSources = RentalMechanicSources;
+export interface MovieReturnSources extends RentalMechanicSources {
+  readonly blueprintCallSites: MovieReturnCallerArtifactIdentity<"blueprint-call-sites">;
+  readonly blueprintCallerBodies: MovieReturnCallerArtifactIdentity<"blueprint-caller-bodies">;
+}
 
 export function compileMovieReturnMechanics(
   rentalEvidence: RentalEvidenceArtifact,
   blueprintBodies: RentalBlueprintBodiesArtifact,
+  callSites: BlueprintCallSitesArtifact,
+  callerBodies: BlueprintCallerBodiesArtifact,
   sources: MovieReturnSources,
 ): MovieReturnMechanics {
   assertRentalInputIdentity(rentalEvidence, blueprintBodies, sources);
+  assertCallerInputIdentity(rentalEvidence, callSites, callerBodies, sources);
   const evidenceClass = findRentalEvidenceClass(rentalEvidence);
   const bodyClass = findRentalBodyClass(blueprintBodies);
   if (bodyClass.path !== evidenceClass.path) {
@@ -81,11 +102,12 @@ export function compileMovieReturnMechanics(
     "ExampleSymbol_b752835dd3cc = (ExampleSymbol_5b49cd8b7a54 > 0)",
     "Item founded = TArray<Item founded>()",
   ]);
-  assertNoSelectionCallerWithinArtifact(blueprintBodies);
+  assertSelectionDefinitionIsOnlyOccurrence(blueprintBodies);
+  const callerFunctionBody = assertCustomerSelectionFlow(callSites, callerBodies);
 
   return {
     artifactType: "movie-return-mechanics",
-    schemaVersion: 1,
+    schemaVersion: 2,
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
       steamBuildId: rentalEvidence.build.steamBuildId,
@@ -122,8 +144,12 @@ export function compileMovieReturnMechanics(
     },
     selection: {
       callerSearch: {
-        coverage: "rental-blueprint-bodies",
-        callerFound: false,
+        coverage: "all-parsed-blueprint-function-packages",
+        candidatePackageCount: callSites.totals.candidatePackageCount,
+        scannedPackageCount: callSites.totals.scannedPackageCount,
+        failedPackageCount: 0,
+        callerFound: true,
+        callSiteCount: 2,
       },
       candidateQueue: "ready-to-return",
       maximumUniqueMovies: 4,
@@ -151,6 +177,25 @@ export function compileMovieReturnMechanics(
         missingCandidate: "not-found-empty",
       },
       evidence: createFunctionEvidence(bodyClass.path, selectionFunction),
+      customerFlow: {
+        callerClass: callerClassName,
+        callerFunction,
+        productPriority: "ready-console-before-movies",
+        movieSelectionWhen: "no-ready-console-found",
+        selectorCallCount: 2,
+        selectorNotFound: "return-without-product",
+        selectedMovies: {
+          iteration: "all-returned-movies",
+          destination: "customer-inventory",
+          removesFromCandidateQueue: true,
+        },
+        evidence: {
+          artifactType: "blueprint-caller-bodies",
+          classPath: callerFunctionBody.classPath,
+          functionName: callerFunctionBody.functionName,
+          statementIndexes: callerFunctionBody.calls.map((call) => call.statementIndex),
+        },
+      },
     },
   };
 }
@@ -188,7 +233,7 @@ function findProbabilityDefault(
   return { name: property.name, value: property.value };
 }
 
-function assertNoSelectionCallerWithinArtifact(input: RentalBlueprintBodiesArtifact): void {
+function assertSelectionDefinitionIsOnlyOccurrence(input: RentalBlueprintBodiesArtifact): void {
   const needle = `${selectionFunction}(`;
   const occurrences = input.classes.reduce(
     (total, class_) => total + class_.pseudoCode.split(needle).length - 1,
@@ -196,6 +241,160 @@ function assertNoSelectionCallerWithinArtifact(input: RentalBlueprintBodiesArtif
   );
   if (occurrences !== 1) {
     throw new Error("Movie selection caller coverage changed in the rental Blueprint artifact.");
+  }
+}
+
+function assertCallerInputIdentity(
+  rentalEvidence: RentalEvidenceArtifact,
+  callSites: BlueprintCallSitesArtifact,
+  callerBodies: BlueprintCallerBodiesArtifact,
+  sources: MovieReturnSources,
+): void {
+  if (
+    callSites.artifactType !== "blueprint-call-sites" ||
+    callSites.schemaVersion !== 1 ||
+    callerBodies.artifactType !== "blueprint-caller-bodies" ||
+    callerBodies.schemaVersion !== 1
+  ) {
+    throw new Error("Expected version 1 Blueprint caller acquisition artifacts.");
+  }
+
+  assertSameBuild(rentalEvidence.build, callSites.build, "Blueprint call sites");
+  assertSameBuild(rentalEvidence.build, callerBodies.build, "Blueprint caller bodies");
+  assertSameMappings(rentalEvidence.mappings, callSites.mappings, "Blueprint call sites");
+  assertSameMappings(rentalEvidence.mappings, callerBodies.mappings, "Blueprint caller bodies");
+
+  if (
+    callerBodies.callSites.fileName !== sources.blueprintCallSites.fileName ||
+    callerBodies.callSites.sizeBytes !== sources.blueprintCallSites.sizeBytes ||
+    callerBodies.callSites.sha256 !== sources.blueprintCallSites.sha256 ||
+    callerBodies.callSites.schemaVersion !== sources.blueprintCallSites.schemaVersion ||
+    sources.blueprintCallSites.artifactType !== "blueprint-call-sites" ||
+    sources.blueprintCallerBodies.artifactType !== "blueprint-caller-bodies"
+  ) {
+    throw new Error("Blueprint caller bodies do not reference the supplied call-site artifact.");
+  }
+}
+
+function assertSameBuild(
+  expected: RentalEvidenceArtifact["build"],
+  actual: BlueprintCallSitesArtifact["build"],
+  label: string,
+): void {
+  if (
+    actual.manifestSha256 !== expected.manifestSha256 ||
+    actual.manifestSchemaVersion !== expected.manifestSchemaVersion ||
+    actual.steamAppId !== expected.steamAppId ||
+    actual.steamBuildId !== expected.steamBuildId
+  ) {
+    throw new Error(`${label} does not belong to the rental-evidence build.`);
+  }
+}
+
+function assertSameMappings(
+  expected: RentalEvidenceArtifact["mappings"],
+  actual: BlueprintCallSitesArtifact["mappings"],
+  label: string,
+): void {
+  if (
+    actual.fileName !== expected.fileName ||
+    actual.sizeBytes !== expected.sizeBytes ||
+    actual.sha256 !== expected.sha256 ||
+    actual.formatVersion !== expected.formatVersion
+  ) {
+    throw new Error(`${label} does not use the rental-evidence mappings.`);
+  }
+}
+
+function assertCustomerSelectionFlow(
+  callSites: BlueprintCallSitesArtifact,
+  callerBodies: BlueprintCallerBodiesArtifact,
+) {
+  if (
+    callSites.target.functionName !== selectionFunction ||
+    callerBodies.target.functionName !== selectionFunction ||
+    callSites.candidateRule !== "parsed-packages-with-function-exports" ||
+    callSites.coverage !== "complete" ||
+    callSites.failures.length !== 0 ||
+    callSites.totals.failedPackageCount !== 0 ||
+    callSites.totals.candidatePackageCount !== callSites.totals.scannedPackageCount ||
+    callSites.totals.callSiteCount !== callSites.callSites.length ||
+    callSites.totals.callSiteCount !== 2
+  ) {
+    throw new Error("Movie selector call-site coverage changed.");
+  }
+
+  const expectedSites = callerStatementIndexes.map((statementIndex) => ({
+    packagePath: callerPackagePath,
+    className: callerClassName,
+    classPath: callerClassPath,
+    functionName: callerFunction,
+    functionPath: callerFunctionPath,
+    callKind: "local-virtual" as const,
+    statementIndex,
+  }));
+  if (JSON.stringify(callSites.callSites) !== JSON.stringify(expectedSites)) {
+    throw new Error("Movie selector call sites changed.");
+  }
+
+  if (
+    callerBodies.totals.packageCount !== 1 ||
+    callerBodies.totals.classCount !== 1 ||
+    callerBodies.totals.functionCount !== 1 ||
+    callerBodies.totals.callSiteCount !== 2 ||
+    callerBodies.functions.length !== 1
+  ) {
+    throw new Error("Movie selector caller-body totals changed.");
+  }
+
+  const functionBody = callerBodies.functions[0]!;
+  if (
+    functionBody.packagePath !== callerPackagePath ||
+    functionBody.className !== callerClassName ||
+    functionBody.classPath !== callerClassPath ||
+    functionBody.functionName !== callerFunction ||
+    functionBody.functionPath !== callerFunctionPath ||
+    functionBody.calls.length !== 2 ||
+    JSON.stringify(functionBody.calls) !==
+      JSON.stringify(
+        callerStatementIndexes.map((statementIndex) => ({
+          callKind: "local-virtual",
+          statementIndex,
+        })),
+      ) ||
+    callerBodies.totals.pseudoCodeCharacterCount !== functionBody.pseudoCode.length
+  ) {
+    throw new Error("Movie selector caller function changed.");
+  }
+
+  const selectorNeedle = `${selectionFunction}(`;
+  if (functionBody.pseudoCode.split(selectorNeedle).length - 1 !== 2) {
+    throw new Error("Movie selector invocation count changed in the caller body.");
+  }
+
+  assertOrderedEvidence(functionBody.pseudoCode, [
+    "Select Example Device(",
+    "if (!ExampleSymbol_f35fefb6cd59)",
+    "Label_399:",
+    `ExampleSymbol_59b9daf98844->Actor Gatherer->ExampleQueueSystem->${selectorNeedle}`,
+    `ref to Rent system->${selectorNeedle}`,
+    "if (!ExampleSymbol_19b27f16b828)",
+    "ExampleSymbol_5546bd5cfb37 = ExampleSymbol_701a289356d8.Length",
+    "ExampleAddInventoryItem(current Cartridge in loop, false);",
+    "Remove Example Ready Item(current Cartridge in loop",
+  ]);
+
+  return functionBody;
+}
+
+function assertOrderedEvidence(pseudoCode: string, fragments: readonly string[]): void {
+  let cursor = 0;
+  for (const fragment of fragments) {
+    const index = pseudoCode.indexOf(fragment, cursor);
+    if (index < 0) {
+      throw new Error(`Movie caller is missing required static evidence: ${fragment}`);
+    }
+    cursor = index + fragment.length;
   }
 }
 
