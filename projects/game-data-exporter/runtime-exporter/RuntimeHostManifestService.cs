@@ -20,7 +20,10 @@ internal static class RuntimeHostManifestService
         WriteIndented = true,
     };
 
-    public static VerifiedStagingManifest ReadStaging(string manifestPath)
+    public static VerifiedStagingManifest ReadStaging(string manifestPath) =>
+        ReadStaging(manifestPath, requireCurrentRuntimeHost: true);
+
+    private static VerifiedStagingManifest ReadStaging(string manifestPath, bool requireCurrentRuntimeHost)
     {
         var path = ResolveExistingRegularFile(manifestPath, "Staging manifest");
         if (!string.Equals(Path.GetFileName(path), RuntimeHostContract.StagingManifestFileName, StringComparison.Ordinal))
@@ -31,7 +34,7 @@ internal static class RuntimeHostManifestService
         var identity = FileIdentityFactory.Create(path);
         var manifest = JsonSerializer.Deserialize<RuntimeHostStagingManifest>(File.ReadAllText(path), InputJsonOptions)
             ?? throw new InvalidDataException("Staging manifest is empty.");
-        ValidateStagingContract(manifest);
+        ValidateStagingContract(manifest, requireCurrentRuntimeHost);
 
         var stagingDirectory = Path.GetDirectoryName(path)!;
         var gameDirectory = ResolveGameDirectory(manifest.GameDirectory.AbsolutePath);
@@ -77,7 +80,7 @@ internal static class RuntimeHostManifestService
 
         var stagingPath = Path.Combine(Path.GetDirectoryName(path)!, RuntimeHostContract.StagingManifestFileName);
         VerifyRegularFileIdentity(stagingPath, manifest.StagingManifest, "Referenced staging manifest");
-        var staging = ReadStaging(stagingPath);
+        var staging = ReadStaging(stagingPath, requireCurrentRuntimeHost: false);
 
         if (manifest.Build != staging.Manifest.Build ||
             !string.Equals(manifest.GameDirectory.AbsolutePath, staging.Manifest.GameDirectory.AbsolutePath, StringComparison.OrdinalIgnoreCase) ||
@@ -188,7 +191,7 @@ internal static class RuntimeHostManifestService
     public static bool IsValidSha256(string? value) =>
         value is { Length: 64 } && value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
 
-    private static void ValidateStagingContract(RuntimeHostStagingManifest manifest)
+    private static void ValidateStagingContract(RuntimeHostStagingManifest manifest, bool requireCurrentRuntimeHost)
     {
         if (manifest.ArtifactType != "runtime-host-staging" ||
             manifest.SchemaVersion != 1 ||
@@ -203,18 +206,25 @@ internal static class RuntimeHostManifestService
             string.IsNullOrWhiteSpace(manifest.Build.SteamBuildId) ||
             !manifest.Build.SteamBuildId.All(char.IsAsciiDigit) ||
             manifest.RuntimeHost.Name != "UE4SS" ||
-            manifest.RuntimeHost.Version != RuntimeHostContract.Ue4ssVersion ||
-            manifest.RuntimeHost.Archive.Sha256 != RuntimeHostContract.Ue4ssArchiveSha256 ||
+            string.IsNullOrWhiteSpace(manifest.RuntimeHost.Version) ||
             manifest.Probe.Name != RuntimeHostContract.ProbeName ||
-            manifest.Probe.Version != RuntimeHostContract.ProbeVersion ||
+            string.IsNullOrWhiteSpace(manifest.Probe.Version) ||
             manifest.Probe.Source.FileName != "main.lua" ||
-            manifest.Probe.Source.SizeBytes != RuntimeHostContract.ProbeScriptSizeBytes ||
-            manifest.Probe.Source.Sha256 != RuntimeHostContract.ProbeScriptSha256 ||
             manifest.Probe.DiagnosticRelativePath != RuntimeHostContract.DiagnosticRelativePath ||
             string.IsNullOrWhiteSpace(manifest.GameDirectory.AbsolutePath) ||
             manifest.ProposedFiles.Count != RuntimeHostContract.ProposedFiles.Count)
         {
             throw new InvalidDataException("Staging manifest does not match the supported runtime-host contract.");
+        }
+
+        if (requireCurrentRuntimeHost &&
+            (manifest.RuntimeHost.Version != RuntimeHostContract.Ue4ssVersion ||
+             manifest.RuntimeHost.Archive.Sha256 != RuntimeHostContract.Ue4ssArchiveSha256 ||
+             manifest.Probe.Version != RuntimeHostContract.ProbeVersion ||
+             manifest.Probe.Source.SizeBytes != RuntimeHostContract.ProbeScriptSizeBytes ||
+             manifest.Probe.Source.Sha256 != RuntimeHostContract.ProbeScriptSha256))
+        {
+            throw new InvalidDataException("Staging manifest does not match the current runtime-host identity.");
         }
 
         ValidateFileIdentity(manifest.Build.BuildManifest, "Build manifest identity");
