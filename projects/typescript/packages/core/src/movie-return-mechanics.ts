@@ -9,9 +9,28 @@ export interface BlueprintEntrypointEvidence extends BlueprintFunctionEvidence {
   readonly entryPoint: number;
 }
 
+export interface MovieReturnCallerArtifactIdentity<
+  ArtifactType extends "blueprint-call-sites" | "blueprint-caller-bodies" =
+    | "blueprint-call-sites"
+    | "blueprint-caller-bodies",
+> {
+  readonly fileName: string;
+  readonly sha256: string;
+  readonly sizeBytes: number;
+  readonly artifactType: ArtifactType;
+  readonly schemaVersion: 1;
+}
+
+export interface BlueprintCallerFunctionEvidence {
+  readonly artifactType: "blueprint-caller-bodies";
+  readonly classPath: string;
+  readonly functionName: string;
+  readonly statementIndexes: readonly number[];
+}
+
 export interface MovieReturnMechanics {
   readonly artifactType: "movie-return-mechanics";
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;
@@ -19,6 +38,8 @@ export interface MovieReturnMechanics {
   readonly sources: {
     readonly rentalEvidence: RentalArtifactIdentity;
     readonly rentalBlueprintBodies: RentalArtifactIdentity;
+    readonly blueprintCallSites: MovieReturnCallerArtifactIdentity<"blueprint-call-sites">;
+    readonly blueprintCallerBodies: MovieReturnCallerArtifactIdentity<"blueprint-caller-bodies">;
   };
   readonly scope: "movie-return-readiness-and-selection";
   readonly evidenceLevel: "decompiled-blueprint";
@@ -43,8 +64,12 @@ export interface MovieReturnMechanics {
   };
   readonly selection: {
     readonly callerSearch: {
-      readonly coverage: "rental-blueprint-bodies";
-      readonly callerFound: false;
+      readonly coverage: "all-parsed-blueprint-function-packages";
+      readonly candidatePackageCount: number;
+      readonly scannedPackageCount: number;
+      readonly failedPackageCount: 0;
+      readonly callerFound: true;
+      readonly callSiteCount: 2;
     };
     readonly candidateQueue: "ready-to-return";
     readonly maximumUniqueMovies: 4;
@@ -72,5 +97,19 @@ export interface MovieReturnMechanics {
       readonly missingCandidate: "not-found-empty";
     };
     readonly evidence: BlueprintFunctionEvidence;
+    readonly customerFlow: {
+      readonly callerClass: "AI_Client_Character_C";
+      readonly callerFunction: "Initial creation - Get if I have Product to return";
+      readonly productPriority: "ready-console-before-movies";
+      readonly movieSelectionWhen: "no-ready-console-found";
+      readonly selectorCallCount: 2;
+      readonly selectorNotFound: "return-without-product";
+      readonly selectedMovies: {
+        readonly iteration: "all-returned-movies";
+        readonly destination: "customer-inventory";
+        readonly removesFromCandidateQueue: true;
+      };
+      readonly evidence: BlueprintCallerFunctionEvidence;
+    };
   };
 }
