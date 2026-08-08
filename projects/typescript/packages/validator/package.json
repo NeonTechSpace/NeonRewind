@@ -9,9 +9,11 @@
   },
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
+    "movie-return": "node src/cli.ts movie-return",
     "test": "node --test test/*.test.ts"
   },
   "dependencies": {
-    "@neonrewind/core": "workspace:*"
+    "@neonrewind/core": "workspace:*",
+    "ajv": "8.20.0"
   }
 }

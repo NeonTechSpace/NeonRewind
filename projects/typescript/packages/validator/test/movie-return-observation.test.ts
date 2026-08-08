@@ -4,11 +4,15 @@ import test from "node:test";
 import {
   validateMovieReturnObservation,
   type CustomerReturnObservationEvent,
-  type MovieReference,
-  type MovieReturnObservation,
   type ReadinessObservationEvent,
   type SelectionObservationEvent,
 } from "../src/index.ts";
+import {
+  createObservation,
+  movie,
+  type Mutable,
+  type MutableObservation,
+} from "./movie-return-fixture.ts";
 
 test("passes a complete observation with matching state transitions", () => {
   const report = validateMovieReturnObservation(createObservation());
@@ -142,107 +146,6 @@ function issueCodes(
   return report.issues.map((issue) => issue.code);
 }
 
-function createObservation(): MutableObservation {
-  return {
-    artifactType: "movie-return-runtime-observation",
-    schemaVersion: 1,
-    build: {
-      steamAppId: "3552140",
-      steamBuildId: "23896268",
-    },
-    targetMechanics: {
-      fileName: "movie-return-mechanics.v4.json",
-      sizeBytes: 1234,
-      sha256: "a".repeat(64),
-      artifactType: "movie-return-mechanics",
-      schemaVersion: 4,
-    },
-    collector: {
-      name: "NeonRewind.MovieReturnRuntimeCollector",
-      version: "0.1.0",
-      runtimeHost: {
-        name: "test-host",
-        version: "1.0.0",
-      },
-    },
-    run: {
-      runId: "20260808T120000Z-0123abcd",
-      startedAtUtc: "2026-08-08T12:00:00.000Z",
-      finishedAtUtc: "2026-08-08T12:05:00.000Z",
-      status: "complete",
-      statusReason: null,
-    },
-    events: [
-      {
-        sequence: 1,
-        eventType: "readiness-observed",
-        observedAtUtc: "2026-08-08T12:01:00.000Z",
-        classPath: "/Game/RentSystem.RentSystem_C",
-        objectPath: "/Game/Map.PersistentLevel.RentSystem_C_0",
-        functionPath: "/Game/RentSystem.RentSystem_C:Get Movie ready for return",
-        preState: {
-          rentedMovies: [movie("movie-0001")],
-          readyMovies: [],
-        },
-        postState: {
-          rentedMovies: [],
-          readyMovies: [movie("movie-0001")],
-        },
-      },
-      {
-        sequence: 2,
-        eventType: "selection-observed",
-        observedAtUtc: "2026-08-08T12:02:00.000Z",
-        classPath: "/Game/RentSystem.RentSystem_C",
-        objectPath: "/Game/Map.PersistentLevel.RentSystem_C_0",
-        functionPath:
-          "/Game/RentSystem.RentSystem_C:Get Random List Of Cartridges From Rent List",
-        preState: {
-          rentedMovies: [],
-          readyMovies: [movie("movie-0001")],
-        },
-        result: {
-          found: true,
-          selectedMovies: [movie("movie-0001")],
-        },
-      },
-      {
-        sequence: 3,
-        eventType: "customer-return-observed",
-        observedAtUtc: "2026-08-08T12:03:00.000Z",
-        classPath: "/Game/AI_Client_Character.AI_Client_Character_C",
-        objectPath: "/Game/Map.PersistentLevel.AI_Client_Character_C_0",
-        functionPath:
-          "/Game/AI_Client_Character.AI_Client_Character_C:Initial creation - Get if I have Product to return",
-        preState: {
-          readyMovies: [movie("movie-0001")],
-          customerInventoryMovies: [],
-        },
-        result: {
-          found: true,
-          selectedMovies: [movie("movie-0001")],
-        },
-        postState: {
-          readyMovies: [],
-          customerInventoryMovies: [movie("movie-0001")],
-        },
-      },
-    ],
-  };
-}
-
-type MutableObservation = {
-  -readonly [Key in keyof MovieReturnObservation]: Mutable<
-    MovieReturnObservation[Key]
-  >;
-};
-
-type Mutable<Value> = Value extends readonly (infer Item)[]
-  ? Mutable<Item>[]
-  : Value extends object
-    ? { -readonly [Key in keyof Value]: Mutable<Value[Key]> }
-    : Value;
-
 function readiness(observation: MutableObservation): Mutable<ReadinessObservationEvent> {
   const event = observation.events.find(
     (candidate) => candidate.eventType === "readiness-observed",
@@ -273,11 +176,4 @@ function customerReturn(
     throw new Error("Fixture customer-return event is missing.");
   }
   return event;
-}
-
-function movie(value: string): MovieReference {
-  return {
-    referenceType: "run-local",
-    value,
-  };
 }

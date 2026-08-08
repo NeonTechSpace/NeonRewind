@@ -15,7 +15,7 @@ Do not commit or publish:
 - Game binaries, package files, mappings, or saves
 - Build manifests or static censuses produced from a game installation
 - Structured values, rental evidence, Blueprint pseudocode, or Blueprint function traces
-- Compiled film catalogs, mechanic artifacts, or extracted game text
+- Compiled film catalogs, mechanic artifacts, runtime observations, validation reports, or extracted game text
 - Extracted or modified game assets
 
 The documented output directories are ignored by Git.
@@ -43,6 +43,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Movie return mechanics | `movie-return-mechanics.v4.json` | Normalizes movie readiness, weighted selection, and customer flow from typed traces |
+| Movie return validation | `movie-return-validation.v1.json` | Verifies a private runtime observation against its exact movie-return mechanics artifact |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -778,6 +779,7 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 - `projects/game-data-exporter/static-extractor` contains the .NET 10 acquisition commands.
 - `projects/game-data-exporter/schemas/acquisition` contains the acquisition JSON Schemas.
 - `projects/game-data-exporter/schemas/runtime` contains the runtime observation JSON Schemas.
+- `projects/game-data-exporter/schemas/validation` contains the validation-report JSON Schemas.
 - `projects/game-data-exporter/runtime-exporter` is an empty scaffold.
 - [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the limits on its future collector.
 - `projects/typescript/packages/core` owns the normalized domain types and schemas.
