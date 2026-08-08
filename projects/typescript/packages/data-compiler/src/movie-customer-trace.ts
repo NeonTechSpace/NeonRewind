@@ -6,8 +6,17 @@ import type {
 } from "./blueprint-caller-inputs.ts";
 import type {
   BlueprintFunctionTraceArtifact,
-  BlueprintTraceNodeInput,
 } from "./blueprint-trace-inputs.ts";
+import {
+  assertTraceCall as assertCall,
+  assertTraceJump as assertJump,
+  assertTraceLiteralChild as assertLiteralChild,
+  assertTraceNodeTree as assertNodeTree,
+  assertTraceRootNode as assertRootNode,
+  assertTraceSymbolChild as assertSymbolChild,
+  findTraceCall as findCall,
+  findTraceFunction,
+} from "./blueprint-trace-assertions.ts";
 import type { MovieReturnSources } from "./movie-return-mechanics.ts";
 import type { RentalEvidenceArtifact } from "./rental-inputs.ts";
 
@@ -45,9 +54,9 @@ export function assertMovieCustomerTrace(
   assertCallerBodyMetadata(callerBodies);
   assertTraceStructure(trace);
 
-  const receiveBeginPlay = findFunction(trace, "ReceiveBeginPlay");
-  const eventGraph = findFunction(trace, eventGraphFunctionName);
-  const customer = findFunction(trace, customerCallerFunctionName);
+  const receiveBeginPlay = findTraceFunction(trace.functions, "ReceiveBeginPlay");
+  const eventGraph = findTraceFunction(trace.functions, eventGraphFunctionName);
+  const customer = findTraceFunction(trace.functions, customerCallerFunctionName);
 
   const entryCall = findCall(
     receiveBeginPlay,
@@ -389,26 +398,6 @@ function assertTraceStructure(trace: BlueprintFunctionTraceArtifact): void {
   }
 }
 
-function assertNodeTree(
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-): void {
-  for (const [index, node] of function_.nodes.entries()) {
-    if (node.nodeIndex !== index) {
-      throw new Error(`Blueprint trace node indexes changed in ${function_.functionName}.`);
-    }
-    if (node.parentNodeIndex === null) {
-      if (node.depth !== 0 || !node.edge.startsWith("script[")) {
-        throw new Error(`Blueprint trace root node changed in ${function_.functionName}.`);
-      }
-      continue;
-    }
-    const parent = function_.nodes[node.parentNodeIndex];
-    if (parent === undefined || node.parentNodeIndex >= index || node.depth !== parent.depth + 1) {
-      throw new Error(`Blueprint trace parent link changed in ${function_.functionName}.`);
-    }
-  }
-}
-
 function assertSameBuild(
   expected: RentalEvidenceArtifact,
   actual: BlueprintCallSitesArtifact | BlueprintCallerBodiesArtifact | BlueprintFunctionTraceArtifact,
@@ -436,114 +425,5 @@ function assertSameMappings(
     actual.mappings.formatVersion !== expected.mappings.formatVersion
   ) {
     throw new Error(`${label} does not use the rental-evidence mappings.`);
-  }
-}
-
-function findFunction(trace: BlueprintFunctionTraceArtifact, name: string) {
-  const matches = trace.functions.filter((function_) => function_.functionName === name);
-  if (matches.length !== 1) {
-    throw new Error(`Expected one Blueprint trace function ${name}, found ${matches.length}.`);
-  }
-  return matches[0]!;
-}
-
-function findCall(
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-  statementIndex: number,
-  functionName: string,
-  callKind: NonNullable<BlueprintTraceNodeInput["call"]>["callKind"],
-  argumentCount: number,
-): BlueprintTraceNodeInput {
-  const node = findNode(function_, statementIndex);
-  if (
-    node.call?.functionName !== functionName ||
-    node.call.callKind !== callKind ||
-    node.call.argumentCount !== argumentCount ||
-    node.kind !== "call"
-  ) {
-    throw new Error(`Blueprint trace call changed at statement ${statementIndex}.`);
-  }
-  return node;
-}
-
-function assertCall(
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-  statementIndex: number,
-  functionName: string,
-  callKind: NonNullable<BlueprintTraceNodeInput["call"]>["callKind"],
-  argumentCount: number,
-): void {
-  findCall(function_, statementIndex, functionName, callKind, argumentCount);
-}
-
-function assertJump(
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-  statementIndex: number,
-  jumpKind: NonNullable<BlueprintTraceNodeInput["jump"]>["jumpKind"],
-  targetEdge?: string,
-  targetOffset?: number,
-): BlueprintTraceNodeInput {
-  const node = findNode(function_, statementIndex);
-  const expectedTargets = targetEdge === undefined
-    ? []
-    : [{ edge: targetEdge, offset: targetOffset }];
-  if (
-    node.kind !== "branch" ||
-    node.jump?.jumpKind !== jumpKind ||
-    JSON.stringify(node.jump.targets) !== JSON.stringify(expectedTargets)
-  ) {
-    throw new Error(`Blueprint trace branch changed at statement ${statementIndex}.`);
-  }
-  return node;
-}
-
-function assertRootNode(
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-  statementIndex: number,
-  opcode: string,
-): void {
-  const node = findNode(function_, statementIndex);
-  if (node.parentNodeIndex !== null || node.opcode !== opcode) {
-    throw new Error(`Blueprint trace root operation changed at statement ${statementIndex}.`);
-  }
-}
-
-function findNode(
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-  statementIndex: number,
-): BlueprintTraceNodeInput {
-  const matches = function_.nodes.filter((node) => node.statementIndex === statementIndex);
-  if (matches.length !== 1) {
-    throw new Error(`Expected one Blueprint trace node at statement ${statementIndex}, found ${matches.length}.`);
-  }
-  return matches[0]!;
-}
-
-function assertSymbolChild(
-  parent: BlueprintTraceNodeInput,
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-  edge: string,
-  symbol: string,
-): void {
-  const child = function_.nodes.find(
-    (node) => node.parentNodeIndex === parent.nodeIndex && node.edge === edge,
-  );
-  if (child?.kind !== "variable" || child.symbol !== symbol) {
-    throw new Error(`Blueprint trace symbol changed for ${edge} at statement ${parent.statementIndex}.`);
-  }
-}
-
-function assertLiteralChild(
-  parent: BlueprintTraceNodeInput,
-  function_: BlueprintFunctionTraceArtifact["functions"][number],
-  edge: string,
-  literalType: NonNullable<BlueprintTraceNodeInput["literal"]>["literalType"],
-  value: string,
-): void {
-  const child = function_.nodes.find(
-    (node) => node.parentNodeIndex === parent.nodeIndex && node.edge === edge,
-  );
-  if (child?.literal?.literalType !== literalType || child.literal.value !== value) {
-    throw new Error(`Blueprint trace literal changed for ${edge} at statement ${parent.statementIndex}.`);
   }
 }

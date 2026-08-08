@@ -49,6 +49,17 @@ export interface BlueprintTraceNodeInput {
   } | null;
 }
 
+export interface BlueprintTraceFunctionInput {
+  readonly packagePath: string;
+  readonly className: string;
+  readonly classPath: string;
+  readonly functionName: string;
+  readonly functionPath: string;
+  readonly flags: string;
+  readonly bytecodeExpressionCount: number;
+  readonly nodes: readonly BlueprintTraceNodeInput[];
+}
+
 export interface BlueprintFunctionTraceArtifact {
   readonly artifactType: "blueprint-function-trace";
   readonly schemaVersion: 2;
@@ -81,14 +92,23 @@ export interface BlueprintFunctionTraceArtifact {
     readonly branchCount: number;
     readonly entrypointCount: number;
   };
-  readonly functions: readonly {
-    readonly packagePath: string;
-    readonly className: string;
-    readonly classPath: string;
-    readonly functionName: string;
-    readonly functionPath: string;
-    readonly flags: string;
-    readonly bytecodeExpressionCount: number;
-    readonly nodes: readonly BlueprintTraceNodeInput[];
-  }[];
+  readonly functions: readonly BlueprintTraceFunctionInput[];
+}
+
+export interface RentalFunctionTraceArtifact {
+  readonly artifactType: "rental-function-trace";
+  readonly schemaVersion: 1;
+  readonly build: RentalBuildReference;
+  readonly rentalBlueprintBodies: {
+    readonly fileName: string;
+    readonly sizeBytes: number;
+    readonly sha256: string;
+    readonly schemaVersion: 1;
+  };
+  readonly requestedFunctionPaths: readonly string[];
+  readonly mappings: RentalMappingIdentity;
+  readonly engine: BlueprintFunctionTraceArtifact["engine"];
+  readonly extractor: BlueprintFunctionTraceArtifact["extractor"];
+  readonly totals: BlueprintFunctionTraceArtifact["totals"];
+  readonly functions: readonly BlueprintTraceFunctionInput[];
 }

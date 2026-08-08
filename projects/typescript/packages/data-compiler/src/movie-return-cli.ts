@@ -11,7 +11,10 @@ import type {
   BlueprintCallerBodiesArtifact,
   BlueprintCallSitesArtifact,
 } from "./blueprint-caller-inputs.ts";
-import type { BlueprintFunctionTraceArtifact } from "./blueprint-trace-inputs.ts";
+import type {
+  BlueprintFunctionTraceArtifact,
+  RentalFunctionTraceArtifact,
+} from "./blueprint-trace-inputs.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import {
   compileMovieReturnMechanics,
@@ -38,6 +41,8 @@ interface MovieReturnOptions {
   readonly callerBodiesSchemaPath: string;
   readonly functionTracePath: string;
   readonly functionTraceSchemaPath: string;
+  readonly rentalFunctionTracePath: string;
+  readonly rentalFunctionTraceSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -62,6 +67,7 @@ export async function runMovieReturnMechanic(
       inputs.callSites.value as BlueprintCallSitesArtifact,
       inputs.callerBodies.value as BlueprintCallerBodiesArtifact,
       inputs.functionTrace.value as BlueprintFunctionTraceArtifact,
+      inputs.rentalFunctionTrace.value as RentalFunctionTraceArtifact,
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
@@ -87,7 +93,7 @@ export async function runMovieReturnMechanic(
 
 export function writeMovieReturnUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonrewind-data-compiler movie-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --call-sites <path> --call-sites-schema <schema> --caller-bodies <path> --caller-bodies-schema <schema> --function-trace <path> --function-trace-schema <schema> --output <path>\n",
+    "  neonrewind-data-compiler movie-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --call-sites <path> --call-sites-schema <schema> --caller-bodies <path> --caller-bodies-schema <schema> --function-trace <path> --function-trace-schema <schema> --rental-function-trace <path> --rental-function-trace-schema <schema> --output <path>\n",
   );
 }
 
@@ -101,14 +107,15 @@ async function readInputs(options: MovieReturnOptions) {
       value: parseJson(bytes, `${name} input`),
     };
   };
-  const [rental, bodies, callSites, callerBodies, functionTrace] = await Promise.all([
+  const [rental, bodies, callSites, callerBodies, functionTrace, rentalFunctionTrace] = await Promise.all([
     readInput(options.rentalEvidencePath, "Rental-evidence"),
     readInput(options.blueprintBodiesPath, "Rental Blueprint-body"),
     readInput(options.callSitesPath, "Blueprint call-site"),
     readInput(options.callerBodiesPath, "Blueprint caller-body"),
     readInput(options.functionTracePath, "Blueprint function trace"),
+    readInput(options.rentalFunctionTracePath, "Rental function trace"),
   ]);
-  return { rental, bodies, callSites, callerBodies, functionTrace };
+  return { rental, bodies, callSites, callerBodies, functionTrace, rentalFunctionTrace };
 }
 
 async function validateInputs(
@@ -121,6 +128,11 @@ async function validateInputs(
     [inputs.callSites, options.callSitesSchemaPath, "Blueprint call-site"],
     [inputs.callerBodies, options.callerBodiesSchemaPath, "Blueprint caller-body"],
     [inputs.functionTrace, options.functionTraceSchemaPath, "Blueprint function trace"],
+    [
+      inputs.rentalFunctionTrace,
+      options.rentalFunctionTraceSchemaPath,
+      "Rental function trace",
+    ],
   ] as const;
   for (const [input, schemaPath, label] of schemas) {
     const schema = parseJson(await readFile(schemaPath), `${label} schema`);
@@ -141,6 +153,11 @@ function createSources(
       inputs.functionTrace,
       "blueprint-function-trace",
       2,
+    ),
+    rentalFunctionTrace: createMovieIdentity(
+      inputs.rentalFunctionTrace,
+      "rental-function-trace",
+      1,
     ),
   };
 }
@@ -186,6 +203,8 @@ function parseOptions(arguments_: readonly string[]): MovieReturnOptions | strin
     "--caller-bodies-schema",
     "--function-trace",
     "--function-trace-schema",
+    "--rental-function-trace",
+    "--rental-function-trace-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -219,6 +238,8 @@ function parseOptions(arguments_: readonly string[]): MovieReturnOptions | strin
     callerBodiesSchemaPath: values.get("--caller-bodies-schema")!,
     functionTracePath: values.get("--function-trace")!,
     functionTraceSchemaPath: values.get("--function-trace-schema")!,
+    rentalFunctionTracePath: values.get("--rental-function-trace")!,
+    rentalFunctionTraceSchemaPath: values.get("--rental-function-trace-schema")!,
     outputPath: values.get("--output")!,
   };
 }

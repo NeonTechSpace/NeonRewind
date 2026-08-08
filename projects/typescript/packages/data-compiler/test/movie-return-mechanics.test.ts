@@ -12,6 +12,7 @@ import {
   createFunctionTrace,
   movieReturnSources,
 } from "./movie-return-fixtures.ts";
+import { createRentalFunctionTrace } from "./movie-rental-trace-fixture.ts";
 import {
   createBlueprintBodies,
   createRentalEvidence,
@@ -25,6 +26,7 @@ test("compiles movie readiness, weighted selection, and the confirmed customer f
     createCallSites(),
     createCallerBodies(),
     createFunctionTrace(),
+    createRentalFunctionTrace(),
     movieReturnSources,
   );
 
@@ -77,70 +79,67 @@ test("compiles movie readiness, weighted selection, and the confirmed customer f
       },
     },
   });
+  assert.deepEqual(mechanics.readiness.evidence, {
+    artifactType: "rental-function-trace",
+    classPath: rentalClassPath,
+    newDayFunction: "Weather - New Day Event",
+    readinessFunction: "Get Movie ready for return",
+    eventGraphFunction: "ExecuteUbergraph_RentSystem",
+    statementIndexes: {
+      newDayCall: 18,
+      newDayEntry: 1792,
+      movieReadinessCall: 1803,
+      consoleReadinessCall: 1817,
+      readinessCall: 0,
+      readinessEntry: 2592,
+      transfer: 1854,
+      clearSource: 1904,
+    },
+  });
   assert.deepEqual(mechanics.selection.evidence, {
-    artifactType: "rental-blueprint-bodies",
+    artifactType: "rental-function-trace",
     classPath: rentalClassPath,
     functionName: "Get Random List Of Cartridges From Rent List",
+    statementIndexes: {
+      limitLength: 40,
+      limitComparison: 69,
+      limitBranch: 93,
+      rentedLength: 190,
+      rentedMinimum: 219,
+      firstProbability: 290,
+      selectedLength: 367,
+      firstAttemptCondition: 396,
+      additionalProbability: 467,
+      weightedDecision: 543,
+      weightedFailure: 562,
+      candidateChoice: 598,
+      candidateValidity: 645,
+      missingCandidate: 669,
+      selectedChoice: 705,
+      addUnique: 782,
+      retry: 810,
+      resultLength: 855,
+      resultCondition: 884,
+      emptyResult: 908,
+    },
   });
 
   const schemaPath = new URL(
-    "../../core/schemas/movie-return-mechanics.v3.schema.json",
+    "../../core/schemas/movie-return-mechanics.v4.schema.json",
     import.meta.url,
   );
   const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
   validateJsonSchema(mechanics, schema, "Movie return mechanics");
 });
 
-test("rejects a changed new-day entrypoint", () => {
-  const bodies = createBlueprintBodies();
-  bodies.classes[0]!.pseudoCode = bodies.classes[0]!.pseudoCode.replace(
-    "ExecuteUbergraph_RentSystem(1792)",
-    "ExecuteUbergraph_RentSystem(1793)",
-  );
-
-  assert.throws(
-    () => compileCurrent({ bodies }),
-    /required static evidence/u,
-  );
-});
-
-test("rejects a changed readiness transfer", () => {
+test("does not parse rental Blueprint pseudocode", () => {
   const bodies = createBlueprintBodies();
   bodies.classes[0]!.pseudoCode = bodies.classes[0]!.pseudoCode.replace(
     "Array_Append(Cartridge Base out Ready to Return, Cartridge Base out for Rent)",
-    "Array_Append(Cartridge Base out for Rent, Cartridge Base out Ready to Return)",
+    "No readable readiness body remains.",
   );
 
-  assert.throws(
-    () => compileCurrent({ bodies }),
-    /required static evidence/u,
-  );
-});
-
-test("rejects a changed first-attempt override", () => {
-  const bodies = createBlueprintBodies();
-  bodies.classes[0]!.pseudoCode = bodies.classes[0]!.pseudoCode.replace(
-    "? 0.95 : CallFunc_SelectFloat_B_ImplicitCast_1",
-    "? 0.75 : CallFunc_SelectFloat_B_ImplicitCast_1",
-  );
-
-  assert.throws(
-    () => compileCurrent({ bodies }),
-    /required static evidence/u,
-  );
-});
-
-test("rejects selection that no longer adds unique candidates", () => {
-  const bodies = createBlueprintBodies();
-  bodies.classes[0]!.pseudoCode = bodies.classes[0]!.pseudoCode.replace(
-    "CallFunc_Array_AddUnique_ReturnValue = List of Cartridge to return.Add",
-    "CallFunc_Array_Add_ReturnValue = List of Cartridge to return.Add",
-  );
-
-  assert.throws(
-    () => compileCurrent({ bodies }),
-    /required static evidence/u,
-  );
+  assert.doesNotThrow(() => compileCurrent({ bodies }));
 });
 
 test("rejects an invalid configured probability", () => {
@@ -154,17 +153,6 @@ test("rejects an invalid configured probability", () => {
   assert.throws(
     () => compileCurrent({ evidence }),
     /number from zero to one/u,
-  );
-});
-
-test("rejects a caller added inside the covered rental artifact", () => {
-  const bodies = createBlueprintBodies();
-  bodies.classes[0]!.pseudoCode +=
-    "\n        Get Random List Of Cartridges From Rent List(found, items);";
-
-  assert.throws(
-    () => compileCurrent({ bodies }),
-    /caller coverage changed/u,
   );
 });
 
@@ -318,6 +306,7 @@ function compileCurrent(
     callSites?: ReturnType<typeof createCallSites>;
     callerBodies?: ReturnType<typeof createCallerBodies>;
     functionTrace?: ReturnType<typeof createFunctionTrace>;
+    rentalFunctionTrace?: ReturnType<typeof createRentalFunctionTrace>;
   } = {},
 ) {
   return compileMovieReturnMechanics(
@@ -326,6 +315,7 @@ function compileCurrent(
     overrides.callSites ?? createCallSites(),
     overrides.callerBodies ?? createCallerBodies(),
     overrides.functionTrace ?? createFunctionTrace(),
+    overrides.rentalFunctionTrace ?? createRentalFunctionTrace(),
     movieReturnSources,
   );
 }

@@ -22,9 +22,9 @@ export type {
 } from "./membership-fee-mechanics.ts";
 
 export type {
-  BlueprintCallerFunctionEvidence,
-  BlueprintEntrypointEvidence,
   BlueprintTraceEvidence,
   MovieReturnArtifactIdentity,
   MovieReturnMechanics,
+  RentalReadinessTraceEvidence,
+  RentalSelectionTraceEvidence,
 } from "./movie-return-mechanics.ts";
