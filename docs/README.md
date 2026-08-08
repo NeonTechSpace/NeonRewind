@@ -910,6 +910,7 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 - `projects/game-data-exporter/schemas/runtime` contains the runtime observation JSON Schemas.
 - `projects/game-data-exporter/schemas/validation` contains the validation-report JSON Schemas.
 - `projects/game-data-exporter/runtime-exporter` contains the offline runtime-host staging command and Lua compatibility probe source.
+- `projects/game-data-exporter/runtime-collector` contains the load-only UE4SS C++ collector and its local Windows build entry points.
 - [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the limits on its future collector.
 - `projects/typescript/packages/core` owns the normalized domain types and schemas.
 - `projects/typescript/packages/data-compiler` validates acquisition data and compiles private domain artifacts.
