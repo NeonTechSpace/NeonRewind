@@ -4,6 +4,22 @@ NeonRewind is an unofficial, open-source project for *Retro Rewind: Video Store 
 It currently reads data from an installed Steam copy of the game and converts the film tables into a consistent JSON catalog.
 The public guide, calculators, and website have not been built yet.
 
+## Data and distribution boundary
+
+The repository contains source code, JSON Schemas, normalization logic, and instructions.
+Users provide their own licensed game installation and run the acquisition commands locally.
+
+Do not commit or publish:
+
+- Compiled extractor binaries
+- Game binaries, package files, mappings, or saves
+- Build manifests or static censuses produced from a game installation
+- Structured values, rental evidence, or Blueprint pseudocode
+- Compiled film catalogs or extracted game text
+- Extracted or modified game assets
+
+The documented output directories are ignored by Git.
+
 ## What the current workflow does
 
 The commands form one pipeline, and each command uses the file produced by the previous command.
@@ -15,6 +31,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Structured index | `structured-asset-index.v1.json` | Locates DataTables and StringTables using a matching Unreal mapping |
 | Structured values | `structured-values.v1.json` | Extracts table rows and strings into deterministic JSON |
 | Rental evidence | `rental-evidence.v1.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
+| Rental Blueprint bodies | `rental-blueprint-bodies.v1.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -31,7 +48,10 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the film-catalog compiler.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, and rental-evidence steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, and rental-blueprint-bodies steps.
+
+The recommended setup uses portable tool archives extracted into ignored local directories.
+Follow [Portable local tool setup](docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
 
 The repository does not currently generate the `.usmap` mapping.
 If you do not already have a matching mapping, you can complete the probe, build-manifest, and static-census steps, then stop.
@@ -171,7 +191,7 @@ $mappings = "C:\path\to\the\matching-build.usmap"
 mappings="C:\path\to\the\matching-build.usmap"
 ```
 
-The next three acquisition commands cannot run reliably without this file.
+The next four acquisition commands cannot run reliably without this file.
 
 ## 5. Create the structured index
 
@@ -249,7 +269,33 @@ dotnet run --project "$extractor" -- rental-evidence \
 
 The output contains extracted game values and must remain in the ignored local acquisition directory.
 
-## 8. Compile the normalized film catalog
+## 8. Extract readable rental Blueprint bodies
+
+This step loads the cooked script bytecode for the four generated classes recorded in the rental-evidence artifact.
+It records each function's flags and bytecode-expression count, then uses CUE4Parse to produce deterministic pseudocode for review.
+The pseudocode is a decompiler interpretation and must be checked against the underlying function metadata before it becomes a mechanic fact.
+
+```powershell
+dotnet run --project $extractor -- rental-blueprint-bodies `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --rental-evidence (Join-Path $buildDirectory "rental-evidence.v1.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "rental-blueprint-bodies.v1.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- rental-blueprint-bodies \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --rental-evidence "$buildDirectory/rental-evidence.v1.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/rental-blueprint-bodies.v1.json"
+```
+
+The output contains extracted game logic and must remain in the ignored local acquisition directory.
+
+## 9. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.

@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonrewind:schema:acquisition:rental-blueprint-bodies:1",
+  "title": "NeonRewind rental Blueprint bodies",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "schemaVersion",
+    "build",
+    "rentalEvidence",
+    "mappings",
+    "engine",
+    "extractor",
+    "totals",
+    "classes"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "rental-blueprint-bodies"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "build": {
+      "$ref": "#/$defs/buildReference"
+    },
+    "rentalEvidence": {
+      "$ref": "#/$defs/inputIdentity"
+    },
+    "mappings": {
+      "$ref": "#/$defs/mappingIdentity"
+    },
+    "engine": {
+      "$ref": "#/$defs/engineIdentity"
+    },
+    "extractor": {
+      "$ref": "#/$defs/extractorIdentity"
+    },
+    "totals": {
+      "$ref": "#/$defs/totals"
+    },
+    "classes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/blueprintClass"
+      }
+    }
+  },
+  "$defs": {
+    "buildReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "properties": {
+        "manifestSha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "manifestSchemaVersion": {
+          "const": 1
+        },
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      }
+    },
+    "inputIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion"],
+      "properties": {
+        "fileName": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileName"
+            },
+            {
+              "pattern": "\\.json$"
+            }
+          ]
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "schemaVersion": {
+          "const": 1
+        }
+      }
+    },
+    "mappingIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "properties": {
+        "fileName": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileName"
+            },
+            {
+              "pattern": "\\.usmap$"
+            }
+          ]
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 16
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "formatVersion": {
+          "const": 4
+        }
+      }
+    },
+    "engineIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "properties": {
+        "version": {
+          "const": "5.4"
+        },
+        "cue4ParseProfile": {
+          "const": "GAME_UE5_4"
+        },
+        "source": {
+          "const": "configured"
+        },
+        "confidence": {
+          "const": "probable"
+        }
+      }
+    },
+    "extractorIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "cue4ParseVersion"],
+      "properties": {
+        "name": {
+          "const": "NeonRewind.StaticExtractor"
+        },
+        "version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "cue4ParseVersion": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packageCount",
+        "classCount",
+        "functionCount",
+        "bytecodeExpressionCount",
+        "pseudoCodeCharacterCount"
+      ],
+      "properties": {
+        "packageCount": {
+          "const": 4
+        },
+        "classCount": {
+          "const": 4
+        },
+        "functionCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bytecodeExpressionCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pseudoCodeCharacterCount": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "blueprintClass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packagePath", "name", "path", "functions", "pseudoCode"],
+      "properties": {
+        "packagePath": {
+          "enum": [
+            "RetroRewind/Content/VideoStore/core/ai/Task/BTTask_BringBackProductFromRent.uasset",
+            "RetroRewind/Content/VideoStore/core/ai/Task/BTTask_Checkout-Fees.uasset",
+            "RetroRewind/Content/VideoStore/core/ai/Task/BTTask_Checkout-Pay.uasset",
+            "RetroRewind/Content/VideoStore/core/blueprint/RentSystem/RentSystem.uasset"
+          ]
+        },
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "functions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/function"
+          }
+        },
+        "pseudoCode": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "function": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "flags", "bytecodeExpressionCount"],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "flags": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "bytecodeExpressionCount": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
