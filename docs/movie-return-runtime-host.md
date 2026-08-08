@@ -1,7 +1,7 @@
 # Movie-return runtime host
 
 This document records the runtime-host investigation for the first movie-return observation.
-The runtime probe and collector have not been implemented.
+The Lua compatibility probe source and offline staging command exist, but no runtime probe has been run and the observation collector has not been implemented.
 Nothing in this document authorizes copying files into a game installation.
 
 ## Investigation result
@@ -18,7 +18,7 @@ The proven proxy binary contains that override support.
 
 ## First implementation
 
-The first implementation is a source-only Lua compatibility probe named `NeonRewindMovieReturnProbe`.
+The first implementation is a source-only Lua compatibility probe named `NeonRewindMovieReturnProbe` under `projects/game-data-exporter/runtime-exporter/Probe`.
 It is not the runtime observation collector.
 Its output is a private diagnostic report and must not validate as `movie-return-observation.v1`.
 
@@ -43,9 +43,9 @@ The [UE4SS `RegisterHook` documentation](https://docs.ue4ss.com/dev/lua-api/glob
 That behavior can capture the post-state but cannot guarantee the exact pre-state at the same Blueprint boundary.
 A manual snapshot before a gameplay action could race with other game state changes and therefore cannot satisfy the evidence contract.
 
-The probe will first determine whether an already-known native `/Script/` function provides a reliable upstream boundary for the same transition.
-UE4SS provides separate pre-call and post-call callbacks for native UFunctions reached through reflection.
-If no suitable native boundary exists, the observation collector requires a narrow UE4SS C++ pre-call and post-call hook.
+The typed traces expose generic native array helpers, but those functions are shared across unrelated gameplay and do not provide a purpose-specific boundary.
+The compatibility probe does not hook those generic functions.
+If the probe confirms the required objects, fields, and Blueprint hook paths, the observation collector requires a narrow UE4SS C++ pre-call and post-call hook.
 UE4SS exposes a [C++ modding API](https://github.com/UE4SS-RE/RE-UE4SS) with pre-hook and post-hook support.
 
 The probe separates compatibility evidence from mechanic-validation evidence.
@@ -78,6 +78,7 @@ The game must be closed before staging or installation checks begin.
 The tooling must verify the exact supported executable and build identity.
 The tooling must refuse installation if `dwmapi.dll`, `override.txt`, or any proposed target already exists.
 The tooling must generate a manifest containing every proposed relative path, byte length, and SHA-256 hash.
+The offline `stage-probe` command writes that record using [`runtime-host-staging.v1.schema.json`](../projects/game-data-exporter/schemas/runtime/runtime-host-staging.v1.schema.json) without copying either proposed file.
 The person using the computer must see that manifest and explicitly approve the copy before any game-directory file is added.
 Installation is copy-only and must not replace an existing file.
 
@@ -95,6 +96,6 @@ Cleanup may remove only the two game-directory files whose paths and hashes matc
 
 ## Decision after the probe
 
-The Lua path is sufficient only if the diagnostic report proves all required fields, arrays, output behavior, and an exact pre-call and post-call boundary.
-If it proves the data paths but not the pre-call boundary, the next implementation is a purpose-specific C++ collector using the same observation schema and operating limits.
+The probe is successful only if the diagnostic report proves the required objects, fields, arrays, Blueprint hook paths, and private output behavior.
+A successful probe leads to a purpose-specific C++ collector using the same observation schema and operating limits because Lua cannot provide the exact Blueprint pre-call state.
 If required fields or hooks are unavailable, the collector design must stop and be revised from the diagnostic evidence.
