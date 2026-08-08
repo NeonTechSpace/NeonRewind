@@ -14,6 +14,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Static census | `static-census.v1.json` | Lists files, Unreal packages, and exported classes |
 | Structured index | `structured-asset-index.v1.json` | Locates DataTables and StringTables using a matching Unreal mapping |
 | Structured values | `structured-values.v1.json` | Extracts table rows and strings into deterministic JSON |
+| Rental evidence | `rental-evidence.v1.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -30,7 +31,7 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the film-catalog compiler.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index and structured-values steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, and rental-evidence steps.
 
 The repository does not currently generate the `.usmap` mapping.
 If you do not already have a matching mapping, you can complete the probe, build-manifest, and static-census steps, then stop.
@@ -170,7 +171,7 @@ $mappings = "C:\path\to\the\matching-build.usmap"
 mappings="C:\path\to\the\matching-build.usmap"
 ```
 
-The next two commands cannot run reliably without this file.
+The next three acquisition commands cannot run reliably without this file.
 
 ## 5. Create the structured index
 
@@ -222,7 +223,33 @@ dotnet run --project "$extractor" -- structured-values \
 
 The command verifies every input again after extraction and refuses to overwrite different output.
 
-## 7. Compile the normalized film catalog
+## 7. Extract the rental-system evidence
+
+This step reads six packages that define the rental manager, its two structs, and three related AI tasks.
+It records generated-class fields, function names, class-default values, struct defaults, and object references contained in those mapped defaults.
+The command stops if the exact package cluster is absent from the census.
+
+```powershell
+dotnet run --project $extractor -- rental-evidence `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.v1.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "rental-evidence.v1.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- rental-evidence \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.v1.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/rental-evidence.v1.json"
+```
+
+The output contains extracted game values and must remain in the ignored local acquisition directory.
+
+## 8. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
