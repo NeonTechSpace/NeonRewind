@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-powershell_script="$script_directory/Build-Collector.ps1"
+powershell_script="$script_directory/Bootstrap-PortableToolchain.ps1"
 
 if command -v pwsh >/dev/null 2>&1; then
     exec pwsh -NoProfile -File "$powershell_script" "$@"

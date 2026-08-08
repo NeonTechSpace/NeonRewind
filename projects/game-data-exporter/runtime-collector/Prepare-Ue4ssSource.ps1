@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$SourceDirectory = (Join-Path $PSScriptRoot ".local/RE-UE4SS-662df915")
+    [string]$SourceDirectory = (Join-Path $PSScriptRoot "../.local/runtime-collector/source/RE-UE4SS-662df915")
 )
 
 $ErrorActionPreference = "Stop"

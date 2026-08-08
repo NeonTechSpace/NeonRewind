@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "rustToolchain": "1.88.0",
+  "assets": {
+    "cmake": {
+      "file": "cmake-3.31.6-windows-x86_64.zip",
+      "url": "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-windows-x86_64.zip",
+      "sha256": "d163cd3ab4959b0a53fa8988f2ddbd2e6c501658201e6a154386bad9dbe4f836"
+    },
+    "ninja": {
+      "file": "ninja-win.zip",
+      "url": "https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-win.zip",
+      "sha256": "f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a"
+    },
+    "llvm": {
+      "file": "clang+llvm-19.1.7-x86_64-pc-windows-msvc.tar.xz",
+      "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/clang%2Bllvm-19.1.7-x86_64-pc-windows-msvc.tar.xz",
+      "sha256": "b4557b4f012161f56a2f5d9e877ab9635cafd7a08f7affe14829bd60c9d357f0"
+    },
+    "xwin": {
+      "file": "xwin-0.9.0-x86_64-pc-windows-msvc.tar.gz",
+      "url": "https://github.com/Jake-Shadle/xwin/releases/download/0.9.0/xwin-0.9.0-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "36a03b1bc21ead290eda3891b5ddfe3219eed45dd592329412248d143a26dda2"
+    },
+    "rustup": {
+      "file": "rustup-init-1.28.2-x86_64-pc-windows-msvc.exe",
+      "url": "https://static.rust-lang.org/rustup/archive/1.28.2/x86_64-pc-windows-msvc/rustup-init.exe",
+      "sha256": "88d8258dcf6ae4f7a80c7d1088e1f36fa7025a1cfd1343731b4ee6f385121fc0"
+    }
+  }
+}

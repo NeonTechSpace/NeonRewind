@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 script_directory="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-source_directory="${1:-$script_directory/.local/RE-UE4SS-662df915}"
+source_directory="${1:-$script_directory/../.local/runtime-collector/source/RE-UE4SS-662df915}"
 expected_commit="662df91503379fc383bc745f7ade795d7b2ca215"
 expected_unreal_commit="b2e876da82b17254c04304746341c8fde0ddb37c"
 expected_pattern_sleuth_commit="da8bfe4c5a464be0ef225c2c9a6ccaa2d9284018"
