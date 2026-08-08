@@ -52,6 +52,11 @@ internal static class Program
             return BlueprintCallerBodiesCommand.Run(blueprintCallerBodiesArguments);
         }
 
+        if (args is ["blueprint-function-trace", .. var blueprintFunctionTraceArguments])
+        {
+            return BlueprintFunctionTraceCommand.Run(blueprintFunctionTraceArguments);
+        }
+
         if (args is [var packageDirectory] &&
             !packageDirectory.StartsWith("-", StringComparison.Ordinal))
         {
@@ -75,6 +80,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-blueprint-bodies --build-manifest <path> --rental-evidence <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-call-sites --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --target-function <name> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-caller-bodies --build-manifest <path> --call-sites <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-function-trace --build-manifest <path> --caller-bodies <path> [--caller-bodies <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine();
         writer.WriteLine("The package probe scans one directory using the configured UE 5.4 profile.");
         writer.WriteLine("The manifest command writes versioned build identity without local paths or Steam account data.");
@@ -85,5 +91,6 @@ internal static class Program
         writer.WriteLine("The rental-blueprint-bodies command writes pseudocode and function metadata for the rental Blueprint classes.");
         writer.WriteLine("The blueprint-call-sites command scans parsed Blueprint bytecode for calls to one exact function name.");
         writer.WriteLine("The blueprint-caller-bodies command decompiles the exact caller functions recorded by a complete call-site artifact.");
+        writer.WriteLine("The blueprint-function-trace command rereads exact caller functions into typed Kismet nodes without parsing pseudocode.");
     }
 }

@@ -38,6 +38,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Customer event-graph body | `blueprint-caller-bodies.movie-customer-entry.v1.json` | Decompiles the event-graph function that invokes the movie-customer function |
 | AI client ubergraph call sites | `blueprint-call-sites.ai-client-ubergraph.v1.json` | Finds Blueprint wrappers that enter the AI client event graph |
 | AI client wrapper bodies | `blueprint-caller-bodies.ai-client-ubergraph.v1.json` | Decompiles those wrappers to recover their numeric event-graph entry points |
+| Blueprint function trace | `blueprint-function-trace.movie-customer.v1.json` | Converts the linked caller functions into typed Kismet nodes without parsing pseudocode |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Movie return mechanics | `movie-return-mechanics.v2.json` | Normalizes movie readiness, weighted selection, and the confirmed customer caller flow |
@@ -57,7 +58,7 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, rental-blueprint-bodies, blueprint-call-sites, and blueprint-caller-bodies steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, and blueprint-function-trace steps.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
 Follow [Portable local tool setup](docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
@@ -461,7 +462,37 @@ dotnet run --project "$extractor" -- blueprint-caller-bodies \
 
 The output contains game-specific wrapper pseudocode and must remain in the ignored local acquisition directory.
 
-## 15. Compile the console-return mechanics
+## 15. Create the typed Blueprint function trace
+
+This step rereads the exact functions in the three caller-body artifacts from cooked Kismet bytecode.
+It writes typed nodes for calls, call arguments, branches, jumps, assignments, variables, literals, contexts, and returns.
+Each input file is recorded by hash, and the command confirms that its functions and target calls still match the game package.
+
+```powershell
+dotnet run --project $extractor -- blueprint-function-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.ai-client-ubergraph.v1.json") `
+  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-customer-entry.v1.json") `
+  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.v1.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-function-trace.movie-customer.v1.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-function-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --caller-bodies "$buildDirectory/blueprint-caller-bodies.ai-client-ubergraph.v1.json" \
+  --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-customer-entry.v1.json" \
+  --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-return.v1.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-function-trace.movie-customer.v1.json"
+```
+
+The output contains game-specific bytecode structure and must remain in the ignored local acquisition directory.
+
+## 16. Compile the console-return mechanics
 
 This step validates both rental artifacts and confirms the expected class, fields, defaults, functions, and decompiled expressions before writing normalized facts.
 The artifact records the configured rental duration, the eligibility comparison, the missing-weather result, and movement from the rented queue to the ready-to-return queue.
@@ -512,7 +543,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 16. Compile the membership-fee mechanics
+## 17. Compile the membership-fee mechanics
 
 This step uses the same two private rental artifacts as the console-return compiler.
 It confirms the membership fee map, the five-field fee record, both mutation functions, and their decompiled expressions.
@@ -564,7 +595,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 17. Compile the movie-return mechanics
+## 18. Compile the movie-return mechanics
 
 This step uses the two private rental artifacts, the complete movie-selector call-site artifact, and the extracted caller-body artifact.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
@@ -625,7 +656,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 18. Compile the normalized film catalog
+## 19. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.

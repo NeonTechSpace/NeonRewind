@@ -124,7 +124,7 @@ internal static class BlueprintCallScanner
         }
     }
 
-    private static bool TryReadCall(
+    internal static bool TryReadCall(
         KismetExpression expression,
         out string calledFunctionName,
         out string callKind)
