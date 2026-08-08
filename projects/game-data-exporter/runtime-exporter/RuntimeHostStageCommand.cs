@@ -10,13 +10,6 @@ internal static class RuntimeHostStageCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int PreconditionExitCode = 3;
     private const int ConflictExitCode = 4;
-    private const string SupportedAppId = "3552140";
-    private const string Ue4ssVersion = "3.0.1-1018-g662df915";
-    private const string Ue4ssArchiveSha256 = "caa0f9a6c2ca372c2be5042668b2e86d1cc3bf45fa069a689552314d97f9ee9e";
-    private const string ProbeName = "NeonRetroRewindMovieReturnProbe";
-    private const string ProbeVersion = "0.0.1";
-    private const string ProbeScriptSha256 = "f36bdeb8af55d5fb61664da5fd6aaa0f85c7ef3b47bf5e1c7485e47d89965d15";
-    private const string DiagnosticRelativePath = "diagnostics/movie-return-compatibility-probe.v1.json";
     private static readonly UTF8Encoding Utf8WithoutBom = new(false);
     private static readonly JsonSerializerOptions InputJsonOptions = new()
     {
@@ -72,7 +65,7 @@ internal static class RuntimeHostStageCommand
         ValidateExecutableIdentity(buildManifest, executableIdentity);
 
         var archiveIdentity = FileIdentityFactory.Create(archivePath);
-        if (!string.Equals(archiveIdentity.Sha256, Ue4ssArchiveSha256, StringComparison.Ordinal))
+        if (!string.Equals(archiveIdentity.Sha256, RuntimeHostContract.Ue4ssArchiveSha256, StringComparison.Ordinal))
         {
             throw new InvalidDataException("UE4SS archive SHA-256 does not match the supported runtime host.");
         }
@@ -83,7 +76,7 @@ internal static class RuntimeHostStageCommand
         }
 
         var probeIdentity = FileIdentityFactory.Create(probeScriptPath);
-        if (!string.Equals(probeIdentity.Sha256, ProbeScriptSha256, StringComparison.Ordinal))
+        if (!string.Equals(probeIdentity.Sha256, RuntimeHostContract.ProbeScriptSha256, StringComparison.Ordinal))
         {
             throw new InvalidDataException("Probe script SHA-256 does not match the runtime exporter version.");
         }
@@ -152,7 +145,7 @@ internal static class RuntimeHostStageCommand
 
         var installDirectory = Path.Combine(temporaryPath, "install");
         var modsDirectory = Path.Combine(temporaryPath, "mods");
-        var probeDirectory = Path.Combine(modsDirectory, ProbeName, "Scripts");
+        var probeDirectory = Path.Combine(modsDirectory, RuntimeHostContract.ProbeName, "Scripts");
         var diagnosticsDirectory = Path.Combine(temporaryPath, "diagnostics");
         Directory.CreateDirectory(installDirectory);
         Directory.CreateDirectory(probeDirectory);
@@ -166,14 +159,16 @@ internal static class RuntimeHostStageCommand
 
         var finalModsDirectory = Path.Combine(finalOutputPath, "mods");
         var finalModsListPath = Path.Combine(finalOutputPath, "mods.txt");
-        var finalDiagnosticPath = Path.Combine(finalOutputPath, DiagnosticRelativePath.Replace('/', Path.DirectorySeparatorChar));
+        var finalDiagnosticPath = Path.Combine(
+            finalOutputPath,
+            RuntimeHostContract.DiagnosticRelativePath.Replace('/', Path.DirectorySeparatorChar));
         var finalUe4ssDllPath = Path.Combine(finalOutputPath, "ue4ss", "UE4SS.dll");
 
         File.WriteAllText(
             Path.Combine(probeDirectory, "config.lua"),
             CreateProbeConfig(buildManifest, finalDiagnosticPath),
             Utf8WithoutBom);
-        File.WriteAllText(Path.Combine(temporaryPath, "mods.txt"), $"{ProbeName} : 1\n", Utf8WithoutBom);
+        File.WriteAllText(Path.Combine(temporaryPath, "mods.txt"), $"{RuntimeHostContract.ProbeName} : 1\n", Utf8WithoutBom);
         IniSettingsEditor.ConfigureForProbe(settingsPath, finalModsDirectory, finalModsListPath);
 
         var overridePath = Path.Combine(installDirectory, "override.txt");
@@ -193,18 +188,18 @@ internal static class RuntimeHostStageCommand
                 buildManifest.Steam.BuildId,
                 manifestIdentity,
                 executableIdentity),
-            new RuntimeHostIdentity("UE4SS", Ue4ssVersion, archiveIdentity),
+            new RuntimeHostIdentity("UE4SS", RuntimeHostContract.Ue4ssVersion, archiveIdentity),
             new ProbeIdentity(
-                ProbeName,
-                ProbeVersion,
+                RuntimeHostContract.ProbeName,
+                RuntimeHostContract.ProbeVersion,
                 probeIdentity,
-                DiagnosticRelativePath),
+                RuntimeHostContract.DiagnosticRelativePath),
             new GameDirectoryIdentity(gameDirectory),
             proposedFiles);
 
         var manifestJson = JsonSerializer.Serialize(stagingManifest, OutputJsonOptions)
             .Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
-        File.WriteAllText(Path.Combine(temporaryPath, "runtime-host-staging.v1.json"), manifestJson, Utf8WithoutBom);
+        File.WriteAllText(Path.Combine(temporaryPath, RuntimeHostContract.StagingManifestFileName), manifestJson, Utf8WithoutBom);
     }
 
     private static BuildManifestInput ReadAndValidateBuildManifest(string path)
@@ -217,7 +212,7 @@ internal static class RuntimeHostStageCommand
             manifest.Steam is null ||
             manifest.Executable is null ||
             manifest.Engine is null ||
-            manifest.Steam.AppId != SupportedAppId ||
+            manifest.Steam.AppId != RuntimeHostContract.SupportedAppId ||
             string.IsNullOrWhiteSpace(manifest.Steam.BuildId) ||
             manifest.Steam.BuildId.Any(character => character is < '0' or > '9') ||
             manifest.Engine.Version != "5.4")
@@ -327,8 +322,8 @@ internal static class RuntimeHostStageCommand
         "return {\n" +
         $"    steam_app_id = {ToLuaString(manifest.Steam.AppId)},\n" +
         $"    steam_build_id = {ToLuaString(manifest.Steam.BuildId)},\n" +
-        $"    probe_name = {ToLuaString(ProbeName)},\n" +
-        $"    probe_version = {ToLuaString(ProbeVersion)},\n" +
+        $"    probe_name = {ToLuaString(RuntimeHostContract.ProbeName)},\n" +
+        $"    probe_version = {ToLuaString(RuntimeHostContract.ProbeVersion)},\n" +
         $"    output_path = {ToLuaString(ToPortablePath(diagnosticPath))},\n" +
         "}\n";
 
@@ -417,5 +412,4 @@ internal static class RuntimeHostStageCommand
         }
     }
 
-    private sealed class RuntimeHostConflictException(string message) : IOException(message);
 }

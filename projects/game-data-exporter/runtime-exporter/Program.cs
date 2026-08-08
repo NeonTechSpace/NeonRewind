@@ -17,7 +17,17 @@ internal static class Program
             return RuntimeHostStageCommand.Run(stageArguments);
         }
 
-        Console.Error.WriteLine("Expected the stage-probe command.");
+        if (args is ["install-probe", .. var installArguments])
+        {
+            return RuntimeHostInstallCommand.Run(installArguments);
+        }
+
+        if (args is ["cleanup-probe", .. var cleanupArguments])
+        {
+            return RuntimeHostCleanupCommand.Run(cleanupArguments);
+        }
+
+        Console.Error.WriteLine("Expected the stage-probe, install-probe, or cleanup-probe command.");
         WriteUsage(Console.Error);
         return InvalidArgumentsExitCode;
     }
@@ -26,8 +36,10 @@ internal static class Program
     {
         writer.WriteLine("Usage:");
         writer.WriteLine("  NeonRetroRewind.RuntimeExporter stage-probe --ue4ss-archive <path> --build-manifest <path> --game-executable <path> --probe-script <path> --output <new-directory>");
+        writer.WriteLine("  NeonRetroRewind.RuntimeExporter install-probe --staging-manifest <path> [--approve-staging-sha256 <sha256>]");
+        writer.WriteLine("  NeonRetroRewind.RuntimeExporter cleanup-probe --installation-manifest <path> [--approve-installation-sha256 <sha256>]");
         writer.WriteLine();
-        writer.WriteLine("The command verifies the supported build and UE4SS archive, then creates an ignored local staging directory.");
-        writer.WriteLine("It does not copy files into the game directory, launch programs, change Steam, or send input.");
+        writer.WriteLine("Run install-probe or cleanup-probe without an approval hash to preview the exact file list.");
+        writer.WriteLine("The commands never launch programs, change Steam, move focus, or send input.");
     }
 }

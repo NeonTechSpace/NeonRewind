@@ -801,7 +801,86 @@ dotnet run --project "$runtimeExporter" -- stage-probe \
 
 Review `runtime-host-staging.v1.json` in the new staging directory.
 It identifies the private inputs and lists the exact size and SHA-256 hash of the proposed `dwmapi.dll` and `override.txt` files.
-The repository does not yet contain installation or cleanup commands, so stop after reviewing the manifest.
+
+Preview installation while the game is closed.
+
+```powershell
+$stagingManifest = Join-Path $runtimeStage "runtime-host-staging.v1.json"
+
+dotnet run --project $runtimeExporter -- install-probe `
+  --staging-manifest $stagingManifest
+```
+
+```bash
+stagingManifest="$runtimeStage/runtime-host-staging.v1.json"
+
+dotnet run --project "$runtimeExporter" -- install-probe \
+  --staging-manifest "$stagingManifest"
+```
+
+The preview prints both source and destination paths, byte lengths, file hashes, and the staging-manifest hash.
+It exits with code `5` because approval was not supplied, and it does not copy either file.
+
+Review the output, copy the displayed staging-manifest hash into `$approvedStagingSha256`, and rerun only when you approve that exact list.
+
+```powershell
+$approvedStagingSha256 = "paste-the-reviewed-staging-manifest-sha256"
+
+dotnet run --project $runtimeExporter -- install-probe `
+  --staging-manifest $stagingManifest `
+  --approve-staging-sha256 $approvedStagingSha256
+```
+
+```bash
+approvedStagingSha256="paste-the-reviewed-staging-manifest-sha256"
+
+dotnet run --project "$runtimeExporter" -- install-probe \
+  --staging-manifest "$stagingManifest" \
+  --approve-staging-sha256 "$approvedStagingSha256"
+```
+
+The approved command creates `runtime-host-installation.v1.json` in the staging directory before copying the two files.
+It refuses existing targets unless it is resuming the same manifest after an interrupted installation.
+The tooling does not launch the game or Steam.
+
+After using the probe, close the game before previewing cleanup.
+
+```powershell
+$installationManifest = Join-Path $runtimeStage "runtime-host-installation.v1.json"
+
+dotnet run --project $runtimeExporter -- cleanup-probe `
+  --installation-manifest $installationManifest
+```
+
+```bash
+installationManifest="$runtimeStage/runtime-host-installation.v1.json"
+
+dotnet run --project "$runtimeExporter" -- cleanup-probe \
+  --installation-manifest "$installationManifest"
+```
+
+The cleanup preview recalculates both installed file hashes and exits with code `5` without removing anything.
+Review the exact removal list, copy the displayed installation-manifest hash into `$approvedInstallationSha256`, and rerun only when you approve that exact list.
+
+```powershell
+$approvedInstallationSha256 = "paste-the-reviewed-installation-manifest-sha256"
+
+dotnet run --project $runtimeExporter -- cleanup-probe `
+  --installation-manifest $installationManifest `
+  --approve-installation-sha256 $approvedInstallationSha256
+```
+
+```bash
+approvedInstallationSha256="paste-the-reviewed-installation-manifest-sha256"
+
+dotnet run --project "$runtimeExporter" -- cleanup-probe \
+  --installation-manifest "$installationManifest" \
+  --approve-installation-sha256 "$approvedInstallationSha256"
+```
+
+Cleanup removes `dwmapi.dll` first and then removes `override.txt`.
+It stops before removal if the game is running, either file is missing, or either path or hash differs from the installation manifest.
+The ignored installation manifest remains as the local record of the approved copy.
 
 ## Common problems
 
