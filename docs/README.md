@@ -753,6 +753,56 @@ popd >/dev/null
 The compiler creates missing output directories, accepts identical existing output, and refuses to overwrite different content.
 The film catalog still contains extracted game text and remains private and uncommitted.
 
+## Prepare the runtime compatibility probe
+
+This command verifies the game executable against the supplied private build manifest and checks the exact UE4SS archive before creating an ignored local staging directory.
+It checks that the game is closed and that neither proposed game-directory file already exists.
+It does not copy anything into the game directory.
+
+Set the paths to the private inputs and choose a new staging directory.
+
+```powershell
+$runtimeExporter = "projects/game-data-exporter/runtime-exporter/NeonRetroRewind.RuntimeExporter.csproj"
+$ue4ssArchive = "C:\path\to\zDEV-UE4SS_v3.0.1-1018-g662df915.zip"
+$probeScript = "projects/game-data-exporter/runtime-exporter/Probe/NeonRetroRewindMovieReturnProbe/Scripts/main.lua"
+$runtimeStage = "projects/game-data-exporter/.local/runtime-host/current/probe-v1"
+
+New-Item -ItemType Directory -Force -Path (Split-Path $runtimeStage) | Out-Null
+```
+
+```bash
+runtimeExporter="projects/game-data-exporter/runtime-exporter/NeonRetroRewind.RuntimeExporter.csproj"
+ue4ssArchive="C:\path\to\zDEV-UE4SS_v3.0.1-1018-g662df915.zip"
+probeScript="projects/game-data-exporter/runtime-exporter/Probe/NeonRetroRewindMovieReturnProbe/Scripts/main.lua"
+runtimeStage="projects/game-data-exporter/.local/runtime-host/current/probe-v1"
+
+mkdir -p "$(dirname "$runtimeStage")"
+```
+
+Run the staging command while the game is closed.
+
+```powershell
+dotnet run --project $runtimeExporter -- stage-probe `
+  --ue4ss-archive $ue4ssArchive `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --game-executable $executable `
+  --probe-script $probeScript `
+  --output $runtimeStage
+```
+
+```bash
+dotnet run --project "$runtimeExporter" -- stage-probe \
+  --ue4ss-archive "$ue4ssArchive" \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --game-executable "$executable" \
+  --probe-script "$probeScript" \
+  --output "$runtimeStage"
+```
+
+Review `runtime-host-staging.v1.json` in the new staging directory.
+It identifies the private inputs and lists the exact size and SHA-256 hash of the proposed `dwmapi.dll` and `override.txt` files.
+The repository does not yet contain installation or cleanup commands, so stop after reviewing the manifest.
+
 ## Common problems
 
 ### A command says that a file does not exist
@@ -780,7 +830,7 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 - `projects/game-data-exporter/schemas/acquisition` contains the acquisition JSON Schemas.
 - `projects/game-data-exporter/schemas/runtime` contains the runtime observation JSON Schemas.
 - `projects/game-data-exporter/schemas/validation` contains the validation-report JSON Schemas.
-- `projects/game-data-exporter/runtime-exporter` is an empty scaffold.
+- `projects/game-data-exporter/runtime-exporter` contains the offline runtime-host staging command and Lua compatibility probe source.
 - [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the limits on its future collector.
 - `projects/typescript/packages/core` owns the normalized domain types and schemas.
 - `projects/typescript/packages/data-compiler` validates acquisition data and compiles private domain artifacts.

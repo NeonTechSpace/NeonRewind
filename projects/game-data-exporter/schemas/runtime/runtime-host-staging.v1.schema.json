@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonretrorewind:schema:runtime:runtime-host-staging:1",
+  "title": "NeonRetroRewind runtime-host staging manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "schemaVersion",
+    "build",
+    "runtimeHost",
+    "probe",
+    "gameDirectory",
+    "proposedFiles"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "runtime-host-staging"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "build": {
+      "$ref": "#/$defs/build"
+    },
+    "runtimeHost": {
+      "$ref": "#/$defs/runtimeHost"
+    },
+    "probe": {
+      "$ref": "#/$defs/probe"
+    },
+    "gameDirectory": {
+      "$ref": "#/$defs/gameDirectory"
+    },
+    "proposedFiles": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/proposedFile"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "relativePath": {
+                  "const": "dwmapi.dll"
+                },
+                "sourceRelativePath": {
+                  "const": "install/dwmapi.dll"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/proposedFile"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "relativePath": {
+                  "const": "override.txt"
+                },
+                "sourceRelativePath": {
+                  "const": "install/override.txt"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "fileIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sizeBytes", "sha256"],
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/\\\\]+$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steamAppId", "steamBuildId", "buildManifest", "executable"],
+      "properties": {
+        "steamAppId": {
+          "const": "3552140"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "buildManifest": {
+          "$ref": "#/$defs/fileIdentity"
+        },
+        "executable": {
+          "$ref": "#/$defs/fileIdentity"
+        }
+      }
+    },
+    "runtimeHost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "archive"],
+      "properties": {
+        "name": {
+          "const": "UE4SS"
+        },
+        "version": {
+          "const": "3.0.1-1018-g662df915"
+        },
+        "archive": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileIdentity"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "sha256": {
+                  "const": "caa0f9a6c2ca372c2be5042668b2e86d1cc3bf45fa069a689552314d97f9ee9e"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "source", "diagnosticRelativePath"],
+      "properties": {
+        "name": {
+          "const": "NeonRetroRewindMovieReturnProbe"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "source": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileIdentity"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "fileName": {
+                  "const": "main.lua"
+                },
+                "sizeBytes": {
+                  "const": 13019
+                },
+                "sha256": {
+                  "const": "f36bdeb8af55d5fb61664da5fd6aaa0f85c7ef3b47bf5e1c7485e47d89965d15"
+                }
+              }
+            }
+          ]
+        },
+        "diagnosticRelativePath": {
+          "const": "diagnostics/movie-return-compatibility-probe.v1.json"
+        }
+      }
+    },
+    "gameDirectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["absolutePath"],
+      "properties": {
+        "absolutePath": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "proposedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relativePath", "sourceRelativePath", "sizeBytes", "sha256"],
+      "properties": {
+        "relativePath": {
+          "enum": ["dwmapi.dll", "override.txt"]
+        },
+        "sourceRelativePath": {
+          "enum": ["install/dwmapi.dll", "install/override.txt"]
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}
