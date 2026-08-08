@@ -20,3 +20,8 @@ export type {
   MembershipFeeMechanics,
   StructFieldEvidence,
 } from "./membership-fee-mechanics.ts";
+
+export type {
+  BlueprintEntrypointEvidence,
+  MovieReturnMechanics,
+} from "./movie-return-mechanics.ts";

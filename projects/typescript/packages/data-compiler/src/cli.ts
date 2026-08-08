@@ -11,6 +11,7 @@ import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import { compileMembershipFeeMechanics } from "./membership-fee-mechanics.ts";
+import { compileMovieReturnMechanics } from "./movie-return-mechanics.ts";
 import { validateJsonSchema } from "./schema-validation.ts";
 import type {
   RentalBlueprintBodiesArtifact,
@@ -76,9 +77,19 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "movie-return-mechanics") {
+    await runRentalMechanic(arguments_.slice(1), {
+      name: "movie-return-mechanics",
+      outputLabel: "Movie return mechanics",
+      failureLabel: "Movie-return-mechanics compilation",
+      compile: compileMovieReturnMechanics,
+    });
+    return;
+  }
+
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, or membership-fee-mechanics command.",
+      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, or movie-return-mechanics command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -346,5 +357,8 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   );
   stream.write(
     "  neonretrorewind-data-compiler membership-fee-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
+  );
+  stream.write(
+    "  neonretrorewind-data-compiler movie-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
   );
 }
