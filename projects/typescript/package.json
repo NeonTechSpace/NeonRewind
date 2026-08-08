@@ -5,6 +5,7 @@
   "scripts": {
     "build": "pnpm --recursive --if-present build",
     "check": "pnpm --recursive --if-present check",
+    "film-catalog": "node packages/data-compiler/src/cli.ts film-catalog",
     "test": "pnpm --recursive --if-present test"
   },
   "devEngines": {
@@ -19,5 +20,8 @@
       "onFail": "download"
     }
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2"
+  }
 }

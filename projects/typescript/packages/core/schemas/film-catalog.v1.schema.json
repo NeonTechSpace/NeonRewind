@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonretrorewind:schema:domain:film-catalog:1",
+  "title": "NeonRetroRewind film catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "schemaVersion",
+    "build",
+    "source",
+    "totals",
+    "films"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "film-catalog"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steamAppId", "steamBuildId"],
+      "properties": {
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      }
+    },
+    "source": {
+      "$ref": "#/$defs/sourceIdentity"
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceFilmTableCount",
+        "catalogTableCount",
+        "excludedTableCount",
+        "genreCount",
+        "filmCount"
+      ],
+      "properties": {
+        "sourceFilmTableCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "catalogTableCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excludedTableCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "genreCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "filmCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "films": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/film"
+      }
+    }
+  },
+  "$defs": {
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fileName",
+        "sha256",
+        "sizeBytes",
+        "artifactType",
+        "schemaVersion"
+      ],
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "artifactType": {
+          "const": "structured-values"
+        },
+        "schemaVersion": {
+          "const": 1
+        }
+      }
+    },
+    "film": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sku",
+        "genre",
+        "productName",
+        "subjectName",
+        "backgroundImage",
+        "subjectImage",
+        "colorPalette",
+        "layoutStyle",
+        "layoutStyleColor",
+        "subjectPlacement",
+        "newToUnlock",
+        "evidence"
+      ],
+      "properties": {
+        "sku": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "genre": {
+          "enum": [
+            "action",
+            "adult",
+            "adventure",
+            "comedy",
+            "drama",
+            "fantasy",
+            "horror",
+            "kid",
+            "police",
+            "romance",
+            "sci-fi",
+            "western",
+            "xmas"
+          ]
+        },
+        "productName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backgroundImage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectImage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "colorPalette": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layoutStyle": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "layoutStyleColor": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "subjectPlacement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "newToUnlock": {
+          "type": "boolean"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "tablePath", "rowKey"],
+      "properties": {
+        "kind": {
+          "const": "data-table"
+        },
+        "tablePath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rowKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
