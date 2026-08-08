@@ -109,6 +109,48 @@ A runtime mismatch must be retained as evidence and must not be rewritten to mat
 The `@neonretrorewind/validator` package checks event ordering, time bounds, queue transfer, selector membership, and customer inventory and queue transitions after schema validation.
 It returns `passed`, `incomplete`, or `mismatch` with bounded issue codes and does not write or alter the observation.
 
+## Validate a completed observation
+
+The offline command is ready, but it needs an observation produced by the future runtime collector.
+Run it from `projects/typescript` after replacing the build and run IDs with the private observation directory names.
+
+```powershell
+$buildId = "replace-with-Steam-build-ID"
+$runId = "replace-with-UTC-run-ID"
+$observation = "../game-data-exporter/.local/runtime/$buildId/$runId/movie-return-observation.v1.json"
+$mechanics = ".local/domain/current/movie-return-mechanics.v4.json"
+$report = ".local/validation/$buildId/$runId/movie-return-validation.v1.json"
+
+pnpm movie-return-validation `
+  --observation $observation `
+  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json" `
+  --mechanics $mechanics `
+  --mechanics-schema "packages/core/schemas/movie-return-mechanics.v4.schema.json" `
+  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.v1.schema.json" `
+  --output $report
+```
+
+```bash
+buildId="replace-with-Steam-build-ID"
+runId="replace-with-UTC-run-ID"
+observation="../game-data-exporter/.local/runtime/$buildId/$runId/movie-return-observation.v1.json"
+mechanics=".local/domain/current/movie-return-mechanics.v4.json"
+report=".local/validation/$buildId/$runId/movie-return-validation.v1.json"
+
+pnpm movie-return-validation \
+  --observation "$observation" \
+  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json" \
+  --mechanics "$mechanics" \
+  --mechanics-schema "packages/core/schemas/movie-return-mechanics.v4.schema.json" \
+  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.v1.schema.json" \
+  --output "$report"
+```
+
+The command validates both private inputs, verifies the mechanics filename, byte length, SHA-256 hash, schema version, and game build recorded by the observation, then rechecks every input before writing.
+The report is deterministic and is created only when the output path is absent or already contains identical bytes.
+An `incomplete` or `mismatch` report is written and returns exit code `8` so automated checks do not treat it as passed.
+Different existing output is retained and returns exit code `7`.
+
 ## Evidence effect
 
 A passing run supports only the deterministic claims exercised by that run and its exact game build.
