@@ -162,7 +162,7 @@ internal static class RuntimeHostStageCommand
         var finalDiagnosticPath = Path.Combine(
             finalOutputPath,
             RuntimeHostContract.DiagnosticRelativePath.Replace('/', Path.DirectorySeparatorChar));
-        var finalUe4ssDllPath = Path.Combine(finalOutputPath, "ue4ss", "UE4SS.dll");
+        var finalUe4ssDirectory = Path.Combine(finalOutputPath, "ue4ss");
 
         File.WriteAllText(
             Path.Combine(probeDirectory, "config.lua"),
@@ -172,7 +172,7 @@ internal static class RuntimeHostStageCommand
         IniSettingsEditor.ConfigureForProbe(settingsPath, finalModsDirectory, finalModsListPath);
 
         var overridePath = Path.Combine(installDirectory, "override.txt");
-        File.WriteAllText(overridePath, ToPortablePath(finalUe4ssDllPath) + "\n", Utf8WithoutBom);
+        File.WriteAllText(overridePath, ToPortablePath(finalUe4ssDirectory) + "\n", Utf8WithoutBom);
 
         var proposedFiles = new[]
         {
