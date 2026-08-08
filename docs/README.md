@@ -1,7 +1,7 @@
 # NeonRetroRewind
 
 NeonRetroRewind is an unofficial, open-source project for *Retro Rewind: Video Store Simulator*.
-It currently reads data from an installed Steam copy of the game, converts the film tables into a consistent JSON catalog, and compiles the first console-return mechanic facts.
+It currently reads data from an installed Steam copy of the game, converts the film tables into a consistent JSON catalog, and compiles the first rental mechanic facts.
 The public guide, calculators, and website have not been built yet.
 
 ## Data and distribution boundary
@@ -33,6 +33,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Rental evidence | `rental-evidence.v1.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
 | Rental Blueprint bodies | `rental-blueprint-bodies.v1.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
+| Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRetroRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -347,7 +348,59 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 10. Compile the normalized film catalog
+## 10. Compile the membership-fee mechanics
+
+This step uses the same two private rental artifacts as the console-return compiler.
+It confirms the membership fee map, the five-field fee record, both mutation functions, and their decompiled expressions.
+The result records how membership ID zero is handled, which fee counters accumulate, which counters are cleared, and how a fee record is removed.
+Each fact points back to its source class field, struct field, or function.
+The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
+
+Move into the TypeScript workspace if you are not already there.
+
+```powershell
+Push-Location projects/typescript
+pnpm install --frozen-lockfile
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm install --frozen-lockfile
+```
+
+Compile the private mechanic artifact.
+
+```powershell
+pnpm membership-fee-mechanics `
+  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" `
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" `
+  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" `
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" `
+  --output ".local/domain/current/membership-fee-mechanics.v1.json"
+```
+
+```bash
+pnpm membership-fee-mechanics \
+  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" \
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" \
+  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" \
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" \
+  --output ".local/domain/current/membership-fee-mechanics.v1.json"
+```
+
+Return to the repository root when the command finishes.
+
+```powershell
+Pop-Location
+```
+
+```bash
+popd >/dev/null
+```
+
+The output contains normalized game rules and remains private and uncommitted.
+
+## 11. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
