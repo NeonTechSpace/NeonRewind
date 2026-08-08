@@ -33,6 +33,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Rental evidence | `rental-evidence.v1.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
 | Rental Blueprint bodies | `rental-blueprint-bodies.v1.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Blueprint call sites | `blueprint-call-sites.movie-return.v1.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
+| Blueprint caller bodies | `blueprint-caller-bodies.movie-return.v1.json` | Decompiles the exact functions found by the movie-return call-site scan |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Movie return mechanics | `movie-return-mechanics.v1.json` | Separates new-day movie readiness from weighted return selection and records caller coverage |
@@ -52,7 +53,7 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, rental-blueprint-bodies, and blueprint-call-sites steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, rental-blueprint-bodies, blueprint-call-sites, and blueprint-caller-bodies steps.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
 Follow [Portable local tool setup](docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
@@ -327,7 +328,32 @@ dotnet run --project "$extractor" -- blueprint-call-sites \
 
 The output contains game-specific caller locations and must remain in the ignored local acquisition directory.
 
-## 10. Compile the console-return mechanics
+## 10. Extract the movie-return caller bodies
+
+This step accepts only a complete call-site artifact for the same build and mappings.
+It rechecks every recorded call and decompiles only the functions that contain them.
+
+```powershell
+dotnet run --project $extractor -- blueprint-caller-bodies `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-return.v1.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.v1.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-caller-bodies \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --call-sites "$buildDirectory/blueprint-call-sites.movie-return.v1.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-caller-bodies.movie-return.v1.json"
+```
+
+The output contains game-specific function bodies and must remain in the ignored local acquisition directory.
+
+## 11. Compile the console-return mechanics
 
 This step validates both rental artifacts and confirms the expected class, fields, defaults, functions, and decompiled expressions before writing normalized facts.
 The artifact records the configured rental duration, the eligibility comparison, the missing-weather result, and movement from the rented queue to the ready-to-return queue.
@@ -378,7 +404,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 11. Compile the membership-fee mechanics
+## 12. Compile the membership-fee mechanics
 
 This step uses the same two private rental artifacts as the console-return compiler.
 It confirms the membership fee map, the five-field fee record, both mutation functions, and their decompiled expressions.
@@ -430,13 +456,13 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 12. Compile the movie-return mechanics
+## 13. Compile the movie-return mechanics
 
 This step uses the same two private rental artifacts as the other mechanic compilers.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
 It separately records the weighted selector's configured probabilities, override condition, four-item limit, candidate queue, and result behavior.
 The current rental Blueprint artifact contains the selector definition but no caller, so this artifact does not claim that its weights are the confirmed nightly return probabilities.
-The separate Blueprint call-site artifact can locate callers outside that four-class rental artifact, but this compiler does not yet include their function bodies.
+The separate Blueprint call-site and caller-body artifacts locate and decompile callers outside that four-class rental artifact, but this compiler does not yet consume them.
 The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
 
 Move into the TypeScript workspace if you are not already there.
@@ -483,7 +509,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 13. Compile the normalized film catalog
+## 14. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
