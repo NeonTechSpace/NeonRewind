@@ -59,7 +59,8 @@ The runtime host may add only the following files under the game's `RetroRewind\
 - `override.txt`
 
 The ignored repository `.local` directory contains the staged `ue4ss` tree, including `UE4SS.dll`, its settings, and its supporting files.
-The `override.txt` file contains the absolute path to that staged `UE4SS.dll`.
+The `override.txt` file contains the absolute path to the staged `ue4ss` directory.
+The pinned proxy appends `UE4SS.dll` to that directory path when it loads the runtime host.
 The staged UE4SS settings must keep the text console and graphical console disabled.
 Hot reload and automatic Lua-mod reload must be disabled.
 The enabled-mod list must contain only `NeonRetroRewindMovieReturnProbe`.
