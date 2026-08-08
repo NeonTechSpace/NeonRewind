@@ -1,7 +1,7 @@
 # Movie-return runtime observation
 
 This document defines the first controlled runtime observation for movie returns.
-The runtime collector and observation schema have not been implemented yet, so these steps are not runnable today.
+The observation schema exists, but the runtime collector has not been implemented, so these steps are not runnable today.
 
 ## Goal
 
@@ -49,12 +49,14 @@ It must not remove any file unless the game is closed and the file is proven to 
 
 ## Required observation record
 
-The observation uses a versioned JSON shape owned by `projects/game-data-exporter/schemas/runtime`.
+The observation uses [`movie-return-observation.v1.schema.json`](../projects/game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json).
+That versioned JSON shape is owned by `projects/game-data-exporter/schemas/runtime`.
 The generated record belongs under `projects/game-data-exporter/.local/runtime/<Steam build ID>/<UTC run ID>/`.
 
 Each record must contain:
 
 - The Steam application ID and build ID.
+- The filename, size, SHA-256 hash, artifact type, and schema version of the private movie-return mechanics artifact being checked.
 - The runtime collector version and observation schema version.
 - A UTC run ID and ordered event sequence numbers.
 - The stable class, object, and function paths used by each event.
