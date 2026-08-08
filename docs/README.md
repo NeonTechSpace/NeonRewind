@@ -782,7 +782,7 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 - [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the limits on its future collector.
 - `projects/typescript/packages/core` owns the normalized domain types and schemas.
 - `projects/typescript/packages/data-compiler` validates acquisition data and compiles private domain artifacts.
-- `projects/typescript/packages/validator` is an empty scaffold.
+- `projects/typescript/packages/validator` checks ordered runtime observations against deterministic mechanic relationships.
 
 ## License
 
