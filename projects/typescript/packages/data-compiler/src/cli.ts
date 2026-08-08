@@ -2,11 +2,19 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import type { AcquisitionArtifactIdentity } from "@neonrewind/core";
+import type {
+  AcquisitionArtifactIdentity,
+  RentalArtifactIdentity,
+} from "@neonrewind/core";
 
+import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import { validateJsonSchema } from "./schema-validation.ts";
+import type {
+  RentalBlueprintBodiesArtifact,
+  RentalEvidenceArtifact,
+} from "./rental-inputs.ts";
 import type { StructuredValuesArtifact } from "./structured-values.ts";
 
 const invalidArgumentsExitCode = 2;
@@ -19,6 +27,14 @@ interface FilmCatalogOptions {
   readonly outputPath: string;
 }
 
+interface ConsoleReturnOptions {
+  readonly rentalEvidencePath: string;
+  readonly rentalEvidenceSchemaPath: string;
+  readonly blueprintBodiesPath: string;
+  readonly blueprintBodiesSchemaPath: string;
+  readonly outputPath: string;
+}
+
 await main(process.argv.slice(2));
 
 async function main(arguments_: readonly string[]): Promise<void> {
@@ -27,8 +43,13 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "console-return-mechanics") {
+    await runConsoleReturnMechanics(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] !== "film-catalog") {
-    console.error("Expected the film-catalog command.");
+    console.error("Expected the film-catalog or console-return-mechanics command.");
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
     return;
@@ -85,6 +106,75 @@ async function main(arguments_: readonly string[]): Promise<void> {
   }
 }
 
+async function runConsoleReturnMechanics(arguments_: readonly string[]): Promise<void> {
+  const options = parseConsoleReturnOptions(arguments_);
+  if (typeof options === "string") {
+    console.error(options);
+    writeUsage(process.stderr);
+    process.exitCode = invalidArgumentsExitCode;
+    return;
+  }
+
+  try {
+    const rentalBytes = await readFile(options.rentalEvidencePath);
+    const bodyBytes = await readFile(options.blueprintBodiesPath);
+    const rentalHash = sha256(rentalBytes);
+    const bodyHash = sha256(bodyBytes);
+    const rentalInput = parseJson(rentalBytes, "Rental-evidence input");
+    const bodyInput = parseJson(bodyBytes, "Rental Blueprint-body input");
+    const rentalSchema = parseJson(
+      await readFile(options.rentalEvidenceSchemaPath),
+      "Rental-evidence schema",
+    );
+    const bodySchema = parseJson(
+      await readFile(options.blueprintBodiesSchemaPath),
+      "Rental Blueprint-body schema",
+    );
+    assertObject(rentalSchema, "Rental-evidence schema");
+    assertObject(bodySchema, "Rental Blueprint-body schema");
+    validateJsonSchema(rentalInput, rentalSchema, "Rental-evidence input");
+    validateJsonSchema(bodyInput, bodySchema, "Rental Blueprint-body input");
+
+    const sources = {
+      rentalEvidence: createRentalIdentity(
+        options.rentalEvidencePath,
+        rentalBytes,
+        rentalHash,
+        "rental-evidence",
+      ),
+      rentalBlueprintBodies: createRentalIdentity(
+        options.blueprintBodiesPath,
+        bodyBytes,
+        bodyHash,
+        "rental-blueprint-bodies",
+      ),
+    } as const;
+    const mechanics = compileConsoleReturnMechanics(
+      rentalInput as RentalEvidenceArtifact,
+      bodyInput as RentalBlueprintBodiesArtifact,
+      sources,
+    );
+    const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
+
+    await assertFileUnchanged(options.rentalEvidencePath, rentalBytes.length, rentalHash);
+    await assertFileUnchanged(options.blueprintBodiesPath, bodyBytes.length, bodyHash);
+
+    const status = await writeImmutableArtifact(options.outputPath, output);
+    if (status === "conflict") {
+      console.error(`Console return mechanics conflict with existing output: ${options.outputPath}`);
+      process.exitCode = outputConflictExitCode;
+      return;
+    }
+
+    const verb = status === "created" ? "wrote" : "is unchanged";
+    console.log(`Console return mechanics ${verb}: ${options.outputPath}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown failure.";
+    console.error(`Console-return-mechanics compilation failed: ${message}`);
+    process.exitCode = inputFailureExitCode;
+  }
+}
+
 function parseFilmCatalogOptions(
   arguments_: readonly string[],
 ): FilmCatalogOptions | string {
@@ -117,6 +207,83 @@ function parseFilmCatalogOptions(
   return { inputPath, inputSchemaPath, outputPath };
 }
 
+function parseConsoleReturnOptions(
+  arguments_: readonly string[],
+): ConsoleReturnOptions | string {
+  const values = new Map<string, string>();
+  const allowed = new Set([
+    "--rental-evidence",
+    "--rental-evidence-schema",
+    "--blueprint-bodies",
+    "--blueprint-bodies-schema",
+    "--output",
+  ]);
+
+  for (let index = 0; index < arguments_.length; index += 2) {
+    const name = arguments_[index];
+    const value = arguments_[index + 1];
+    if (name === undefined || !allowed.has(name)) {
+      return `Unknown console-return-mechanics option ${name ?? "<missing>"}.`;
+    }
+    if (value === undefined || value.startsWith("--")) {
+      return `Expected a value for ${name}.`;
+    }
+    if (values.has(name)) {
+      return `Option ${name} was provided more than once.`;
+    }
+    values.set(name, value);
+  }
+
+  const rentalEvidencePath = values.get("--rental-evidence");
+  const rentalEvidenceSchemaPath = values.get("--rental-evidence-schema");
+  const blueprintBodiesPath = values.get("--blueprint-bodies");
+  const blueprintBodiesSchemaPath = values.get("--blueprint-bodies-schema");
+  const outputPath = values.get("--output");
+  if (
+    rentalEvidencePath === undefined ||
+    rentalEvidenceSchemaPath === undefined ||
+    blueprintBodiesPath === undefined ||
+    blueprintBodiesSchemaPath === undefined ||
+    outputPath === undefined
+  ) {
+    return "Expected both rental inputs, both schemas, and --output.";
+  }
+
+  return {
+    rentalEvidencePath,
+    rentalEvidenceSchemaPath,
+    blueprintBodiesPath,
+    blueprintBodiesSchemaPath,
+    outputPath,
+  };
+}
+
+function createRentalIdentity(
+  path: string,
+  bytes: Uint8Array,
+  hash: string,
+  artifactType: RentalArtifactIdentity["artifactType"],
+): RentalArtifactIdentity {
+  return {
+    fileName: basename(path),
+    sha256: hash,
+    sizeBytes: bytes.length,
+    artifactType,
+    schemaVersion: 1,
+  };
+}
+
+async function assertFileUnchanged(
+  path: string,
+  expectedSize: number,
+  expectedHash: string,
+): Promise<void> {
+  const finalBytes = await readFile(path);
+  if (finalBytes.length !== expectedSize || sha256(finalBytes) !== expectedHash) {
+    throw new Error(`Input changed during compilation: ${path}`);
+  }
+}
+
 function parseJson(bytes: Uint8Array, label: string): unknown {
   try {
     return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
@@ -139,5 +306,8 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   stream.write("Usage:\n");
   stream.write(
     "  neonrewind-data-compiler film-catalog --input <structured-values> --input-schema <schema> --output <film-catalog>\n",
+  );
+  stream.write(
+    "  neonrewind-data-compiler console-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
   );
 }

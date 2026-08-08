@@ -5,6 +5,7 @@
   "scripts": {
     "build": "pnpm --recursive --if-present build",
     "check": "pnpm --recursive --if-present check",
+    "console-return-mechanics": "node packages/data-compiler/src/cli.ts console-return-mechanics",
     "film-catalog": "node packages/data-compiler/src/cli.ts film-catalog",
     "test": "pnpm --recursive --if-present test"
   },

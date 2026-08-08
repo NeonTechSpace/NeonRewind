@@ -1,7 +1,7 @@
 # NeonRewind
 
 NeonRewind is an unofficial, open-source project for *Retro Rewind: Video Store Simulator*.
-It currently reads data from an installed Steam copy of the game and converts the film tables into a consistent JSON catalog.
+It currently reads data from an installed Steam copy of the game, converts the film tables into a consistent JSON catalog, and compiles the first console-return mechanic facts.
 The public guide, calculators, and website have not been built yet.
 
 ## Data and distribution boundary
@@ -15,7 +15,7 @@ Do not commit or publish:
 - Game binaries, package files, mappings, or saves
 - Build manifests or static censuses produced from a game installation
 - Structured values, rental evidence, or Blueprint pseudocode
-- Compiled film catalogs or extracted game text
+- Compiled film catalogs, mechanic artifacts, or extracted game text
 - Extracted or modified game assets
 
 The documented output directories are ignored by Git.
@@ -32,6 +32,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Structured values | `structured-values.v1.json` | Extracts table rows and strings into deterministic JSON |
 | Rental evidence | `rental-evidence.v1.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
 | Rental Blueprint bodies | `rental-blueprint-bodies.v1.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
+| Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -46,7 +47,7 @@ You need the following items:
 
 - Windows and a licensed Steam installation of *Retro Rewind: Video Store Simulator*.
 - The .NET 10 SDK for the acquisition commands.
-- Node.js `24.19.0` and pnpm `11.x` for the film-catalog compiler.
+- Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
 - An internet connection for the first dependency installation unless the packages are already cached.
 - A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, and rental-blueprint-bodies steps.
 
@@ -295,7 +296,58 @@ dotnet run --project "$extractor" -- rental-blueprint-bodies \
 
 The output contains extracted game logic and must remain in the ignored local acquisition directory.
 
-## 9. Compile the normalized film catalog
+## 9. Compile the console-return mechanics
+
+This step validates both rental artifacts and confirms the expected class, fields, defaults, functions, and decompiled expressions before writing normalized facts.
+The artifact records the configured rental duration, the eligibility comparison, the missing-weather result, and movement from the rented queue to the ready-to-return queue.
+Each fact points back to its source class, property, or function.
+The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
+
+Move into the TypeScript workspace if you are not already there.
+
+```powershell
+Push-Location projects/typescript
+pnpm install --frozen-lockfile
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm install --frozen-lockfile
+```
+
+Compile the private mechanic artifact.
+
+```powershell
+pnpm console-return-mechanics `
+  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" `
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" `
+  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" `
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" `
+  --output ".local/domain/current/console-return-mechanics.v1.json"
+```
+
+```bash
+pnpm console-return-mechanics \
+  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" \
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" \
+  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" \
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" \
+  --output ".local/domain/current/console-return-mechanics.v1.json"
+```
+
+Return to the repository root when the command finishes.
+
+```powershell
+Pop-Location
+```
+
+```bash
+popd >/dev/null
+```
+
+The output contains normalized game rules and remains private and uncommitted.
+
+## 10. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
@@ -369,8 +421,8 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 - `projects/game-data-exporter/static-extractor` contains the .NET 10 acquisition commands.
 - `projects/game-data-exporter/schemas/acquisition` contains the acquisition JSON Schemas.
 - `projects/game-data-exporter/runtime-exporter` is an empty scaffold.
-- `projects/typescript/packages/core` owns the normalized film-catalog types and schema.
-- `projects/typescript/packages/data-compiler` validates acquisition data and compiles the film catalog.
+- `projects/typescript/packages/core` owns the normalized domain types and schemas.
+- `projects/typescript/packages/data-compiler` validates acquisition data and compiles private domain artifacts.
 - `projects/typescript/packages/validator` is an empty scaffold.
 
 ## License
