@@ -106,6 +106,8 @@ The first observation is complete only when all applicable checks can be evaluat
 
 The observation must remain marked incomplete when a required event was not reached or a required state could not be read.
 A runtime mismatch must be retained as evidence and must not be rewritten to match the static artifact.
+The `@neonretrorewind/validator` package checks event ordering, time bounds, queue transfer, selector membership, and customer inventory and queue transitions after schema validation.
+It returns `passed`, `incomplete`, or `mismatch` with bounded issue codes and does not write or alter the observation.
 
 ## Evidence effect
 

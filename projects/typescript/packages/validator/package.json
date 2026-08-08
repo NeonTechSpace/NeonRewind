@@ -4,6 +4,13 @@
   "private": true,
   "type": "module",
   "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test test/*.test.ts"
+  },
   "dependencies": {
     "@neonretrorewind/core": "workspace:*"
   }
