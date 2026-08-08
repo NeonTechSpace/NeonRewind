@@ -1,8 +1,8 @@
 # Movie-return runtime host
 
 This document records the runtime-host investigation for the first movie-return observation.
-The Lua compatibility probe source and offline staging command exist, but no runtime probe has been run and the observation collector has not been implemented.
-Nothing in this document authorizes copying files into a game installation.
+The Lua compatibility probe source and approval-gated staging, installation, and cleanup commands exist.
+The Lua probe produces a compatibility diagnostic, not a runtime observation.
 
 ## Investigation result
 
@@ -81,6 +81,9 @@ The tooling must generate a manifest containing every proposed relative path, by
 The offline `stage-probe` command writes that record using [`runtime-host-staging.v1.schema.json`](../projects/game-data-exporter/schemas/runtime/runtime-host-staging.v1.schema.json) without copying either proposed file.
 The person using the computer must see that manifest and explicitly approve the copy before any game-directory file is added.
 Installation is copy-only and must not replace an existing file.
+Running `install-probe` without an approval hash prints the exact copy list and changes nothing.
+An approved run requires the SHA-256 hash of the reviewed staging manifest and writes `runtime-host-installation.v1.json` before copying.
+The command can resume only when that installation manifest and any existing targets still match the same approved staging manifest.
 
 The person using the computer launches the game normally after installation.
 The person using the computer controls all gameplay, window focus, and shutdown.
@@ -93,6 +96,8 @@ The tooling must recalculate every installed file hash after the game has closed
 Cleanup must stop if a file changed, an expected file is missing, or an unowned file exists inside an installed directory.
 The person using the computer must see and explicitly approve the exact removal list.
 Cleanup may remove only the two game-directory files whose paths and hashes match the installation manifest.
+Running `cleanup-probe` without an approval hash prints that list and changes nothing.
+An approved run requires the SHA-256 hash of the reviewed installation manifest, removes the proxy first, and preserves the private installation manifest.
 
 ## Decision after the probe
 

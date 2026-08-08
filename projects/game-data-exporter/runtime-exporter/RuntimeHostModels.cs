@@ -55,4 +55,37 @@ internal sealed record ProposedGameFile(
     long SizeBytes,
     string Sha256);
 
+internal sealed record RuntimeHostInstallationManifest(
+    string ArtifactType,
+    int SchemaVersion,
+    FileIdentity StagingManifest,
+    RuntimeBuildIdentity Build,
+    GameDirectoryIdentity GameDirectory,
+    IReadOnlyList<InstalledGameFile> InstalledFiles);
+
+internal sealed record InstalledGameFile(
+    string RelativePath,
+    long SizeBytes,
+    string Sha256);
+
+internal sealed record VerifiedStagingManifest(
+    string Path,
+    string Directory,
+    FileIdentity Identity,
+    RuntimeHostStagingManifest Manifest,
+    string GameDirectory,
+    string ExecutablePath,
+    IReadOnlyList<VerifiedProposedGameFile> Files);
+
+internal sealed record VerifiedProposedGameFile(
+    ProposedGameFile Entry,
+    string SourcePath,
+    string TargetPath);
+
+internal sealed record VerifiedInstallationManifest(
+    string Path,
+    FileIdentity Identity,
+    RuntimeHostInstallationManifest Manifest,
+    VerifiedStagingManifest Staging);
+
 internal sealed record FileIdentity(string FileName, long SizeBytes, string Sha256);
