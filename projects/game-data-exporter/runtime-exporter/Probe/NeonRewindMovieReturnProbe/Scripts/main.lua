@@ -2,12 +2,19 @@ local Config = require("config")
 
 local MAX_ARRAY_ELEMENTS = 16
 local MAX_CUSTOMERS = 8
-local MAX_CUSTOMER_PROPERTIES = 64
 local MAX_ERRORS = 32
 local MAX_HOOK_CALLBACKS = 32
+local RUNTIME_SCAN_INTERVAL_MS = 5000
+local MAX_RUNTIME_SCAN_ATTEMPTS = 120
 
 local RENT_CLASS = "/Game/VideoStore/core/blueprint/RentSystem/RentSystem.RentSystem_C"
 local CUSTOMER_CLASS = "/Game/VideoStore/core/ai/pawn/AI_Client_Character.AI_Client_Character_C"
+local CUSTOMER_PROPERTY_CANDIDATES = {
+    "ref to Rent system",
+    "current Console in loop",
+    "current Cartridge in loop",
+    "Is Holding something",
+}
 
 local function json_object(value)
     return { json_kind = "object", value = value }
@@ -96,16 +103,24 @@ local report = {
         instancesFound = 0,
         recordedObjectPaths = json_array({}),
         relevantClassProperties = json_array({}),
+        unreadablePropertyNames = json_array({}),
         propertiesVisited = 0,
         propertiesUnreadable = 0,
         propertiesScanned = false,
     }),
     hooks = json_array({}),
+    runtimeScan = json_object({
+        intervalMilliseconds = RUNTIME_SCAN_INTERVAL_MS,
+        maximumAttempts = MAX_RUNTIME_SCAN_ATTEMPTS,
+        attempts = 0,
+        active = false,
+        stopReason = nil,
+    }),
     errors = json_array({}),
     limits = json_object({
         maximumArrayElementsPerQueue = MAX_ARRAY_ELEMENTS,
         maximumCustomers = MAX_CUSTOMERS,
-        maximumCustomerProperties = MAX_CUSTOMER_PROPERTIES,
+        maximumCustomerProperties = #CUSTOMER_PROPERTY_CANDIDATES,
         maximumErrors = MAX_ERRORS,
         maximumCallbacksPerHook = MAX_HOOK_CALLBACKS,
     }),
@@ -267,62 +282,25 @@ local function refresh_rental_manager(candidate)
     end
 end
 
-local function property_is_relevant(full_name)
-    local lowered = string.lower(full_name)
-    return string.find(lowered, "inventory", 1, true) ~= nil
-        or string.find(lowered, "product", 1, true) ~= nil
-        or string.find(lowered, "cartridge", 1, true) ~= nil
-        or string.find(lowered, "holding", 1, true) ~= nil
-        or string.find(lowered, "return", 1, true) ~= nil
-end
-
-local function readable_property_name(property)
-    local full_name_ok, full_name = pcall(function()
-        return property:GetFullName()
-    end)
-    if full_name_ok and full_name ~= nil then
-        return bounded_text(full_name)
-    end
-
-    local short_name_ok, short_name = pcall(function()
-        return property:GetFName():ToString()
-    end)
-    if short_name_ok and short_name ~= nil then
-        return bounded_text(short_name)
-    end
-
-    return nil
-end
-
 local function scan_customer_properties(customer)
     local customers = report.customers.value
     if customers.propertiesScanned or not valid_object(customer) then
         return
     end
 
-    local ok, failure = pcall(function()
-        local class = customer:GetClass()
-        local depth = 0
-        while valid_object(class) and depth < 8 and #customers.relevantClassProperties.value < MAX_CUSTOMER_PROPERTIES do
-            class:ForEachProperty(function(property)
-                customers.propertiesVisited = customers.propertiesVisited + 1
-                local full_name = readable_property_name(property)
-                if full_name == nil then
-                    customers.propertiesUnreadable = customers.propertiesUnreadable + 1
-                elseif property_is_relevant(full_name) then
-                    table.insert(customers.relevantClassProperties.value, full_name)
-                end
-                return #customers.relevantClassProperties.value >= MAX_CUSTOMER_PROPERTIES
-            end)
-            class = class:GetSuperStruct()
-            depth = depth + 1
+    for _, field_name in ipairs(CUSTOMER_PROPERTY_CANDIDATES) do
+        customers.propertiesVisited = customers.propertiesVisited + 1
+        local readable = pcall(function()
+            customer:GetPropertyValue(field_name)
+        end)
+        if readable then
+            table.insert(customers.relevantClassProperties.value, field_name)
+        else
+            customers.propertiesUnreadable = customers.propertiesUnreadable + 1
+            table.insert(customers.unreadablePropertyNames.value, field_name)
         end
-        customers.propertiesScanned = true
-    end)
-
-    if not ok then
-        add_error("customer-properties", failure)
     end
+    customers.propertiesScanned = true
 end
 
 local function record_customer(customer)
@@ -397,8 +375,9 @@ local function register_hook(key)
 
     local hook = state.report.value
     if not ok or pre_or_error == nil then
+        local first_unavailable_result = hook.registration ~= "unavailable"
         hook.registration = "unavailable"
-        if not ok then
+        if not ok and first_unavailable_result then
             add_error("hook:" .. key, pre_or_error)
         end
         return
@@ -416,6 +395,29 @@ local function register_blueprint_hooks()
     register_hook("customer-return")
 end
 
+local function refresh_customers()
+    local found_customers_ok, found_customers = pcall(FindAllOf, "AI_Client_Character_C")
+    if found_customers_ok and found_customers ~= nil then
+        for _, customer in ipairs(found_customers) do
+            record_customer(customer)
+        end
+    elseif not found_customers_ok then
+        add_error("find-customers", found_customers)
+    end
+end
+
+local function runtime_scan_complete()
+    if not report.rentalManager.value.found or not report.customers.value.propertiesScanned then
+        return false
+    end
+    for _, state in pairs(hook_states) do
+        if not state.registered then
+            return false
+        end
+    end
+    return true
+end
+
 define_hook(
     "movie-readiness",
     RENT_CLASS .. ":Get Movie ready for return",
@@ -429,16 +431,7 @@ define_hook(
     CUSTOMER_CLASS .. ":Initial creation - Get if I have Product to return",
     "blueprint-post-only")
 refresh_rental_manager(nil)
-
-local found_customers_ok, found_customers = pcall(FindAllOf, "AI_Client_Character_C")
-if found_customers_ok and found_customers ~= nil then
-    for _, customer in ipairs(found_customers) do
-        record_customer(customer)
-    end
-elseif not found_customers_ok then
-    add_error("find-customers", found_customers)
-end
-
+refresh_customers()
 register_blueprint_hooks()
 
 local rent_notification_ok, rent_notification_error = pcall(NotifyOnNewObject, RENT_CLASS, function(object)
@@ -457,6 +450,46 @@ local customer_notification_ok, customer_notification_error = pcall(NotifyOnNewO
 end)
 if not customer_notification_ok then
     add_error("notify-customer", customer_notification_error)
+end
+
+local runtime_scan_handle = nil
+
+local function stop_runtime_scan(reason)
+    local runtime_scan = report.runtimeScan.value
+    runtime_scan.active = false
+    runtime_scan.stopReason = reason
+    if runtime_scan_handle ~= nil then
+        local cancelled_ok, cancelled_or_error = pcall(CancelDelayedAction, runtime_scan_handle)
+        if not cancelled_ok then
+            add_error("runtime-scan-cancel", cancelled_or_error)
+        end
+    end
+end
+
+local function run_runtime_scan()
+    local runtime_scan = report.runtimeScan.value
+    runtime_scan.attempts = runtime_scan.attempts + 1
+    refresh_rental_manager(nil)
+    refresh_customers()
+    register_blueprint_hooks()
+
+    if runtime_scan_complete() then
+        stop_runtime_scan("runtime-targets-found")
+    elseif runtime_scan.attempts >= runtime_scan.maximumAttempts then
+        stop_runtime_scan("maximum-attempts-reached")
+    end
+    write_report()
+end
+
+local runtime_scan_ok, runtime_scan_handle_or_error = pcall(
+    LoopInGameThreadWithDelay,
+    RUNTIME_SCAN_INTERVAL_MS,
+    run_runtime_scan)
+if runtime_scan_ok and runtime_scan_handle_or_error ~= nil then
+    runtime_scan_handle = runtime_scan_handle_or_error
+    report.runtimeScan.value.active = true
+else
+    add_error("runtime-scan-start", runtime_scan_handle_or_error)
 end
 
 write_report()
