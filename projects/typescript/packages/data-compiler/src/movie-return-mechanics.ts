@@ -7,21 +7,23 @@ import type {
   BlueprintCallerBodiesArtifact,
   BlueprintCallSitesArtifact,
 } from "./blueprint-caller-inputs.ts";
-import type { BlueprintFunctionTraceArtifact } from "./blueprint-trace-inputs.ts";
+import type {
+  BlueprintFunctionTraceArtifact,
+  RentalFunctionTraceArtifact,
+} from "./blueprint-trace-inputs.ts";
 import {
   assertMovieCustomerTrace,
   customerCallerClassName,
   customerCallerFunctionName,
 } from "./movie-customer-trace.ts";
+import { assertMovieRentalTrace } from "./movie-rental-trace.ts";
 import type {
   RentalBlueprintBodiesArtifact,
   RentalEvidenceArtifact,
 } from "./rental-inputs.ts";
 import {
-  assertBlueprintFunction,
   assertRentalInputIdentity,
   findOne,
-  findRentalBodyClass,
   findRentalEvidenceClass,
   type RentalMechanicSources,
 } from "./rental-mechanic-evidence.ts";
@@ -30,17 +32,12 @@ const rentedFieldName = "Example Active Items";
 const readyFieldName = "Example Ready Items";
 const firstProbabilityName = "Example Initial Weight";
 const additionalProbabilityName = "Example Additional Weight";
-const newDayFunction = "Example Period Event";
-const readinessFunction = "Prepare Example Items";
-const dispatcherFunction = "ExecuteExampleGraph_ExampleQueueSystem";
-const selectionFunction = "Select Example Items";
-const newDayEntryPoint = 1792;
-const readinessEntryPoint = 2592;
 
 export interface MovieReturnSources extends RentalMechanicSources {
   readonly blueprintCallSites: MovieReturnArtifactIdentity<"blueprint-call-sites">;
   readonly blueprintCallerBodies: MovieReturnArtifactIdentity<"blueprint-caller-bodies">;
   readonly blueprintFunctionTrace: MovieReturnArtifactIdentity<"blueprint-function-trace">;
+  readonly rentalFunctionTrace: MovieReturnArtifactIdentity<"rental-function-trace">;
 }
 
 export function compileMovieReturnMechanics(
@@ -49,14 +46,11 @@ export function compileMovieReturnMechanics(
   callSites: BlueprintCallSitesArtifact,
   callerBodies: BlueprintCallerBodiesArtifact,
   functionTrace: BlueprintFunctionTraceArtifact,
+  rentalFunctionTrace: RentalFunctionTraceArtifact,
   sources: MovieReturnSources,
 ): MovieReturnMechanics {
   assertRentalInputIdentity(rentalEvidence, blueprintBodies, sources);
   const evidenceClass = findRentalEvidenceClass(rentalEvidence);
-  const bodyClass = findRentalBodyClass(blueprintBodies);
-  if (bodyClass.path !== evidenceClass.path) {
-    throw new Error("Rental class paths differ between the two source artifacts.");
-  }
 
   const rentedField = findQueueField(evidenceClass, rentedFieldName);
   const readyField = findQueueField(evidenceClass, readyFieldName);
@@ -69,39 +63,11 @@ export function compileMovieReturnMechanics(
     additionalProbabilityName,
   );
 
-  assertBlueprintFunction(bodyClass, newDayFunction, [
-    `ExecuteExampleGraph_ExampleQueueSystem(${newDayEntryPoint})`,
-  ]);
-  assertBlueprintFunction(bodyClass, readinessFunction, [
-    `ExecuteExampleGraph_ExampleQueueSystem(${readinessEntryPoint})`,
-  ]);
-  assertBlueprintFunction(bodyClass, dispatcherFunction, [
-    "Label_1792:\n        Simulated New Day Event when SaveGame is Load = true;",
-    "Prepare Example Items();\n    \n        Prepare Example Devices();",
-    "Label_2592:\n        goto Label_1832;",
-    "Label_1832:\n        Array_Append(Example Ready Items, Example Active Items);",
-    "Example Active Items.Clear();",
-  ]);
-  assertBlueprintFunction(bodyClass, selectionFunction, [
-    "Example Selected Items.Length",
-    ">= 4",
-    "Find a product = true",
-    "Item founded = Example Selected Items",
-    "Example Active Items.Length",
-    ">= 3",
-    "Example Initial Weight",
-    "? 0.95 : ExampleSymbol_203da61871cf",
-    "Example Selected Items.Length",
-    "<= 0",
-    "Example Additional Weight",
-    "UKismetMathLibrary::RandomBoolWithWeight",
-    "Array_Random(Example Ready Items",
-    "ExampleSymbol_0ab7d40dbb1d !== -1",
-    "ExampleSymbol_6777d42deb5f = Example Selected Items.Add(ExampleSymbol_0e79e7bf84f2)",
-    "ExampleSymbol_b752835dd3cc = (ExampleSymbol_5b49cd8b7a54 > 0)",
-    "Item founded = TArray<Item founded>()",
-  ]);
-  assertSelectionDefinitionIsOnlyOccurrence(blueprintBodies);
+  const rentalTraceEvidence = assertMovieRentalTrace(
+    rentalEvidence,
+    rentalFunctionTrace,
+    sources,
+  );
   const customerTraceEvidence = assertMovieCustomerTrace(
     rentalEvidence,
     callSites,
@@ -112,7 +78,7 @@ export function compileMovieReturnMechanics(
 
   return {
     artifactType: "movie-return-mechanics",
-    schemaVersion: 3,
+    schemaVersion: 4,
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
       steamBuildId: rentalEvidence.build.steamBuildId,
@@ -133,19 +99,7 @@ export function compileMovieReturnMechanics(
       },
       transfer: "append-all",
       clearsSource: true,
-      evidence: {
-        newDayHandler: createEntrypointEvidence(
-          bodyClass.path,
-          newDayFunction,
-          newDayEntryPoint,
-        ),
-        readinessHandler: createEntrypointEvidence(
-          bodyClass.path,
-          readinessFunction,
-          readinessEntryPoint,
-        ),
-        dispatcher: createFunctionEvidence(bodyClass.path, dispatcherFunction),
-      },
+      evidence: rentalTraceEvidence.readiness,
     },
     selection: {
       callerSearch: {
@@ -181,7 +135,7 @@ export function compileMovieReturnMechanics(
         weightedFailureWithSelection: "found-selected",
         missingCandidate: "not-found-empty",
       },
-      evidence: createFunctionEvidence(bodyClass.path, selectionFunction),
+      evidence: rentalTraceEvidence.selection,
       customerFlow: {
         callerClass: customerCallerClassName,
         callerFunction: customerCallerFunctionName,
@@ -233,36 +187,10 @@ function findProbabilityDefault(
   return { name: property.name, value: property.value };
 }
 
-function assertSelectionDefinitionIsOnlyOccurrence(input: RentalBlueprintBodiesArtifact): void {
-  const needle = `${selectionFunction}(`;
-  const occurrences = input.classes.reduce(
-    (total, class_) => total + class_.pseudoCode.split(needle).length - 1,
-    0,
-  );
-  if (occurrences !== 1) {
-    throw new Error("Movie selection caller coverage changed in the rental Blueprint artifact.");
-  }
-}
-
 function createFieldEvidence(classPath: string, fieldName: string) {
   return { artifactType: "rental-evidence" as const, classPath, fieldName };
 }
 
 function createDefaultEvidence(classPath: string, propertyName: string) {
   return { artifactType: "rental-evidence" as const, classPath, propertyName };
-}
-
-function createFunctionEvidence(classPath: string, functionName: string) {
-  return { artifactType: "rental-blueprint-bodies" as const, classPath, functionName };
-}
-
-function createEntrypointEvidence(
-  classPath: string,
-  functionName: string,
-  entryPoint: number,
-) {
-  return {
-    ...createFunctionEvidence(classPath, functionName),
-    entryPoint,
-  };
 }

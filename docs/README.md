@@ -42,7 +42,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Rental function trace | `rental-function-trace.movie-return.v1.json` | Converts selected rental functions into typed Kismet nodes tied to the rental-body artifact |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
-| Movie return mechanics | `movie-return-mechanics.v3.json` | Normalizes movie readiness, weighted selection, and the typed customer caller flow |
+| Movie return mechanics | `movie-return-mechanics.v4.json` | Normalizes movie readiness, weighted selection, and customer flow from typed traces |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRetroRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -530,7 +530,6 @@ dotnet run --project "$extractor" -- rental-function-trace \
 ```
 
 The output contains game-specific bytecode structure and must remain in the ignored local acquisition directory.
-The current movie-return compiler does not consume this artifact yet.
 
 ## 17. Compile the console-return mechanics
 
@@ -637,11 +636,12 @@ The output contains normalized game rules and remains private and uncommitted.
 
 ## 19. Compile the movie-return mechanics
 
-This step uses the two private rental artifacts, the complete movie-selector call-site artifact, the extracted caller-body artifact, and the typed function trace.
+This step uses the two private rental artifacts, the complete movie-selector call-site artifact, the extracted caller-body artifact, and both typed function traces.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
 It separately records the weighted selector's configured probabilities, override condition, four-item limit, candidate queue, and result behavior.
 It records complete caller-search coverage, the BeginPlay entry path, the console-first customer branch, both selector calls, and movement of selected cartridges from the ready queue into customer inventory.
-Version 3 validates calls, arguments, branch targets, branch symbols, loop structure, and input hashes from the typed trace without parsing customer-flow pseudocode.
+Version 4 validates calls, arguments, branch targets, branch symbols, queue operations, selection outcomes, loop structure, and input hashes from the typed traces.
+It does not parse rental or customer-flow pseudocode.
 The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
 
 Move into the TypeScript workspace if you are not already there.
@@ -670,7 +670,9 @@ pnpm movie-return-mechanics `
   --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" `
   --function-trace "../game-data-exporter/.local/acquisition/current/blueprint-function-trace.movie-customer.v2.json" `
   --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.v2.schema.json" `
-  --output ".local/domain/current/movie-return-mechanics.v3.json"
+  --rental-function-trace "../game-data-exporter/.local/acquisition/current/rental-function-trace.movie-return.v1.json" `
+  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.v1.schema.json" `
+  --output ".local/domain/current/movie-return-mechanics.v4.json"
 ```
 
 ```bash
@@ -685,7 +687,9 @@ pnpm movie-return-mechanics \
   --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" \
   --function-trace "../game-data-exporter/.local/acquisition/current/blueprint-function-trace.movie-customer.v2.json" \
   --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.v2.schema.json" \
-  --output ".local/domain/current/movie-return-mechanics.v3.json"
+  --rental-function-trace "../game-data-exporter/.local/acquisition/current/rental-function-trace.movie-return.v1.json" \
+  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.v1.schema.json" \
+  --output ".local/domain/current/movie-return-mechanics.v4.json"
 ```
 
 Return to the repository root when the command finishes.

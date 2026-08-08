@@ -1,35 +1,25 @@
 import type {
-  BlueprintFunctionEvidence,
   DefaultPropertyEvidence,
   RentalArtifactIdentity,
 } from "./console-return-mechanics.ts";
 import type { ClassFieldEvidence } from "./membership-fee-mechanics.ts";
 
-export interface BlueprintEntrypointEvidence extends BlueprintFunctionEvidence {
-  readonly entryPoint: number;
-}
-
 export interface MovieReturnArtifactIdentity<
   ArtifactType extends
     | "blueprint-call-sites"
     | "blueprint-caller-bodies"
-    | "blueprint-function-trace" =
+    | "blueprint-function-trace"
+    | "rental-function-trace" =
     | "blueprint-call-sites"
     | "blueprint-caller-bodies"
-    | "blueprint-function-trace",
+    | "blueprint-function-trace"
+    | "rental-function-trace",
 > {
   readonly fileName: string;
   readonly sha256: string;
   readonly sizeBytes: number;
   readonly artifactType: ArtifactType;
   readonly schemaVersion: ArtifactType extends "blueprint-function-trace" ? 2 : 1;
-}
-
-export interface BlueprintCallerFunctionEvidence {
-  readonly artifactType: "blueprint-caller-bodies";
-  readonly classPath: string;
-  readonly functionName: string;
-  readonly statementIndexes: readonly number[];
 }
 
 export interface BlueprintTraceEvidence {
@@ -56,9 +46,55 @@ export interface BlueprintTraceEvidence {
   };
 }
 
+export interface RentalReadinessTraceEvidence {
+  readonly artifactType: "rental-function-trace";
+  readonly classPath: string;
+  readonly newDayFunction: "Example Period Event";
+  readonly readinessFunction: "Prepare Example Items";
+  readonly eventGraphFunction: "ExecuteExampleGraph_ExampleQueueSystem";
+  readonly statementIndexes: {
+    readonly newDayCall: 18;
+    readonly newDayEntry: 1792;
+    readonly movieReadinessCall: 1803;
+    readonly consoleReadinessCall: 1817;
+    readonly readinessCall: 0;
+    readonly readinessEntry: 2592;
+    readonly transfer: 1854;
+    readonly clearSource: 1904;
+  };
+}
+
+export interface RentalSelectionTraceEvidence {
+  readonly artifactType: "rental-function-trace";
+  readonly classPath: string;
+  readonly functionName: "Select Example Items";
+  readonly statementIndexes: {
+    readonly limitLength: 40;
+    readonly limitComparison: 69;
+    readonly limitBranch: 93;
+    readonly rentedLength: 190;
+    readonly rentedMinimum: 219;
+    readonly firstProbability: 290;
+    readonly selectedLength: 367;
+    readonly firstAttemptCondition: 396;
+    readonly additionalProbability: 467;
+    readonly weightedDecision: 543;
+    readonly weightedFailure: 562;
+    readonly candidateChoice: 598;
+    readonly candidateValidity: 645;
+    readonly missingCandidate: 669;
+    readonly selectedChoice: 705;
+    readonly addUnique: 782;
+    readonly retry: 810;
+    readonly resultLength: 855;
+    readonly resultCondition: 884;
+    readonly emptyResult: 908;
+  };
+}
+
 export interface MovieReturnMechanics {
   readonly artifactType: "movie-return-mechanics";
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;
@@ -69,6 +105,7 @@ export interface MovieReturnMechanics {
     readonly blueprintCallSites: MovieReturnArtifactIdentity<"blueprint-call-sites">;
     readonly blueprintCallerBodies: MovieReturnArtifactIdentity<"blueprint-caller-bodies">;
     readonly blueprintFunctionTrace: MovieReturnArtifactIdentity<"blueprint-function-trace">;
+    readonly rentalFunctionTrace: MovieReturnArtifactIdentity<"rental-function-trace">;
   };
   readonly scope: "movie-return-readiness-and-selection";
   readonly evidenceLevel: "decompiled-blueprint";
@@ -85,11 +122,7 @@ export interface MovieReturnMechanics {
     };
     readonly transfer: "append-all";
     readonly clearsSource: true;
-    readonly evidence: {
-      readonly newDayHandler: BlueprintEntrypointEvidence;
-      readonly readinessHandler: BlueprintEntrypointEvidence;
-      readonly dispatcher: BlueprintFunctionEvidence;
-    };
+    readonly evidence: RentalReadinessTraceEvidence;
   };
   readonly selection: {
     readonly callerSearch: {
@@ -125,7 +158,7 @@ export interface MovieReturnMechanics {
       readonly weightedFailureWithSelection: "found-selected";
       readonly missingCandidate: "not-found-empty";
     };
-    readonly evidence: BlueprintFunctionEvidence;
+    readonly evidence: RentalSelectionTraceEvidence;
     readonly customerFlow: {
       readonly callerClass: "ExampleActor_C";
       readonly callerFunction: "Initialize Example Return";

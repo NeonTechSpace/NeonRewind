@@ -46,12 +46,20 @@ const functionTraceIdentity = createCallerIdentity(
   400,
   2,
 );
+const rentalFunctionTraceIdentity = createCallerIdentity(
+  "rental-function-trace.movie-return.v1.json",
+  "rental-function-trace",
+  "c",
+  500,
+  1,
+);
 
 export const movieReturnSources: MovieReturnSources = {
   ...rentalSources,
   blueprintCallSites: callSiteIdentity,
   blueprintCallerBodies: callerBodyIdentity,
   blueprintFunctionTrace: functionTraceIdentity,
+  rentalFunctionTrace: rentalFunctionTraceIdentity,
 };
 
 export function createCallSites(): Mutable<BlueprintCallSitesArtifact> {
