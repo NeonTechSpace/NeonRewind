@@ -777,6 +777,7 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 
 - `projects/game-data-exporter/static-extractor` contains the .NET 10 acquisition commands.
 - `projects/game-data-exporter/schemas/acquisition` contains the acquisition JSON Schemas.
+- `projects/game-data-exporter/schemas/runtime` contains the runtime observation JSON Schemas.
 - `projects/game-data-exporter/runtime-exporter` is an empty scaffold.
 - [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the limits on its future collector.
 - `projects/typescript/packages/core` owns the normalized domain types and schemas.
