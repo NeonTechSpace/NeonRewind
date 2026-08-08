@@ -12,7 +12,7 @@ internal static class BlueprintFunctionTraceCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
-    private const int SchemaVersion = 1;
+    private const int SchemaVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

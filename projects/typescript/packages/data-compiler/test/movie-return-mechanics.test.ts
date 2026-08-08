@@ -9,6 +9,7 @@ import {
   callerFunction,
   createCallerBodies,
   createCallSites,
+  createFunctionTrace,
   movieReturnSources,
 } from "./movie-return-fixtures.ts";
 import {
@@ -23,6 +24,7 @@ test("compiles movie readiness, weighted selection, and the confirmed customer f
     createBlueprintBodies(),
     createCallSites(),
     createCallerBodies(),
+    createFunctionTrace(),
     movieReturnSources,
   );
 
@@ -52,10 +54,27 @@ test("compiles movie readiness, weighted selection, and the confirmed customer f
       removesFromCandidateQueue: true,
     },
     evidence: {
-      artifactType: "blueprint-caller-bodies",
+      artifactType: "blueprint-function-trace",
       classPath: callerClassPath,
-      functionName: callerFunction,
-      statementIndexes: [465, 519],
+      entryFunction: "ReceiveBeginPlay",
+      entryPoint: 68,
+      eventGraphFunction: "ExecuteUbergraph_AI_Client_Character",
+      customerFunction: callerFunction,
+      statementIndexes: {
+        eventGraphEntry: 68,
+        customerCall: 49,
+        consoleSelectionCall: 230,
+        consoleFailureBranch: 262,
+        consoleFailureTarget: 399,
+        selectorCalls: [465, 519],
+        selectorFailureBranch: 551,
+        loopHeader: 607,
+        loopCondition: 704,
+        inventoryAdd: 941,
+        readyQueueRemoval: 987,
+        loopExit: 1456,
+        loopBack: 1541,
+      },
     },
   });
   assert.deepEqual(mechanics.selection.evidence, {
@@ -65,7 +84,7 @@ test("compiles movie readiness, weighted selection, and the confirmed customer f
   });
 
   const schemaPath = new URL(
-    "../../core/schemas/movie-return-mechanics.v2.schema.json",
+    "../../core/schemas/movie-return-mechanics.v3.schema.json",
     import.meta.url,
   );
   const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
@@ -165,11 +184,11 @@ test("rejects caller bodies linked to another call-site artifact", () => {
 
   assert.throws(
     () => compileCurrent({ callerBodies }),
-    /do not reference the supplied call-site artifact/u,
+    /source identities do not match/u,
   );
 });
 
-test("rejects a changed console-first customer flow", () => {
+test("does not parse customer-flow pseudocode", () => {
   const callerBodies = createCallerBodies();
   const function_ = callerBodies.functions[0]!;
   function_.pseudoCode = function_.pseudoCode.replace(
@@ -178,7 +197,118 @@ test("rejects a changed console-first customer flow", () => {
   );
   callerBodies.totals.pseudoCodeCharacterCount = function_.pseudoCode.length;
 
-  assert.throws(() => compileCurrent({ callerBodies }), /required static evidence/u);
+  assert.doesNotThrow(() => compileCurrent({ callerBodies }));
+});
+
+test("rejects a changed typed console-result branch", () => {
+  const functionTrace = createFunctionTrace();
+  const customer = functionTrace.functions.find(
+    (function_) => function_.functionName === callerFunction,
+  );
+  const branchResult = customer?.nodes.find(
+    (node) => node.statementIndex === 267,
+  );
+  assert.ok(branchResult);
+  branchResult.symbol = "another result";
+
+  assert.throws(
+    () => compileCurrent({ functionTrace }),
+    /trace symbol changed/u,
+  );
+});
+
+test("rejects a changed typed BeginPlay entrypoint", () => {
+  const functionTrace = createFunctionTrace();
+  const beginPlay = functionTrace.functions.find(
+    (function_) => function_.functionName === "ReceiveBeginPlay",
+  );
+  const entryNode = beginPlay?.nodes[0];
+  assert.ok(entryNode?.call);
+  entryNode.call = {
+    ...entryNode.call,
+    integerArguments: [{ position: 0, value: "69" }],
+  };
+
+  assert.throws(
+    () => compileCurrent({ functionTrace }),
+    /BeginPlay entry changed/u,
+  );
+});
+
+test("rejects a changed typed event-graph route", () => {
+  const functionTrace = createFunctionTrace();
+  const eventGraph = functionTrace.functions.find(
+    (function_) => function_.functionName === "ExecuteUbergraph_AI_Client_Character",
+  );
+  const entryJump = eventGraph?.nodes.find((node) => node.statementIndex === 68);
+  assert.ok(entryJump?.jump);
+  entryJump.jump = {
+    ...entryJump.jump,
+    targets: [{ edge: "codeOffset", offset: 11 }],
+  };
+
+  assert.throws(
+    () => compileCurrent({ functionTrace }),
+    /trace branch changed/u,
+  );
+});
+
+test("rejects a changed typed selector-result branch", () => {
+  const functionTrace = createFunctionTrace();
+  const customer = functionTrace.functions.find(
+    (function_) => function_.functionName === callerFunction,
+  );
+  const selectorResult = customer?.nodes.find((node) => node.statementIndex === 552);
+  assert.ok(selectorResult);
+  selectorResult.symbol = "another selector result";
+
+  assert.throws(
+    () => compileCurrent({ functionTrace }),
+    /trace symbol changed/u,
+  );
+});
+
+test("rejects a changed typed movie loop", () => {
+  const functionTrace = createFunctionTrace();
+  const customer = functionTrace.functions.find(
+    (function_) => function_.functionName === callerFunction,
+  );
+  const loopBack = customer?.nodes.find((node) => node.statementIndex === 1541);
+  assert.ok(loopBack?.jump);
+  loopBack.jump = {
+    ...loopBack.jump,
+    targets: [{ edge: "codeOffset", offset: 608 }],
+  };
+
+  assert.throws(
+    () => compileCurrent({ functionTrace }),
+    /trace branch changed/u,
+  );
+});
+
+test("rejects changed typed ready-queue removal", () => {
+  const functionTrace = createFunctionTrace();
+  const customer = functionTrace.functions.find(
+    (function_) => function_.functionName === callerFunction,
+  );
+  const removal = customer?.nodes.find((node) => node.statementIndex === 987);
+  assert.ok(removal?.call);
+  removal.call = { ...removal.call, functionName: "Keep Product Ready" };
+
+  assert.throws(
+    () => compileCurrent({ functionTrace }),
+    /trace call changed/u,
+  );
+});
+
+test("rejects a function trace linked to another caller-body artifact", () => {
+  const functionTrace = createFunctionTrace();
+  functionTrace.callerBodies[2]!.sha256 = "0".repeat(64);
+
+  assert.throws(
+    () => compileCurrent({ functionTrace }),
+    /does not reference the supplied caller bodies/u,
+  );
 });
 
 function compileCurrent(
@@ -187,6 +317,7 @@ function compileCurrent(
     bodies?: ReturnType<typeof createBlueprintBodies>;
     callSites?: ReturnType<typeof createCallSites>;
     callerBodies?: ReturnType<typeof createCallerBodies>;
+    functionTrace?: ReturnType<typeof createFunctionTrace>;
   } = {},
 ) {
   return compileMovieReturnMechanics(
@@ -194,6 +325,7 @@ function compileCurrent(
     overrides.bodies ?? createBlueprintBodies(),
     overrides.callSites ?? createCallSites(),
     overrides.callerBodies ?? createCallerBodies(),
+    overrides.functionTrace ?? createFunctionTrace(),
     movieReturnSources,
   );
 }
