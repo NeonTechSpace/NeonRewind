@@ -2,6 +2,7 @@
 
 This document defines the first controlled runtime observation for movie returns.
 The observation schema exists, but the runtime collector has not been implemented, so these steps are not runnable today.
+The [runtime-host investigation](movie-return-runtime-host.md) defines the compatibility probe, temporary installation footprint, and approval gates that precede the collector.
 
 ## Goal
 
