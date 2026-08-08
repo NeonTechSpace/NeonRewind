@@ -24,6 +24,7 @@ export type {
 export type {
   BlueprintCallerFunctionEvidence,
   BlueprintEntrypointEvidence,
-  MovieReturnCallerArtifactIdentity,
+  BlueprintTraceEvidence,
+  MovieReturnArtifactIdentity,
   MovieReturnMechanics,
 } from "./movie-return-mechanics.ts";

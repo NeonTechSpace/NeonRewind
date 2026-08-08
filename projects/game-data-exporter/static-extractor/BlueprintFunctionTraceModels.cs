@@ -45,6 +45,7 @@ internal sealed record BlueprintTraceNode(
     int StatementIndex,
     string Opcode,
     string Kind,
+    string? Symbol,
     BlueprintTraceCall? Call,
     BlueprintTraceJump? Jump,
     BlueprintTraceLiteral? Literal);

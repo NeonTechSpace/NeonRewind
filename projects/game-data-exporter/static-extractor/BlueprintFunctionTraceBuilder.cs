@@ -131,9 +131,27 @@ internal static class BlueprintFunctionTraceBuilder
             StatementIndex: expression.StatementIndex,
             Opcode: expression.GetType().Name,
             Kind: Classify(expression, call, jump, literal),
+            Symbol: ReadSymbol(expression),
             Call: call,
             Jump: jump,
             Literal: literal);
+    }
+
+    private static string? ReadSymbol(KismetExpression expression)
+    {
+        var fields = new[] { "Variable", "Property", "DestinationProperty", "RValuePointer" };
+        foreach (var fieldName in fields)
+        {
+            var value = expression.GetType().GetField(fieldName)?.GetValue(expression);
+            var symbol = value?.ToString();
+            if (!string.IsNullOrWhiteSpace(symbol) &&
+                !symbol.StartsWith("CUE4Parse.", StringComparison.Ordinal))
+            {
+                return symbol;
+            }
+        }
+
+        return null;
     }
 
     private static BlueprintTraceCall? CreateCall(KismetExpression expression)

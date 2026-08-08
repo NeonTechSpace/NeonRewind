@@ -14,7 +14,7 @@ Do not commit or publish:
 - Compiled extractor binaries
 - Game binaries, package files, mappings, or saves
 - Build manifests or static censuses produced from a game installation
-- Structured values, rental evidence, or Blueprint pseudocode
+- Structured values, rental evidence, Blueprint pseudocode, or Blueprint function traces
 - Compiled film catalogs, mechanic artifacts, or extracted game text
 - Extracted or modified game assets
 
@@ -38,10 +38,10 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Customer event-graph body | `blueprint-caller-bodies.movie-customer-entry.v1.json` | Decompiles the event-graph function that invokes the movie-customer function |
 | AI client ubergraph call sites | `blueprint-call-sites.ai-client-ubergraph.v1.json` | Finds Blueprint wrappers that enter the AI client event graph |
 | AI client wrapper bodies | `blueprint-caller-bodies.ai-client-ubergraph.v1.json` | Decompiles those wrappers to recover their numeric event-graph entry points |
-| Blueprint function trace | `blueprint-function-trace.movie-customer.v1.json` | Converts the linked caller functions into typed Kismet nodes without parsing pseudocode |
+| Blueprint function trace | `blueprint-function-trace.movie-customer.v2.json` | Converts the linked caller functions into typed Kismet nodes with branch-variable identities |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
-| Movie return mechanics | `movie-return-mechanics.v2.json` | Normalizes movie readiness, weighted selection, and the confirmed customer caller flow |
+| Movie return mechanics | `movie-return-mechanics.v3.json` | Normalizes movie readiness, weighted selection, and the typed customer caller flow |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRetroRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -465,7 +465,7 @@ The output contains game-specific wrapper pseudocode and must remain in the igno
 ## 15. Create the typed Blueprint function trace
 
 This step rereads the exact functions in the three caller-body artifacts from cooked Kismet bytecode.
-It writes typed nodes for calls, call arguments, branches, jumps, assignments, variables, literals, contexts, and returns.
+It writes typed nodes for calls, call arguments, branches, jumps, assignments, variables, symbols, literals, contexts, and returns.
 Each input file is recorded by hash, and the command confirms that its functions and target calls still match the game package.
 
 ```powershell
@@ -476,7 +476,7 @@ dotnet run --project $extractor -- blueprint-function-trace `
   --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.v1.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "blueprint-function-trace.movie-customer.v1.json")
+  --output (Join-Path $buildDirectory "blueprint-function-trace.movie-customer.v2.json")
 ```
 
 ```bash
@@ -487,7 +487,7 @@ dotnet run --project "$extractor" -- blueprint-function-trace \
   --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-return.v1.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/blueprint-function-trace.movie-customer.v1.json"
+  --output "$buildDirectory/blueprint-function-trace.movie-customer.v2.json"
 ```
 
 The output contains game-specific bytecode structure and must remain in the ignored local acquisition directory.
@@ -597,11 +597,11 @@ The output contains normalized game rules and remains private and uncommitted.
 
 ## 18. Compile the movie-return mechanics
 
-This step uses the two private rental artifacts, the complete movie-selector call-site artifact, and the extracted caller-body artifact.
+This step uses the two private rental artifacts, the complete movie-selector call-site artifact, the extracted caller-body artifact, and the typed function trace.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
 It separately records the weighted selector's configured probabilities, override condition, four-item limit, candidate queue, and result behavior.
-It records complete caller-search coverage, the console-first customer branch, both selector calls, and movement of selected cartridges from the ready queue into customer inventory.
-Version 2 requires all four matching acquisition artifacts and rejects partial caller-search coverage or changed caller control flow.
+It records complete caller-search coverage, the BeginPlay entry path, the console-first customer branch, both selector calls, and movement of selected cartridges from the ready queue into customer inventory.
+Version 3 validates calls, arguments, branch targets, branch symbols, loop structure, and input hashes from the typed trace without parsing customer-flow pseudocode.
 The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
 
 Move into the TypeScript workspace if you are not already there.
@@ -628,7 +628,9 @@ pnpm movie-return-mechanics `
   --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.v1.schema.json" `
   --caller-bodies "../game-data-exporter/.local/acquisition/current/blueprint-caller-bodies.movie-return.v1.json" `
   --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" `
-  --output ".local/domain/current/movie-return-mechanics.v2.json"
+  --function-trace "../game-data-exporter/.local/acquisition/current/blueprint-function-trace.movie-customer.v2.json" `
+  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.v2.schema.json" `
+  --output ".local/domain/current/movie-return-mechanics.v3.json"
 ```
 
 ```bash
@@ -641,7 +643,9 @@ pnpm movie-return-mechanics \
   --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.v1.schema.json" \
   --caller-bodies "../game-data-exporter/.local/acquisition/current/blueprint-caller-bodies.movie-return.v1.json" \
   --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" \
-  --output ".local/domain/current/movie-return-mechanics.v2.json"
+  --function-trace "../game-data-exporter/.local/acquisition/current/blueprint-function-trace.movie-customer.v2.json" \
+  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.v2.schema.json" \
+  --output ".local/domain/current/movie-return-mechanics.v3.json"
 ```
 
 Return to the repository root when the command finishes.

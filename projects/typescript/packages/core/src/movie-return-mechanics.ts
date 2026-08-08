@@ -9,16 +9,20 @@ export interface BlueprintEntrypointEvidence extends BlueprintFunctionEvidence {
   readonly entryPoint: number;
 }
 
-export interface MovieReturnCallerArtifactIdentity<
-  ArtifactType extends "blueprint-call-sites" | "blueprint-caller-bodies" =
+export interface MovieReturnArtifactIdentity<
+  ArtifactType extends
     | "blueprint-call-sites"
-    | "blueprint-caller-bodies",
+    | "blueprint-caller-bodies"
+    | "blueprint-function-trace" =
+    | "blueprint-call-sites"
+    | "blueprint-caller-bodies"
+    | "blueprint-function-trace",
 > {
   readonly fileName: string;
   readonly sha256: string;
   readonly sizeBytes: number;
   readonly artifactType: ArtifactType;
-  readonly schemaVersion: 1;
+  readonly schemaVersion: ArtifactType extends "blueprint-function-trace" ? 2 : 1;
 }
 
 export interface BlueprintCallerFunctionEvidence {
@@ -28,9 +32,33 @@ export interface BlueprintCallerFunctionEvidence {
   readonly statementIndexes: readonly number[];
 }
 
+export interface BlueprintTraceEvidence {
+  readonly artifactType: "blueprint-function-trace";
+  readonly classPath: string;
+  readonly entryFunction: "ReceiveBeginPlay";
+  readonly entryPoint: 68;
+  readonly eventGraphFunction: "ExecuteExampleGraph_ExampleActor";
+  readonly customerFunction: "Initialize Example Return";
+  readonly statementIndexes: {
+    readonly eventGraphEntry: 68;
+    readonly customerCall: 49;
+    readonly consoleSelectionCall: 230;
+    readonly consoleFailureBranch: 262;
+    readonly consoleFailureTarget: 399;
+    readonly selectorCalls: readonly [465, 519];
+    readonly selectorFailureBranch: 551;
+    readonly loopHeader: 607;
+    readonly loopCondition: 704;
+    readonly inventoryAdd: 941;
+    readonly readyQueueRemoval: 987;
+    readonly loopExit: 1456;
+    readonly loopBack: 1541;
+  };
+}
+
 export interface MovieReturnMechanics {
   readonly artifactType: "movie-return-mechanics";
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;
@@ -38,8 +66,9 @@ export interface MovieReturnMechanics {
   readonly sources: {
     readonly rentalEvidence: RentalArtifactIdentity;
     readonly rentalBlueprintBodies: RentalArtifactIdentity;
-    readonly blueprintCallSites: MovieReturnCallerArtifactIdentity<"blueprint-call-sites">;
-    readonly blueprintCallerBodies: MovieReturnCallerArtifactIdentity<"blueprint-caller-bodies">;
+    readonly blueprintCallSites: MovieReturnArtifactIdentity<"blueprint-call-sites">;
+    readonly blueprintCallerBodies: MovieReturnArtifactIdentity<"blueprint-caller-bodies">;
+    readonly blueprintFunctionTrace: MovieReturnArtifactIdentity<"blueprint-function-trace">;
   };
   readonly scope: "movie-return-readiness-and-selection";
   readonly evidenceLevel: "decompiled-blueprint";
@@ -109,7 +138,7 @@ export interface MovieReturnMechanics {
         readonly destination: "customer-inventory";
         readonly removesFromCandidateQueue: true;
       };
-      readonly evidence: BlueprintCallerFunctionEvidence;
+      readonly evidence: BlueprintTraceEvidence;
     };
   };
 }
