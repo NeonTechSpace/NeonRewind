@@ -37,6 +37,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Customer entry call sites | `blueprint-call-sites.movie-customer-entry.v1.json` | Searches parsed Blueprint bytecode for calls into the discovered movie-customer function |
 | Customer event-graph body | `blueprint-caller-bodies.movie-customer-entry.v1.json` | Decompiles the event-graph function that invokes the movie-customer function |
 | AI client ubergraph call sites | `blueprint-call-sites.ai-client-ubergraph.v1.json` | Finds Blueprint wrappers that enter the AI client event graph |
+| AI client wrapper bodies | `blueprint-caller-bodies.ai-client-ubergraph.v1.json` | Decompiles those wrappers to recover their numeric event-graph entry points |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Movie return mechanics | `movie-return-mechanics.v2.json` | Normalizes movie readiness, weighted selection, and the confirmed customer caller flow |
@@ -435,7 +436,32 @@ dotnet run --project "$extractor" -- blueprint-call-sites \
 
 The output contains game-specific wrapper locations and must remain in the ignored local acquisition directory.
 
-## 14. Compile the console-return mechanics
+## 14. Extract the AI client event-graph wrappers
+
+This step verifies the preceding call-site artifact and decompiles the exact wrapper functions it found.
+The result maps each wrapper to the numeric entry point it passes into the AI client event graph.
+
+```powershell
+dotnet run --project $extractor -- blueprint-caller-bodies `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.ai-client-ubergraph.v1.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-caller-bodies.ai-client-ubergraph.v1.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-caller-bodies \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --call-sites "$buildDirectory/blueprint-call-sites.ai-client-ubergraph.v1.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-caller-bodies.ai-client-ubergraph.v1.json"
+```
+
+The output contains game-specific wrapper pseudocode and must remain in the ignored local acquisition directory.
+
+## 15. Compile the console-return mechanics
 
 This step validates both rental artifacts and confirms the expected class, fields, defaults, functions, and decompiled expressions before writing normalized facts.
 The artifact records the configured rental duration, the eligibility comparison, the missing-weather result, and movement from the rented queue to the ready-to-return queue.
@@ -486,7 +512,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 15. Compile the membership-fee mechanics
+## 16. Compile the membership-fee mechanics
 
 This step uses the same two private rental artifacts as the console-return compiler.
 It confirms the membership fee map, the five-field fee record, both mutation functions, and their decompiled expressions.
@@ -538,7 +564,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 16. Compile the movie-return mechanics
+## 17. Compile the movie-return mechanics
 
 This step uses the two private rental artifacts, the complete movie-selector call-site artifact, and the extracted caller-body artifact.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
@@ -599,7 +625,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 17. Compile the normalized film catalog
+## 18. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
