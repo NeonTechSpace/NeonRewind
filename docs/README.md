@@ -35,6 +35,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Blueprint call sites | `blueprint-call-sites.movie-return.v1.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
 | Blueprint caller bodies | `blueprint-caller-bodies.movie-return.v1.json` | Decompiles the exact functions found by the movie-return call-site scan |
 | Customer entry call sites | `blueprint-call-sites.movie-customer-entry.v1.json` | Searches parsed Blueprint bytecode for calls into the discovered movie-customer function |
+| Customer event-graph body | `blueprint-caller-bodies.movie-customer-entry.v1.json` | Decompiles the event-graph function that invokes the movie-customer function |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Movie return mechanics | `movie-return-mechanics.v2.json` | Normalizes movie readiness, weighted selection, and the confirmed customer caller flow |
@@ -381,7 +382,32 @@ dotnet run --project "$extractor" -- blueprint-call-sites \
 
 The output contains game-specific caller locations and must remain in the ignored local acquisition directory.
 
-## 12. Compile the console-return mechanics
+## 12. Extract the movie-customer event graph
+
+This step verifies the complete customer-entry call-site artifact and decompiles only the event-graph function that contains its call.
+The result exposes the entry label and control flow immediately surrounding the movie-customer function.
+
+```powershell
+dotnet run --project $extractor -- blueprint-caller-bodies `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-customer-entry.v1.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-caller-bodies.movie-customer-entry.v1.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-caller-bodies \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --call-sites "$buildDirectory/blueprint-call-sites.movie-customer-entry.v1.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-caller-bodies.movie-customer-entry.v1.json"
+```
+
+The output contains game-specific event-graph pseudocode and must remain in the ignored local acquisition directory.
+
+## 13. Compile the console-return mechanics
 
 This step validates both rental artifacts and confirms the expected class, fields, defaults, functions, and decompiled expressions before writing normalized facts.
 The artifact records the configured rental duration, the eligibility comparison, the missing-weather result, and movement from the rented queue to the ready-to-return queue.
@@ -432,7 +458,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 13. Compile the membership-fee mechanics
+## 14. Compile the membership-fee mechanics
 
 This step uses the same two private rental artifacts as the console-return compiler.
 It confirms the membership fee map, the five-field fee record, both mutation functions, and their decompiled expressions.
@@ -484,7 +510,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 14. Compile the movie-return mechanics
+## 15. Compile the movie-return mechanics
 
 This step uses the two private rental artifacts, the complete movie-selector call-site artifact, and the extracted caller-body artifact.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
@@ -545,7 +571,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 15. Compile the normalized film catalog
+## 16. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
