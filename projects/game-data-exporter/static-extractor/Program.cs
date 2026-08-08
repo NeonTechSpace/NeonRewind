@@ -42,6 +42,11 @@ internal static class Program
             return RentalBlueprintBodiesCommand.Run(rentalBlueprintBodiesArguments);
         }
 
+        if (args is ["blueprint-call-sites", .. var blueprintCallSitesArguments])
+        {
+            return BlueprintCallSitesCommand.Run(blueprintCallSitesArguments);
+        }
+
         if (args is [var packageDirectory] &&
             !packageDirectory.StartsWith("-", StringComparison.Ordinal))
         {
@@ -63,6 +68,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor structured-values --build-manifest <path> --structured-index <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-blueprint-bodies --build-manifest <path> --rental-evidence <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-call-sites --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --target-function <name> --output <path>");
         writer.WriteLine();
         writer.WriteLine("The package probe scans one directory using the configured UE 5.4 profile.");
         writer.WriteLine("The manifest command writes versioned build identity without local paths or Steam account data.");
@@ -71,5 +77,6 @@ internal static class Program
         writer.WriteLine("The structured-values command writes normalized DataTable rows and StringTable entries for local use.");
         writer.WriteLine("The rental-evidence command writes mapped class defaults and references for the rental-system package cluster.");
         writer.WriteLine("The rental-blueprint-bodies command writes pseudocode and function metadata for the rental Blueprint classes.");
+        writer.WriteLine("The blueprint-call-sites command scans parsed Blueprint bytecode for calls to one exact function name.");
     }
 }
