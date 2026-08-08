@@ -13,3 +13,10 @@ export type {
   DefaultPropertyEvidence,
   RentalArtifactIdentity,
 } from "./console-return-mechanics.ts";
+
+export type {
+  ClassFieldEvidence,
+  MembershipFeeFieldDefinition,
+  MembershipFeeMechanics,
+  StructFieldEvidence,
+} from "./membership-fee-mechanics.ts";

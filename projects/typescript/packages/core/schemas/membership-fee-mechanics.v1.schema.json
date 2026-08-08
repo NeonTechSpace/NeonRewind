@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonrewind:schema:domain:membership-fee-mechanics:1",
+  "title": "NeonRewind membership fee mechanics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "schemaVersion",
+    "build",
+    "sources",
+    "scope",
+    "evidenceLevel",
+    "runtimeValidation",
+    "storage",
+    "feeRecord",
+    "addition",
+    "removal"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "membership-fee-mechanics"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "build": {
+      "$ref": "#/$defs/build"
+    },
+    "sources": {
+      "$ref": "#/$defs/sources"
+    },
+    "scope": {
+      "const": "membership-fee-record"
+    },
+    "evidenceLevel": {
+      "const": "decompiled-blueprint"
+    },
+    "runtimeValidation": {
+      "const": "not-run"
+    },
+    "storage": {
+      "$ref": "#/$defs/storage"
+    },
+    "feeRecord": {
+      "$ref": "#/$defs/feeRecord"
+    },
+    "addition": {
+      "$ref": "#/$defs/addition"
+    },
+    "removal": {
+      "$ref": "#/$defs/removal"
+    }
+  },
+  "$defs": {
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steamAppId", "steamBuildId"],
+      "properties": {
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rentalEvidence", "rentalBlueprintBodies"],
+      "properties": {
+        "rentalEvidence": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/sourceIdentity"
+            },
+            {
+              "properties": {
+                "artifactType": {
+                  "const": "rental-evidence"
+                }
+              }
+            }
+          ]
+        },
+        "rentalBlueprintBodies": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/sourceIdentity"
+            },
+            {
+              "properties": {
+                "artifactType": {
+                  "const": "rental-blueprint-bodies"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sha256", "sizeBytes", "artifactType", "schemaVersion"],
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/\\\\]+\\.json$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactType": {
+          "enum": ["rental-evidence", "rental-blueprint-bodies"]
+        },
+        "schemaVersion": {
+          "const": 1
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["container", "key", "value", "evidence"],
+      "properties": {
+        "container": {
+          "const": "map"
+        },
+        "key": {
+          "const": "membership-id"
+        },
+        "value": {
+          "const": "fee-record"
+        },
+        "evidence": {
+          "$ref": "#/$defs/classFieldEvidence"
+        }
+      }
+    },
+    "feeRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["late", "broken", "rewind", "consoleLate", "consoleBroken"],
+      "properties": {
+        "late": {
+          "$ref": "#/$defs/feeField"
+        },
+        "broken": {
+          "$ref": "#/$defs/feeField"
+        },
+        "rewind": {
+          "$ref": "#/$defs/feeField"
+        },
+        "consoleLate": {
+          "$ref": "#/$defs/feeField"
+        },
+        "consoleBroken": {
+          "$ref": "#/$defs/feeField"
+        }
+      }
+    },
+    "feeField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defaultValue", "evidence"],
+      "properties": {
+        "defaultValue": {
+          "const": 0
+        },
+        "evidence": {
+          "$ref": "#/$defs/structFieldEvidence"
+        }
+      }
+    },
+    "addition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["zeroMembershipId", "mapWrite", "fieldUpdates", "evidence"],
+      "properties": {
+        "zeroMembershipId": {
+          "const": "no-op"
+        },
+        "mapWrite": {
+          "const": "add-or-replace"
+        },
+        "fieldUpdates": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["late", "broken", "rewind", "consoleLate", "consoleBroken"],
+          "properties": {
+            "late": {
+              "const": "stored-plus-incoming"
+            },
+            "broken": {
+              "const": "stored-plus-incoming"
+            },
+            "rewind": {
+              "const": "stored-plus-incoming"
+            },
+            "consoleLate": {
+              "const": "set-zero"
+            },
+            "consoleBroken": {
+              "const": "set-zero"
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/functionEvidence"
+        }
+      }
+    },
+    "removal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["zeroMembershipId", "operation", "evidence"],
+      "properties": {
+        "zeroMembershipId": {
+          "const": "no-op"
+        },
+        "operation": {
+          "const": "remove-entry"
+        },
+        "evidence": {
+          "$ref": "#/$defs/functionEvidence"
+        }
+      }
+    },
+    "classFieldEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "classPath", "fieldName"],
+      "properties": {
+        "artifactType": {
+          "const": "rental-evidence"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fieldName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "structFieldEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "structPath", "fieldName"],
+      "properties": {
+        "artifactType": {
+          "const": "rental-evidence"
+        },
+        "structPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fieldName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "functionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactType", "classPath", "functionName"],
+      "properties": {
+        "artifactType": {
+          "const": "rental-blueprint-bodies"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "functionName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

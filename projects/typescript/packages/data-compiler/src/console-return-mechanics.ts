@@ -1,36 +1,34 @@
-import type {
-  ConsoleReturnMechanics,
-  RentalArtifactIdentity,
-} from "@neonrewind/core";
+import type { ConsoleReturnMechanics } from "@neonrewind/core";
 
 import type {
   RentalBlueprintBodiesArtifact,
-  RentalBlueprintClassEvidence,
   RentalEvidenceArtifact,
 } from "./rental-inputs.ts";
+import {
+  assertBlueprintFunction,
+  assertRentalInputIdentity,
+  findOne,
+  findRentalBodyClass,
+  findRentalEvidenceClass,
+  type RentalMechanicSources,
+} from "./rental-mechanic-evidence.ts";
 
-const rentalPackagePath =
-  "RetroRewind/Content/VideoStore/core/blueprint/RentSystem/RentSystem.uasset";
-const rentalClassName = "RentSystem_C";
 const rentalDurationProperty = "Number of day a console is rented";
 const eligibilityFunction = "Is this console ready to come back from rent";
 const queueFunction = "Get Console Rent ready for return";
 const rentedField = "Console Base out for Rent";
 const readyField = "Console Base out Ready to Return";
 
-export interface ConsoleReturnSources {
-  readonly rentalEvidence: RentalArtifactIdentity;
-  readonly rentalBlueprintBodies: RentalArtifactIdentity;
-}
+export type ConsoleReturnSources = RentalMechanicSources;
 
 export function compileConsoleReturnMechanics(
   rentalEvidence: RentalEvidenceArtifact,
   blueprintBodies: RentalBlueprintBodiesArtifact,
   sources: ConsoleReturnSources,
 ): ConsoleReturnMechanics {
-  assertInputIdentity(rentalEvidence, blueprintBodies, sources);
-  const evidenceClass = findEvidenceClass(rentalEvidence);
-  const bodyClass = findBodyClass(blueprintBodies);
+  assertRentalInputIdentity(rentalEvidence, blueprintBodies, sources);
+  const evidenceClass = findRentalEvidenceClass(rentalEvidence);
+  const bodyClass = findRentalBodyClass(blueprintBodies);
   if (bodyClass.path !== evidenceClass.path) {
     throw new Error("Rental class paths differ between the two source artifacts.");
   }
@@ -61,12 +59,12 @@ export function compileConsoleReturnMechanics(
     throw new Error("Console rental queues do not have one matching object-array type.");
   }
 
-  assertFunction(bodyClass, eligibilityFunction, [
+  assertBlueprintFunction(bodyClass, eligibilityFunction, [
     "Weather Actor ref->Days Passed - Console to Test->The Game Day It Was Rent",
     ">= Number of day a console is rented",
     "ReturnValue = false",
   ]);
-  assertFunction(bodyClass, queueFunction, [
+  assertBlueprintFunction(bodyClass, queueFunction, [
     "Is this console ready to come back from rent(CallFunc_Array_Get_Item_1)",
     "if (!CallFunc_Is_this_console_ready_to_come_back_from_rent_ReturnValue)",
     "Console Base out Ready to Return.Add(CallFunc_Array_Get_Item_1)",
@@ -122,109 +120,6 @@ export function compileConsoleReturnMechanics(
   };
 }
 
-function assertInputIdentity(
-  rentalEvidence: RentalEvidenceArtifact,
-  blueprintBodies: RentalBlueprintBodiesArtifact,
-  sources: ConsoleReturnSources,
-): void {
-  if (rentalEvidence.artifactType !== "rental-evidence" || rentalEvidence.schemaVersion !== 1) {
-    throw new Error("Expected rental-evidence schema version 1.");
-  }
-  if (
-    blueprintBodies.artifactType !== "rental-blueprint-bodies" ||
-    blueprintBodies.schemaVersion !== 1
-  ) {
-    throw new Error("Expected rental-blueprint-bodies schema version 1.");
-  }
-  if (
-    sources.rentalEvidence.artifactType !== rentalEvidence.artifactType ||
-    sources.rentalBlueprintBodies.artifactType !== blueprintBodies.artifactType
-  ) {
-    throw new Error("Source identities do not match their acquisition artifacts.");
-  }
-  if (
-    rentalEvidence.build.manifestSha256 !== blueprintBodies.build.manifestSha256 ||
-    rentalEvidence.build.steamAppId !== blueprintBodies.build.steamAppId ||
-    rentalEvidence.build.steamBuildId !== blueprintBodies.build.steamBuildId ||
-    rentalEvidence.mappings.sha256 !== blueprintBodies.mappings.sha256
-  ) {
-    throw new Error("Rental source artifacts do not belong to the same build and mappings.");
-  }
-}
-
-function findEvidenceClass(input: RentalEvidenceArtifact): RentalBlueprintClassEvidence {
-  const package_ = findOne(
-    input.packages,
-    (candidate) => candidate.path === rentalPackagePath,
-    `package ${rentalPackagePath}`,
-  );
-  return findOne(
-    package_.blueprintClasses,
-    (candidate) => candidate.name === rentalClassName,
-    `class ${rentalClassName}`,
-  );
-}
-
-function findBodyClass(input: RentalBlueprintBodiesArtifact) {
-  return findOne(
-    input.classes,
-    (candidate) =>
-      candidate.packagePath === rentalPackagePath && candidate.name === rentalClassName,
-    `Blueprint body class ${rentalClassName}`,
-  );
-}
-
-function findField(input: RentalBlueprintClassEvidence, name: string) {
+function findField(input: ReturnType<typeof findRentalEvidenceClass>, name: string) {
   return findOne(input.fields, (field) => field.name === name, `field ${name}`);
-}
-
-function assertFunction(
-  input: ReturnType<typeof findBodyClass>,
-  name: string,
-  requiredExpressions: readonly string[],
-): void {
-  const function_ = findOne(
-    input.functions,
-    (candidate) => candidate.name === name,
-    `function ${name}`,
-  );
-  if (function_.bytecodeExpressionCount < 1) {
-    throw new Error(`Function ${name} has no parsed bytecode expressions.`);
-  }
-  const pseudoCode = findFunctionPseudoCode(input.pseudoCode, name);
-  for (const expression of requiredExpressions) {
-    if (!pseudoCode.includes(expression)) {
-      throw new Error(`Function ${name} no longer contains required static evidence.`);
-    }
-  }
-}
-
-function findFunctionPseudoCode(pseudoCode: string, name: string): string {
-  const lines = pseudoCode.split(/\r?\n/u);
-  const headerPattern = /^    (?:public|private|protected) /u;
-  const matchingHeaders = lines
-    .map((line, index) => ({ line, index }))
-    .filter(({ line }) => headerPattern.test(line) && line.includes(` ${name}(`));
-  if (matchingHeaders.length !== 1) {
-    throw new Error(`Expected exactly one pseudocode body for function ${name}.`);
-  }
-
-  const start = matchingHeaders[0]!.index;
-  const nextFunctionComment = lines.findIndex(
-    (line, index) => index > start && /^    \/\/ \(/u.test(line),
-  );
-  const end = nextFunctionComment === -1 ? lines.length : nextFunctionComment;
-  return lines.slice(start, end).join("\n");
-}
-
-function findOne<T>(
-  values: readonly T[],
-  predicate: (value: T) => boolean,
-  label: string,
-): T {
-  const matches = values.filter(predicate);
-  if (matches.length !== 1) {
-    throw new Error(`Expected exactly one ${label}.`);
-  }
-  return matches[0] as T;
 }

@@ -34,6 +34,13 @@ export interface RentalBlueprintClassEvidence {
   };
 }
 
+export interface RentalStructEvidence {
+  readonly name: string;
+  readonly path: string;
+  readonly fields: readonly RentalField[];
+  readonly defaults: readonly RentalDefaultProperty[];
+}
+
 export interface RentalEvidenceArtifact {
   readonly artifactType: "rental-evidence";
   readonly schemaVersion: 1;
@@ -42,6 +49,7 @@ export interface RentalEvidenceArtifact {
   readonly packages: readonly {
     readonly path: string;
     readonly blueprintClasses: readonly RentalBlueprintClassEvidence[];
+    readonly userDefinedStructs: readonly RentalStructEvidence[];
   }[];
 }
 

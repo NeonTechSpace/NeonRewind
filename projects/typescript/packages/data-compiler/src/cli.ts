@@ -10,11 +10,13 @@ import type {
 import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
+import { compileMembershipFeeMechanics } from "./membership-fee-mechanics.ts";
 import { validateJsonSchema } from "./schema-validation.ts";
 import type {
   RentalBlueprintBodiesArtifact,
   RentalEvidenceArtifact,
 } from "./rental-inputs.ts";
+import type { RentalMechanicSources } from "./rental-mechanic-evidence.ts";
 import type { StructuredValuesArtifact } from "./structured-values.ts";
 
 const invalidArgumentsExitCode = 2;
@@ -35,6 +37,17 @@ interface ConsoleReturnOptions {
   readonly outputPath: string;
 }
 
+interface RentalMechanicCommand {
+  readonly name: string;
+  readonly outputLabel: string;
+  readonly failureLabel: string;
+  readonly compile: (
+    rentalEvidence: RentalEvidenceArtifact,
+    blueprintBodies: RentalBlueprintBodiesArtifact,
+    sources: RentalMechanicSources,
+  ) => object;
+}
+
 await main(process.argv.slice(2));
 
 async function main(arguments_: readonly string[]): Promise<void> {
@@ -44,12 +57,29 @@ async function main(arguments_: readonly string[]): Promise<void> {
   }
 
   if (arguments_[0] === "console-return-mechanics") {
-    await runConsoleReturnMechanics(arguments_.slice(1));
+    await runRentalMechanic(arguments_.slice(1), {
+      name: "console-return-mechanics",
+      outputLabel: "Console return mechanics",
+      failureLabel: "Console-return-mechanics compilation",
+      compile: compileConsoleReturnMechanics,
+    });
+    return;
+  }
+
+  if (arguments_[0] === "membership-fee-mechanics") {
+    await runRentalMechanic(arguments_.slice(1), {
+      name: "membership-fee-mechanics",
+      outputLabel: "Membership fee mechanics",
+      failureLabel: "Membership-fee-mechanics compilation",
+      compile: compileMembershipFeeMechanics,
+    });
     return;
   }
 
   if (arguments_[0] !== "film-catalog") {
-    console.error("Expected the film-catalog or console-return-mechanics command.");
+    console.error(
+      "Expected the film-catalog, console-return-mechanics, or membership-fee-mechanics command.",
+    );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
     return;
@@ -106,8 +136,11 @@ async function main(arguments_: readonly string[]): Promise<void> {
   }
 }
 
-async function runConsoleReturnMechanics(arguments_: readonly string[]): Promise<void> {
-  const options = parseConsoleReturnOptions(arguments_);
+async function runRentalMechanic(
+  arguments_: readonly string[],
+  command: RentalMechanicCommand,
+): Promise<void> {
+  const options = parseRentalMechanicOptions(arguments_, command.name);
   if (typeof options === "string") {
     console.error(options);
     writeUsage(process.stderr);
@@ -149,7 +182,7 @@ async function runConsoleReturnMechanics(arguments_: readonly string[]): Promise
         "rental-blueprint-bodies",
       ),
     } as const;
-    const mechanics = compileConsoleReturnMechanics(
+    const mechanics = command.compile(
       rentalInput as RentalEvidenceArtifact,
       bodyInput as RentalBlueprintBodiesArtifact,
       sources,
@@ -161,16 +194,16 @@ async function runConsoleReturnMechanics(arguments_: readonly string[]): Promise
 
     const status = await writeImmutableArtifact(options.outputPath, output);
     if (status === "conflict") {
-      console.error(`Console return mechanics conflict with existing output: ${options.outputPath}`);
+      console.error(`${command.outputLabel} conflict with existing output: ${options.outputPath}`);
       process.exitCode = outputConflictExitCode;
       return;
     }
 
     const verb = status === "created" ? "wrote" : "is unchanged";
-    console.log(`Console return mechanics ${verb}: ${options.outputPath}`);
+    console.log(`${command.outputLabel} ${verb}: ${options.outputPath}`);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown failure.";
-    console.error(`Console-return-mechanics compilation failed: ${message}`);
+    console.error(`${command.failureLabel} failed: ${message}`);
     process.exitCode = inputFailureExitCode;
   }
 }
@@ -207,8 +240,9 @@ function parseFilmCatalogOptions(
   return { inputPath, inputSchemaPath, outputPath };
 }
 
-function parseConsoleReturnOptions(
+function parseRentalMechanicOptions(
   arguments_: readonly string[],
+  commandName: string,
 ): ConsoleReturnOptions | string {
   const values = new Map<string, string>();
   const allowed = new Set([
@@ -223,7 +257,7 @@ function parseConsoleReturnOptions(
     const name = arguments_[index];
     const value = arguments_[index + 1];
     if (name === undefined || !allowed.has(name)) {
-      return `Unknown console-return-mechanics option ${name ?? "<missing>"}.`;
+      return `Unknown ${commandName} option ${name ?? "<missing>"}.`;
     }
     if (value === undefined || value.startsWith("--")) {
       return `Expected a value for ${name}.`;
@@ -309,5 +343,8 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   );
   stream.write(
     "  neonrewind-data-compiler console-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
+  );
+  stream.write(
+    "  neonrewind-data-compiler membership-fee-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
   );
 }
