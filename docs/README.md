@@ -34,6 +34,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Rental Blueprint bodies | `rental-blueprint-bodies.v1.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
+| Movie return mechanics | `movie-return-mechanics.v1.json` | Separates new-day movie readiness from weighted return selection and records caller coverage |
 | Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRewind records |
 
 An artifact is a JSON file produced by one of these commands.
@@ -400,7 +401,59 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 11. Compile the normalized film catalog
+## 11. Compile the movie-return mechanics
+
+This step uses the same two private rental artifacts as the other mechanic compilers.
+It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
+It separately records the weighted selector's configured probabilities, override condition, four-item limit, candidate queue, and result behavior.
+The current rental Blueprint artifact contains the selector definition but no caller, so this artifact does not claim that its weights are the confirmed nightly return probabilities.
+The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
+
+Move into the TypeScript workspace if you are not already there.
+
+```powershell
+Push-Location projects/typescript
+pnpm install --frozen-lockfile
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm install --frozen-lockfile
+```
+
+Compile the private mechanic artifact.
+
+```powershell
+pnpm movie-return-mechanics `
+  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" `
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" `
+  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" `
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" `
+  --output ".local/domain/current/movie-return-mechanics.v1.json"
+```
+
+```bash
+pnpm movie-return-mechanics \
+  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" \
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" \
+  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" \
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" \
+  --output ".local/domain/current/movie-return-mechanics.v1.json"
+```
+
+Return to the repository root when the command finishes.
+
+```powershell
+Pop-Location
+```
+
+```bash
+popd >/dev/null
+```
+
+The output contains normalized game rules and remains private and uncommitted.
+
+## 12. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.

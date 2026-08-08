@@ -8,6 +8,7 @@
     "console-return-mechanics": "node packages/data-compiler/src/cli.ts console-return-mechanics",
     "film-catalog": "node packages/data-compiler/src/cli.ts film-catalog",
     "membership-fee-mechanics": "node packages/data-compiler/src/cli.ts membership-fee-mechanics",
+    "movie-return-mechanics": "node packages/data-compiler/src/cli.ts movie-return-mechanics",
     "test": "pnpm --recursive --if-present test"
   },
   "devEngines": {
