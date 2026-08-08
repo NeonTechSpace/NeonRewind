@@ -173,10 +173,10 @@
                   "const": "main.lua"
                 },
                 "sizeBytes": {
-                  "const": 13019
+                  "const": 14139
                 },
                 "sha256": {
-                  "const": "f36bdeb8af55d5fb61664da5fd6aaa0f85c7ef3b47bf5e1c7485e47d89965d15"
+                  "const": "93600439f3fd1278bdab3c6ae3abc5bb724daa2a0f80af55b44b35996be68a9a"
                 }
               }
             }

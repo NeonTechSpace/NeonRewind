@@ -96,6 +96,8 @@ local report = {
         instancesFound = 0,
         recordedObjectPaths = json_array({}),
         relevantClassProperties = json_array({}),
+        propertiesVisited = 0,
+        propertiesUnreadable = 0,
         propertiesScanned = false,
     }),
     hooks = json_array({}),
@@ -202,6 +204,7 @@ local function snapshot_array(object, field_name)
         readable = false,
         count = nil,
         recordedElementPaths = json_array({}),
+        unreadableElementCount = 0,
         truncated = false,
     }
 
@@ -214,15 +217,26 @@ local function snapshot_array(object, field_name)
         local array = object:GetPropertyValue(field_name)
         snapshot.count = #array
         snapshot.readable = true
-        array:ForEach(function(_, element)
+        for index = 1, snapshot.count do
             if #snapshot.recordedElementPaths.value >= MAX_ARRAY_ELEMENTS then
                 snapshot.truncated = true
-                return true
+                break
             end
-            local path = object_path(element:get())
+
+            local element = array[index]
+            local unwrapped_ok, unwrapped = pcall(function()
+                return element:get()
+            end)
+            if not unwrapped_ok then
+                unwrapped = element
+            end
+
+            local path = object_path(unwrapped)
+            if path == nil then
+                snapshot.unreadableElementCount = snapshot.unreadableElementCount + 1
+            end
             table.insert(snapshot.recordedElementPaths.value, path or "invalid-object-reference")
-            return false
-        end)
+        end
     end)
 
     if not ok then
@@ -262,6 +276,24 @@ local function property_is_relevant(full_name)
         or string.find(lowered, "return", 1, true) ~= nil
 end
 
+local function readable_property_name(property)
+    local full_name_ok, full_name = pcall(function()
+        return property:GetFullName()
+    end)
+    if full_name_ok and full_name ~= nil then
+        return bounded_text(full_name)
+    end
+
+    local short_name_ok, short_name = pcall(function()
+        return property:GetFName():ToString()
+    end)
+    if short_name_ok and short_name ~= nil then
+        return bounded_text(short_name)
+    end
+
+    return nil
+end
+
 local function scan_customer_properties(customer)
     local customers = report.customers.value
     if customers.propertiesScanned or not valid_object(customer) then
@@ -273,8 +305,11 @@ local function scan_customer_properties(customer)
         local depth = 0
         while valid_object(class) and depth < 8 and #customers.relevantClassProperties.value < MAX_CUSTOMER_PROPERTIES do
             class:ForEachProperty(function(property)
-                local full_name = bounded_text(property:GetFullName())
-                if property_is_relevant(full_name) then
+                customers.propertiesVisited = customers.propertiesVisited + 1
+                local full_name = readable_property_name(property)
+                if full_name == nil then
+                    customers.propertiesUnreadable = customers.propertiesUnreadable + 1
+                elseif property_is_relevant(full_name) then
                     table.insert(customers.relevantClassProperties.value, full_name)
                 end
                 return #customers.relevantClassProperties.value >= MAX_CUSTOMER_PROPERTIES
