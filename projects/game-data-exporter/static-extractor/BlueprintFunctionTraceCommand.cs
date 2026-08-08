@@ -1,9 +1,4 @@
 using System.Text.Json;
-using CUE4Parse.FileProvider;
-using CUE4Parse.MappingsProvider.Usmap;
-using CUE4Parse.UE4.Objects.Engine;
-using CUE4Parse.UE4.Objects.UObject;
-using CUE4Parse.UE4.Versions;
 
 namespace NeonRewind.StaticExtractor;
 
@@ -120,25 +115,6 @@ internal static class BlueprintFunctionTraceCommand
         string mappingsPath,
         string packageDirectory)
     {
-        var versions = new VersionContainer(EGame.GAME_UE5_4);
-        using var provider = new DefaultFileProvider(
-            Path.GetFullPath(packageDirectory),
-            SearchOption.TopDirectoryOnly,
-            versions,
-            StringComparer.OrdinalIgnoreCase)
-        {
-            MappingsContainer = new FileUsmapTypeMappingsProvider(Path.GetFullPath(mappingsPath)),
-            ReadScriptData = true,
-        };
-
-        provider.Initialize();
-        provider.Mount();
-        provider.PostMount();
-        if (provider.MountedVfs.Count == 0 || provider.UnloadedVfs.Count > 0)
-        {
-            throw new InvalidDataException("Package containers did not mount completely.");
-        }
-
         var requests = inputs
             .SelectMany(input => input.Artifact.Functions.Select(function =>
                 new TraceRequest(function, input.Artifact.Target.FunctionName)))
@@ -152,30 +128,15 @@ internal static class BlueprintFunctionTraceCommand
             throw new InvalidDataException("Blueprint caller-body inputs contain duplicate functions.");
         }
 
-        var functions = new List<BlueprintTracedFunction>();
-        foreach (var classGroup in requests.GroupBy(request => new TraceClassKey(
-            request.Function.PackagePath,
-            request.Function.ClassName,
-            request.Function.ClassPath)))
+        var orderedFunctions = BlueprintFunctionTracer.Trace(
+            mappingsPath,
+            packageDirectory,
+            requests.Select(request => CreateTraceRequest(request.Function)).ToArray());
+        foreach (var function in orderedFunctions)
         {
-            var blueprintClass = LoadClass(provider, classGroup.Key);
-            foreach (var request in classGroup)
-            {
-                var function = LoadFunction(blueprintClass, request.Function);
-                var trace = BlueprintFunctionTraceBuilder.Build(
-                    request.Function.PackagePath,
-                    blueprintClass,
-                    function);
-                VerifyFunction(trace, request);
-                functions.Add(trace);
-            }
+            var request = requests.Single(value => value.Function.FunctionPath == function.FunctionPath);
+            VerifyTargetCalls(function, request);
         }
-
-        var orderedFunctions = functions
-            .OrderBy(function => function.PackagePath, StringComparer.Ordinal)
-            .ThenBy(function => function.ClassPath, StringComparer.Ordinal)
-            .ThenBy(function => function.FunctionPath, StringComparer.Ordinal)
-            .ToArray();
         var nodes = orderedFunctions.SelectMany(function => function.Nodes).ToArray();
 
         return new BlueprintFunctionTrace(
@@ -206,7 +167,7 @@ internal static class BlueprintFunctionTraceCommand
                     .Distinct(StringComparer.Ordinal).Count(),
                 ClassCount: orderedFunctions.Select(function => function.ClassPath)
                     .Distinct(StringComparer.Ordinal).Count(),
-                FunctionCount: orderedFunctions.Length,
+                FunctionCount: orderedFunctions.Count,
                 NodeCount: nodes.Length,
                 CallCount: nodes.Count(node => node.Call is not null),
                 BranchCount: nodes.Count(node => node.Jump is not null),
@@ -219,73 +180,9 @@ internal static class BlueprintFunctionTraceCommand
            call.FunctionName.StartsWith("ExecuteUbergraph_", StringComparison.Ordinal) &&
            call.IntegerArguments[0].Position == 0;
 
-    private static UBlueprintGeneratedClass LoadClass(
-        DefaultFileProvider provider,
-        TraceClassKey expected)
-    {
-        if (!provider.TryGetGameFile(expected.PackagePath, out var file))
-        {
-            throw new InvalidDataException($"Blueprint trace package is missing: {expected.PackagePath}");
-        }
-
-        try
-        {
-            var blueprintClass = provider.LoadPackage(file)
-                .GetExports()
-                .OfType<UBlueprintGeneratedClass>()
-                .SingleOrDefault(value => value.Name == expected.ClassName) ??
-                throw new InvalidDataException($"Blueprint trace class is missing: {expected.ClassPath}");
-            if (blueprintClass.GetPathName() != expected.ClassPath)
-            {
-                throw new InvalidDataException($"Blueprint trace class path changed: {expected.ClassPath}");
-            }
-
-            return blueprintClass;
-        }
-        catch (InvalidDataException)
-        {
-            throw;
-        }
-        catch (Exception exception) when (exception is not OutOfMemoryException)
-        {
-            throw new InvalidDataException(
-                $"Could not load Blueprint trace package {expected.PackagePath} ({exception.GetType().Name}).",
-                exception);
-        }
-    }
-
-    private static UFunction LoadFunction(
-        UBlueprintGeneratedClass blueprintClass,
-        BlueprintCallerFunctionBody expected)
-    {
-        var matches = blueprintClass.FuncMap
-            .Where(pair => pair.Key.Text == expected.FunctionName)
-            .Select(pair => pair.Value.Load<UFunction>())
-            .Where(function => function is not null)
-            .Cast<UFunction>()
-            .ToArray();
-        if (matches.Length != 1 || matches[0].GetPathName() != expected.FunctionPath)
-        {
-            throw new InvalidDataException($"Blueprint trace function changed: {expected.FunctionPath}");
-        }
-
-        return matches[0];
-    }
-
-    private static void VerifyFunction(BlueprintTracedFunction actual, TraceRequest request)
+    private static void VerifyTargetCalls(BlueprintTracedFunction actual, TraceRequest request)
     {
         var expected = request.Function;
-        if (actual.PackagePath != expected.PackagePath ||
-            actual.ClassName != expected.ClassName ||
-            actual.ClassPath != expected.ClassPath ||
-            actual.FunctionName != expected.FunctionName ||
-            actual.FunctionPath != expected.FunctionPath ||
-            actual.Flags != expected.Flags ||
-            actual.BytecodeExpressionCount != expected.BytecodeExpressionCount)
-        {
-            throw new InvalidDataException($"Blueprint trace function metadata changed: {expected.FunctionPath}");
-        }
-
         var calls = actual.Nodes
             .Where(node => node.Call?.FunctionName == request.TargetFunctionName)
             .Select(node => new BlueprintCallerFunctionCall(
@@ -303,6 +200,17 @@ internal static class BlueprintFunctionTraceCommand
             throw new InvalidDataException($"Blueprint trace target calls changed: {expected.FunctionPath}");
         }
     }
+
+    private static BlueprintFunctionTraceRequest CreateTraceRequest(
+        BlueprintCallerFunctionBody function)
+        => new(
+            function.PackagePath,
+            function.ClassName,
+            function.ClassPath,
+            function.FunctionName,
+            function.FunctionPath,
+            function.Flags,
+            function.BytecodeExpressionCount);
 
     private static IReadOnlyList<TraceInput> ReadInputs(IReadOnlyList<string> paths)
         => paths.Select(path => new TraceInput(
@@ -467,6 +375,4 @@ internal static class BlueprintFunctionTraceCommand
     private sealed record TraceRequest(
         BlueprintCallerFunctionBody Function,
         string TargetFunctionName);
-
-    private sealed record TraceClassKey(string PackagePath, string ClassName, string ClassPath);
 }
