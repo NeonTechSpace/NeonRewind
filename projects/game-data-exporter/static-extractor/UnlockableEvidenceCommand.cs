@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace NeonRetroRewind.StaticExtractor;
 
-internal static class RentalEvidenceCommand
+internal static class UnlockableEvidenceCommand
 {
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
@@ -10,12 +10,10 @@ internal static class RentalEvidenceCommand
 
     private static readonly BlueprintClusterTarget[] Targets =
     [
-        new("ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleReturn.uasset", "BlueprintGeneratedClass"),
-        new("ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleExampleFeeRecord.uasset", "BlueprintGeneratedClass"),
-        new("ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExamplePayment.uasset", "BlueprintGeneratedClass"),
-        new("ExampleGame/Content/ExampleProject/core/blueprint/ExampleQueueSystem/ExampleFeeRecord.uasset", "UserDefinedStruct"),
-        new("ExampleGame/Content/ExampleProject/core/blueprint/ExampleQueueSystem/ExampleQueueSystem.uasset", "BlueprintGeneratedClass"),
-        new("ExampleGame/Content/ExampleProject/core/blueprint/ExampleQueueSystem/ExampleQueueStruct.uasset", "UserDefinedStruct"),
+        new("ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.uasset", "BlueprintGeneratedClass"),
+        new("ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockFunctions.uasset", "BlueprintGeneratedClass"),
+        new("ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset", "BlueprintGeneratedClass"),
+        new("ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockState.uasset", "UserDefinedStruct"),
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -48,7 +46,7 @@ internal static class RentalEvidenceCommand
             var censusIdentity = FileIdentityFactory.Create(options.StaticCensusPath);
             var mappingIdentity = AcquisitionValidator.ReadMappingIdentity(options.MappingsPath);
             BlueprintClusterEvidenceReader.ValidateCensus(census, manifest, manifestIdentity.Sha256);
-            BlueprintClusterEvidenceReader.ValidateTargets(census, Targets, "rental");
+            BlueprintClusterEvidenceReader.ValidateTargets(census, Targets, "unlockable");
             var packagePaths = AcquisitionValidator.VerifyPackageFiles(manifest, options.PackageDirectory);
 
             var evidence = CreateEvidence(
@@ -65,37 +63,37 @@ internal static class RentalEvidenceCommand
             AcquisitionValidator.VerifyUnchanged(options.MappingsPath, mappingIdentity, "Mappings");
 
             var json = JsonSerializer.Serialize(evidence, JsonOptions) + "\n";
-            var writeStatus = ImmutableArtifactWriter.Write(options.OutputPath, json, "Rental evidence");
+            var writeStatus = ImmutableArtifactWriter.Write(options.OutputPath, json, "Unlockable evidence");
             return writeStatus == ArtifactWriteStatus.Conflict ? OutputConflictExitCode : 0;
         }
         catch (IOException exception)
         {
-            Console.Error.WriteLine($"Rental-evidence operation failed: {exception.Message}");
+            Console.Error.WriteLine($"Unlockable-evidence operation failed: {exception.Message}");
             return InputFailureExitCode;
         }
         catch (InvalidDataException exception)
         {
-            Console.Error.WriteLine($"Rental-evidence input failed: {exception.Message}");
+            Console.Error.WriteLine($"Unlockable-evidence input failed: {exception.Message}");
             return InputFailureExitCode;
         }
         catch (System.Text.Json.JsonException exception)
         {
-            Console.Error.WriteLine($"Rental-evidence input failed: {exception.Message}");
+            Console.Error.WriteLine($"Unlockable-evidence input failed: {exception.Message}");
             return InputFailureExitCode;
         }
         catch (Newtonsoft.Json.JsonException exception)
         {
-            Console.Error.WriteLine($"Rental-evidence serialization failed: {exception.Message}");
+            Console.Error.WriteLine($"Unlockable-evidence serialization failed: {exception.Message}");
             return InputFailureExitCode;
         }
         catch (UnauthorizedAccessException exception)
         {
-            Console.Error.WriteLine($"Rental-evidence access failed: {exception.Message}");
+            Console.Error.WriteLine($"Unlockable-evidence access failed: {exception.Message}");
             return InputFailureExitCode;
         }
     }
 
-    private static RentalEvidence CreateEvidence(
+    private static UnlockableEvidence CreateEvidence(
         BuildManifest manifest,
         string manifestSha256,
         FileIdentity censusIdentity,
@@ -103,8 +101,8 @@ internal static class RentalEvidenceCommand
         string mappingsPath,
         string packageDirectory)
     {
-        var packages = BlueprintClusterEvidenceReader.Extract(mappingsPath, packageDirectory, Targets, "Rental")
-            .Select(package => new RentalPackageEvidence(
+        var packages = BlueprintClusterEvidenceReader.Extract(mappingsPath, packageDirectory, Targets, "Unlockable")
+            .Select(package => new UnlockablePackageEvidence(
                 package.Path,
                 package.BlueprintClasses,
                 package.UserDefinedStructs))
@@ -118,13 +116,13 @@ internal static class RentalEvidenceCommand
             .Concat(userDefinedStructs.SelectMany(value => value.References))
             .ToArray();
 
-        return new RentalEvidence(
-            ArtifactType: "rental-evidence",
+        return new UnlockableEvidence(
+            ArtifactType: "unlockable-evidence",
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
-            StaticCensus: new RentalEvidenceInput(
+            StaticCensus: new UnlockableEvidenceInput(
                 FileName: censusIdentity.FileName,
                 SizeBytes: censusIdentity.SizeBytes,
                 Sha256: censusIdentity.Sha256),
@@ -134,7 +132,7 @@ internal static class RentalEvidenceCommand
                 Name: "NeonRetroRewind.StaticExtractor",
                 Version: AcquisitionValidator.ReadAssemblyMetadata("ExtractorVersion"),
                 Cue4ParseVersion: AcquisitionValidator.ReadAssemblyMetadata("Cue4ParsePackageVersion")),
-            Totals: new RentalEvidenceTotals(
+            Totals: new UnlockableEvidenceTotals(
                 PackageCount: packages.Length,
                 BlueprintClassCount: blueprintClasses.Length,
                 UserDefinedStructCount: userDefinedStructs.Length,
@@ -146,7 +144,10 @@ internal static class RentalEvidenceCommand
             Packages: packages);
     }
 
-    private static bool TryParseArguments(string[] args, out RentalEvidenceOptions options, out string error)
+    private static bool TryParseArguments(
+        string[] args,
+        out UnlockableEvidenceOptions options,
+        out string error)
     {
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
         for (var index = 0; index < args.Length; index++)
@@ -154,14 +155,14 @@ internal static class RentalEvidenceCommand
             var option = args[index];
             if (index + 1 >= args.Length)
             {
-                options = RentalEvidenceOptions.Empty;
+                options = UnlockableEvidenceOptions.Empty;
                 error = $"Missing value for option '{option}'.";
                 return false;
             }
 
             if (!values.TryAdd(option, args[++index]))
             {
-                options = RentalEvidenceOptions.Empty;
+                options = UnlockableEvidenceOptions.Empty;
                 error = $"Duplicate option '{option}'.";
                 return false;
             }
@@ -171,14 +172,14 @@ internal static class RentalEvidenceCommand
         var unknown = values.Keys.FirstOrDefault(key => !required.Contains(key, StringComparer.Ordinal));
         if (unknown is not null || required.Any(option => !values.ContainsKey(option)))
         {
-            options = RentalEvidenceOptions.Empty;
+            options = UnlockableEvidenceOptions.Empty;
             error = unknown is null
-                ? "Rental-evidence generation requires all five input and output options."
+                ? "Unlockable-evidence generation requires all five input and output options."
                 : $"Unknown option '{unknown}'.";
             return false;
         }
 
-        options = new RentalEvidenceOptions(
+        options = new UnlockableEvidenceOptions(
             values["--build-manifest"],
             values["--static-census"],
             values["--mappings"],
@@ -190,19 +191,19 @@ internal static class RentalEvidenceCommand
 
     private static void WriteUsage(TextWriter writer)
     {
-        writer.WriteLine("Usage: NeonRetroRewind.StaticExtractor rental-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("Usage: NeonRetroRewind.StaticExtractor unlockable-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine();
-        writer.WriteLine("The command writes mapped class defaults and object references for the rental-system package cluster.");
+        writer.WriteLine("The command writes mapped class defaults and references for the unlockable-system package cluster.");
         writer.WriteLine("The output directory must already exist, and different existing content is never overwritten.");
     }
 
-    private sealed record RentalEvidenceOptions(
+    private sealed record UnlockableEvidenceOptions(
         string BuildManifestPath,
         string StaticCensusPath,
         string MappingsPath,
         string PackageDirectory,
         string OutputPath)
     {
-        public static RentalEvidenceOptions Empty { get; } = new("", "", "", "", "");
+        public static UnlockableEvidenceOptions Empty { get; } = new("", "", "", "", "");
     }
 }

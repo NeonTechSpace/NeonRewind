@@ -14,7 +14,7 @@ Do not commit or publish:
 - Compiled extractor binaries
 - Game binaries, package files, mappings, or saves
 - Build manifests or static censuses produced from a game installation
-- Structured values, rental evidence, Blueprint pseudocode, or Blueprint function traces
+- Structured values, rental or unlockable evidence, Blueprint pseudocode, or Blueprint function traces
 - Compiled film catalogs, mechanic artifacts, runtime observations, validation reports, or extracted game text
 - Extracted or modified game assets
 
@@ -31,6 +31,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Structured index | `structured-asset-index.json` | Locates DataTables and StringTables using a matching Unreal mapping |
 | Structured values | `structured-values.json` | Extracts table rows and strings into deterministic JSON |
 | Rental evidence | `rental-evidence.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
+| Unlockable evidence | `unlockable-evidence.json` | Extracts the unlockable subsystem's fields, functions, explicit defaults, and default-value object references |
 | Rental Blueprint bodies | `rental-blueprint-bodies.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Blueprint call sites | `blueprint-call-sites.movie-return.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
 | Blueprint caller bodies | `blueprint-caller-bodies.movie-return.json` | Decompiles the exact functions found by the movie-return call-site scan |
@@ -60,7 +61,7 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
 Follow [Portable local tool setup](docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
@@ -283,6 +284,32 @@ dotnet run --project "$extractor" -- rental-evidence \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
   --output "$buildDirectory/rental-evidence.json"
+```
+
+The output contains extracted game values and must remain in the ignored local acquisition directory.
+
+## 7a. Extract the unlockable-system evidence
+
+This step reads the unlockable manager, its shared item base, its helper class, and its save structure.
+It records generated-class fields, function names, class-default values, struct defaults, and object references contained in those mapped defaults.
+The command stops if the exact four-package cluster is absent from the census.
+
+```powershell
+dotnet run --project $extractor -- unlockable-evidence `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "unlockable-evidence.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- unlockable-evidence \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/unlockable-evidence.json"
 ```
 
 The output contains extracted game values and must remain in the ignored local acquisition directory.
