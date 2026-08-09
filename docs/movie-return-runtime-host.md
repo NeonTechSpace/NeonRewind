@@ -2,7 +2,7 @@
 
 This document records the runtime-host investigation for the first movie-return observation.
 The Lua compatibility probe source and approval-gated probe lifecycle exist.
-Collector-specific staging, installation preview, and cleanup routing also exist, but the current C++ DLL remains load-only and must not be installed for an observation.
+Collector-specific staging, installation preview, cleanup routing, and the bounded `0.1.0` C++ collector now exist. Native compilation is complete; an observation still requires a separate user-operated game run.
 The Lua probe produces a compatibility diagnostic, not a runtime observation.
 
 ## Investigation result
@@ -112,5 +112,4 @@ The completed compatibility probe proved the required objects, fields, arrays, B
 That result leads to a purpose-specific C++ collector using the observation contract because Lua cannot provide the exact Blueprint pre-call state.
 The probe's 16-element diagnostic limit does not define the collector limit. The contract permits at most 256 captured references per collection and requires the collector to record the actual count and whether references were omitted.
 If required fields or hooks are unavailable, the collector design must stop and be revised from the diagnostic evidence.
-The current collector version `0.0.1` is still the load-only scaffold.
-Collector staging proves payload identity and lifecycle routing; it does not prove that gameplay hooks or observation writing exist.
+Collector `0.1.0` implements the bounded gameplay hooks and atomic observation writer. Its native build and offline staging checks do not prove behavior inside the game; that requires the user-operated observation run.

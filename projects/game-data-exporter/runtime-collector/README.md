@@ -1,7 +1,13 @@
 # Movie-return runtime collector
 
 This directory contains the source and local build commands for the UE4SS C++ movie-return collector.
-The current collector is a load-only scaffold: it does not register gameplay hooks or write an observation.
+Collector `0.1.0` registers bounded hooks for readiness, selection, customer return, and the inventory additions made inside a customer-return call. It writes the three contracted observation event types; the inventory hook supplies state for the customer-return event and does not create another event type.
+
+The collector accepts only the closed staged config for its version, the pinned UE4SS host, and Steam app `3552140`. Before registering hooks, it verifies the staged observation schema and target-mechanics files against the sizes and SHA-256 hashes in that config. It retries hook discovery until all four Blueprint functions are loaded, checks their reflected parameter shapes, and fails closed if those shapes do not match.
+
+Each run writes `movie-return-observation.json` and `movie-return-observation.sha256` below `<configured-output-root>/<steam-build-id>/<run-id>/`. The JSON and hash sidecar are each published through a same-directory temporary file and atomic replacement. The record remains `aborted` while capture is incomplete, becomes `complete` after at least one readiness, selection, and customer-return event, and records a bounded failure status when the collector can still persist one.
+
+Customer inventory capture is scoped to the active customer-return call: its pre-state is empty and its post-state contains the objects actually passed to `ExampleAddInventoryItem` during that call. This event-local representation lets the validator compare the observed additions with the selected movies without requiring or guessing a separate full-inventory field on the customer Blueprint.
 
 The build is portable on 64-bit Windows.
 Its compiler, linker, CMake, Ninja, Rust toolchain, Windows SDK files, dependency source, and output remain in `projects/game-data-exporter/.local`, which Git ignores.
@@ -149,6 +155,4 @@ If a build is interrupted, rerun the same build command.
 Ninja keeps completed outputs and schedules unfinished or invalid targets again; no manual process or cache cleanup is required.
 
 Building does not copy anything into the game directory.
-The runtime exporter can now stage the DLL with its exact path, size, SHA-256 hash, generated config, observation schema, target-mechanics identity, and output root.
-The current `0.0.1` DLL is still load-only, so do not install it for an observation.
-Installation becomes meaningful only after the collector registers the bounded hooks and writes the contracted record.
+The runtime exporter can stage the DLL with its exact path, size, SHA-256 hash, generated config, observation schema, target-mechanics identity, and output root. Installation and cleanup remain separate explicit commands; none of the build or staging commands starts the game.

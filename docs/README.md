@@ -896,14 +896,13 @@ The collector staging command uses the same verified UE4SS archive, game executa
 It additionally copies a source-built `main.dll`, the observation schema, and one exact `movie-return-mechanics.json` into ignored local staging and generates a closed collector config.
 The staging manifest binds all of those inputs by byte length and SHA-256 hash.
 
-The current collector version `0.0.1` is load-only.
-The following command is suitable for checking the staging contract, but the resulting payload must not be installed for an observation until the collector implements its hooks and output writer.
+Collector `0.1.0` implements the bounded hooks and observation writer. The following command prepares its ignored staging payload without changing the game directory.
 
 ```powershell
 $collectorDll = "projects/game-data-exporter/.local/rc-build/<build-id>/artifact/NeonRetroRewindMovieReturnCollector/dlls/main.dll"
 $observationSchema = "projects/game-data-exporter/schemas/runtime/movie-return-observation.schema.json"
 $targetMechanics = Join-Path $domainDirectory "movie-return-mechanics.json"
-$observationOutputRoot = "projects/game-data-exporter/.local/runtime/$buildId"
+$observationOutputRoot = "projects/game-data-exporter/.local/runtime"
 $collectorStage = "projects/game-data-exporter/.local/runtime-host/runs/$runtimeStageId/collector"
 
 New-Item -ItemType Directory -Force -Path $observationOutputRoot | Out-Null
@@ -923,7 +922,7 @@ dotnet run --project $runtimeExporter -- stage-collector `
 collectorDll="projects/game-data-exporter/.local/rc-build/<build-id>/artifact/NeonRetroRewindMovieReturnCollector/dlls/main.dll"
 observationSchema="projects/game-data-exporter/schemas/runtime/movie-return-observation.schema.json"
 targetMechanics="$domainDirectory/movie-return-mechanics.json"
-observationOutputRoot="projects/game-data-exporter/.local/runtime/$buildId"
+observationOutputRoot="projects/game-data-exporter/.local/runtime"
 collectorStage="projects/game-data-exporter/.local/runtime-host/runs/$runtimeStageId/collector"
 
 mkdir -p "$observationOutputRoot"
@@ -970,8 +969,8 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 - `projects/game-data-exporter/schemas/runtime` contains the runtime observation JSON Schemas.
 - `projects/game-data-exporter/schemas/validation` contains the validation-report JSON Schemas.
 - `projects/game-data-exporter/runtime-exporter` contains the offline probe and collector runtime-host lifecycle commands and the Lua compatibility probe source.
-- `projects/game-data-exporter/runtime-collector` contains the load-only UE4SS C++ collector and its local Windows build entry points.
-- [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the limits on its future collector.
+- `projects/game-data-exporter/runtime-collector` contains the bounded UE4SS C++ collector and its local Windows build entry points.
+- [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the collector's limits.
 - `projects/typescript/packages/core` owns the normalized domain types and schemas.
 - `projects/typescript/packages/data-compiler` validates acquisition data and compiles private domain artifacts.
 - `projects/typescript/packages/validator` checks ordered runtime observations against deterministic mechanic relationships.

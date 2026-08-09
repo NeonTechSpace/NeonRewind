@@ -64,7 +64,7 @@ test("accepts the generated collector config contract", async () => {
     targetMechanics: createCollectorIdentity().targetMechanics,
     collector: {
       name: "NeonRetroRewind.MovieReturnRuntimeCollector",
-      version: "0.0.1",
+      version: "0.1.0",
     },
     runtimeHost: {
       name: "UE4SS",
@@ -75,7 +75,7 @@ test("accepts the generated collector config contract", async () => {
       stagedRelativePath:
         "mods/NeonRetroRewindMovieReturnCollector/movie-return-observation.schema.json",
     },
-    observationOutputRootAbsolutePath: "M:/NeonRetroRewind/.local/runtime/23896268",
+    observationOutputRootAbsolutePath: "M:/NeonRetroRewind/.local/runtime",
   };
 
   assert.doesNotThrow(() =>
@@ -136,7 +136,7 @@ function createStagingManifest(): {
 function createCollectorIdentity() {
   return {
     name: "NeonRetroRewindMovieReturnCollector",
-    version: "0.0.1",
+    version: "0.1.0",
     binary: file("main.dll", 100, "a"),
     config: file("config.json", 100, "b"),
     observationSchema: file("movie-return-observation.schema.json", 100, "c"),
@@ -144,7 +144,7 @@ function createCollectorIdentity() {
       ...file("movie-return-mechanics.json", 100, "d"),
       artifactType: "movie-return-mechanics",
     },
-    observationOutputRootAbsolutePath: "M:/NeonRetroRewind/.local/runtime/23896268",
+    observationOutputRootAbsolutePath: "M:/NeonRetroRewind/.local/runtime",
   };
 }
 

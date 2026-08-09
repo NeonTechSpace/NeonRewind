@@ -1,9 +1,9 @@
 set(TARGET NeonRetroRewindMovieReturnCollector)
 
-add_library(${TARGET} SHARED src/dllmain.cpp)
+add_library(${TARGET} SHARED src/dllmain.cpp src/observation.cpp)
 
 target_compile_features(${TARGET} PRIVATE cxx_std_23)
-target_link_libraries(${TARGET} PRIVATE UE4SS)
+target_link_libraries(${TARGET} PRIVATE UE4SS bcrypt)
 
 set_target_properties(
     ${TARGET}

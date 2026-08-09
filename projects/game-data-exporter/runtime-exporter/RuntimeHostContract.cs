@@ -12,7 +12,7 @@ internal static class RuntimeHostContract
     public const string DiagnosticRelativePath = "diagnostics/movie-return-compatibility-probe.json";
     public const string CollectorName = "NeonRetroRewindMovieReturnCollector";
     public const string CollectorRecordName = "NeonRetroRewind.MovieReturnRuntimeCollector";
-    public const string CollectorVersion = "0.0.1";
+    public const string CollectorVersion = "0.1.0";
     public const string CollectorBinaryRelativePath = "mods/NeonRetroRewindMovieReturnCollector/dlls/main.dll";
     public const string CollectorConfigRelativePath = "mods/NeonRetroRewindMovieReturnCollector/config.json";
     public const string CollectorSchemaRelativePath = "mods/NeonRetroRewindMovieReturnCollector/movie-return-observation.schema.json";

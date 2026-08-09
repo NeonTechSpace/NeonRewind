@@ -96,7 +96,7 @@
           "const": "NeonRetroRewind.MovieReturnRuntimeCollector"
         },
         "version": {
-          "const": "0.0.1"
+          "const": "0.1.0"
         }
       }
     },

@@ -1,7 +1,7 @@
 # Movie-return runtime observation
 
 This document defines the first controlled runtime observation for movie returns.
-The observation schema exists, but the runtime collector has not been implemented, so these steps are not runnable today.
+Collector `0.1.0`, its observation schema, build instructions, and exact install and cleanup commands are implemented. The remaining integration check is a user-operated game run.
 The [runtime-host investigation](movie-return-runtime-host.md) defines the compatibility probe, temporary installation footprint, and approval gates that precede the collector.
 
 ## Goal
@@ -72,12 +72,10 @@ The schema permits duplicate references, more than four selected movies, and dis
 Movie references must use stable runtime object paths when available.
 If stable paths are unavailable, the collector must assign run-local opaque identifiers that cannot be used outside that observation.
 
-The collector must write to a temporary filename, close the file, validate it against the schema, calculate its SHA-256 hash, and then rename it to the final filename.
+The collector validates its bounded generated values, serializes and parses the complete JSON record, writes and flushes a same-directory temporary file, atomically replaces the final observation, calculates its SHA-256 hash, and publishes the hash sidecar through the same temporary-file process.
 An interrupted run must retain an `aborted` or `failed` record when enough metadata exists to explain the interruption.
 
 ## User-operated run
-
-Do not begin this run until the collector, schema, build instructions, and cleanup instructions exist.
 
 1. Close the game before preparing or installing the collector.
 2. Review the exact temporary files and destinations proposed for the game directory.
@@ -117,7 +115,7 @@ It returns `passed`, `incomplete`, or `mismatch` with bounded issue codes and do
 
 ## Validate a completed observation
 
-The offline command is ready, but it needs an observation produced by the future runtime collector.
+The offline command needs an observation produced by the runtime collector.
 Run it from `projects/typescript` after replacing the build and run IDs with the private observation directory names.
 
 ```powershell
