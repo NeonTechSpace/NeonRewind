@@ -7,9 +7,9 @@ internal static class RuntimeHostCleanupCommand
     private const int ConflictExitCode = 4;
     private const int ApprovalRequiredExitCode = 5;
 
-    public static int Run(string[] args)
+    public static int Run(string[] args, string commandName, RuntimeHostPayloadKind payloadKind)
     {
-        if (!CleanupProbeOptions.TryParse(args, out var options, out var error))
+        if (!CleanupProbeOptions.TryParse(args, commandName, out var options, out var error))
         {
             Console.Error.WriteLine(error);
             return InvalidArgumentsExitCode;
@@ -17,7 +17,7 @@ internal static class RuntimeHostCleanupCommand
 
         try
         {
-            return Cleanup(options!);
+            return Cleanup(options!, payloadKind);
         }
         catch (RuntimeHostApprovalRequiredException exception)
         {
@@ -36,9 +36,9 @@ internal static class RuntimeHostCleanupCommand
         }
     }
 
-    private static int Cleanup(CleanupProbeOptions options)
+    private static int Cleanup(CleanupProbeOptions options, RuntimeHostPayloadKind payloadKind)
     {
-        var installation = RuntimeHostManifestService.ReadInstallation(options.InstallationManifestPath);
+        var installation = RuntimeHostManifestService.ReadInstallation(options.InstallationManifestPath, payloadKind);
         RuntimeHostManifestService.EnsureGameIsClosed(installation.Staging.ExecutablePath);
         VerifyInstalledTargets(installation);
         WritePreview(installation);
@@ -56,7 +56,7 @@ internal static class RuntimeHostCleanupCommand
         }
 
         using var operationLock = RuntimeHostOperationLock.Acquire(installation.Staging.GameDirectory);
-        installation = RuntimeHostManifestService.ReadInstallation(installation.Path);
+        installation = RuntimeHostManifestService.ReadInstallation(installation.Path, payloadKind);
         if (!string.Equals(options.ApprovalSha256, installation.Identity.Sha256, StringComparison.Ordinal))
         {
             throw new RuntimeHostApprovalRequiredException("The installation manifest changed after approval. Review it again before cleanup.");

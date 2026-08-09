@@ -20,10 +20,13 @@ internal static class RuntimeHostManifestService
         WriteIndented = true,
     };
 
-    public static VerifiedStagingManifest ReadStaging(string manifestPath) =>
-        ReadStaging(manifestPath, requireCurrentRuntimeHost: true);
+    public static VerifiedStagingManifest ReadStaging(string manifestPath, RuntimeHostPayloadKind payloadKind) =>
+        ReadStaging(manifestPath, payloadKind, requireCurrentRuntimeHost: true);
 
-    private static VerifiedStagingManifest ReadStaging(string manifestPath, bool requireCurrentRuntimeHost)
+    private static VerifiedStagingManifest ReadStaging(
+        string manifestPath,
+        RuntimeHostPayloadKind payloadKind,
+        bool requireCurrentRuntimeHost)
     {
         var path = ResolveExistingRegularFile(manifestPath, "Staging manifest");
         if (!string.Equals(Path.GetFileName(path), RuntimeHostContract.StagingManifestFileName, StringComparison.Ordinal))
@@ -34,7 +37,7 @@ internal static class RuntimeHostManifestService
         var identity = FileIdentityFactory.Create(path);
         var manifest = JsonSerializer.Deserialize<RuntimeHostStagingManifest>(File.ReadAllText(path), InputJsonOptions)
             ?? throw new InvalidDataException("Staging manifest is empty.");
-        ValidateStagingContract(manifest, requireCurrentRuntimeHost);
+        ValidateStagingContract(manifest, payloadKind, requireCurrentRuntimeHost);
 
         var stagingDirectory = Path.GetDirectoryName(path)!;
         var gameDirectory = ResolveGameDirectory(manifest.GameDirectory.AbsolutePath);
@@ -54,6 +57,11 @@ internal static class RuntimeHostManifestService
                 Path.Combine(gameDirectory, entry.RelativePath));
         }).ToArray();
 
+        if (requireCurrentRuntimeHost)
+        {
+            VerifyPayloadFiles(stagingDirectory, manifest);
+        }
+
         VerifyRegularFileIdentity(path, identity, "Staging manifest");
         return new VerifiedStagingManifest(
             path,
@@ -65,7 +73,7 @@ internal static class RuntimeHostManifestService
             files);
     }
 
-    public static VerifiedInstallationManifest ReadInstallation(string manifestPath)
+    public static VerifiedInstallationManifest ReadInstallation(string manifestPath, RuntimeHostPayloadKind payloadKind)
     {
         var path = ResolveExistingRegularFile(manifestPath, "Installation manifest");
         if (!string.Equals(Path.GetFileName(path), RuntimeHostContract.InstallationManifestFileName, StringComparison.Ordinal))
@@ -80,7 +88,7 @@ internal static class RuntimeHostManifestService
 
         var stagingPath = Path.Combine(Path.GetDirectoryName(path)!, RuntimeHostContract.StagingManifestFileName);
         VerifyRegularFileIdentity(stagingPath, manifest.StagingManifest, "Referenced staging manifest");
-        var staging = ReadStaging(stagingPath, requireCurrentRuntimeHost: false);
+        var staging = ReadStaging(stagingPath, payloadKind, requireCurrentRuntimeHost: false);
 
         if (manifest.Build != staging.Manifest.Build ||
             !string.Equals(manifest.GameDirectory.AbsolutePath, staging.Manifest.GameDirectory.AbsolutePath, StringComparison.OrdinalIgnoreCase) ||
@@ -190,14 +198,15 @@ internal static class RuntimeHostManifestService
     public static bool IsValidSha256(string? value) =>
         value is { Length: 64 } && value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
 
-    private static void ValidateStagingContract(RuntimeHostStagingManifest manifest, bool requireCurrentRuntimeHost)
+    private static void ValidateStagingContract(
+        RuntimeHostStagingManifest manifest,
+        RuntimeHostPayloadKind payloadKind,
+        bool requireCurrentRuntimeHost)
     {
         if (manifest.ArtifactType != "runtime-host-staging" ||
             manifest.Build is null ||
             manifest.RuntimeHost is null ||
             manifest.RuntimeHost.Archive is null ||
-            manifest.Probe is null ||
-            manifest.Probe.Source is null ||
             manifest.GameDirectory is null ||
             manifest.ProposedFiles is null ||
             manifest.Build.SteamAppId != RuntimeHostContract.SupportedAppId ||
@@ -205,22 +214,17 @@ internal static class RuntimeHostManifestService
             !manifest.Build.SteamBuildId.All(char.IsAsciiDigit) ||
             manifest.RuntimeHost.Name != "UE4SS" ||
             string.IsNullOrWhiteSpace(manifest.RuntimeHost.Version) ||
-            manifest.Probe.Name != RuntimeHostContract.ProbeName ||
-            string.IsNullOrWhiteSpace(manifest.Probe.Version) ||
-            manifest.Probe.Source.FileName != "main.lua" ||
-            manifest.Probe.DiagnosticRelativePath != RuntimeHostContract.DiagnosticRelativePath ||
             string.IsNullOrWhiteSpace(manifest.GameDirectory.AbsolutePath) ||
-            manifest.ProposedFiles.Count != RuntimeHostContract.ProposedFiles.Count)
+            manifest.ProposedFiles.Count != RuntimeHostContract.ProposedFiles.Count ||
+            (manifest.Probe is null) == (manifest.Collector is null) ||
+            (payloadKind == RuntimeHostPayloadKind.Probe) != (manifest.Probe is not null))
         {
             throw new InvalidDataException("Staging manifest does not match the supported runtime-host contract.");
         }
 
         if (requireCurrentRuntimeHost &&
             (manifest.RuntimeHost.Version != RuntimeHostContract.Ue4ssVersion ||
-             manifest.RuntimeHost.Archive.Sha256 != RuntimeHostContract.Ue4ssArchiveSha256 ||
-             manifest.Probe.Version != RuntimeHostContract.ProbeVersion ||
-             manifest.Probe.Source.SizeBytes != RuntimeHostContract.ProbeScriptSizeBytes ||
-             manifest.Probe.Source.Sha256 != RuntimeHostContract.ProbeScriptSha256))
+             manifest.RuntimeHost.Archive.Sha256 != RuntimeHostContract.Ue4ssArchiveSha256))
         {
             throw new InvalidDataException("Staging manifest does not match the current runtime-host identity.");
         }
@@ -228,7 +232,14 @@ internal static class RuntimeHostManifestService
         ValidateFileIdentity(manifest.Build.BuildManifest, "Build manifest identity");
         ValidateFileIdentity(manifest.Build.Executable, "Executable identity");
         ValidateFileIdentity(manifest.RuntimeHost.Archive, "Runtime-host archive identity");
-        ValidateFileIdentity(manifest.Probe.Source, "Probe source identity");
+        if (manifest.Probe is not null)
+        {
+            ValidateProbe(manifest.Probe, requireCurrentRuntimeHost);
+        }
+        else
+        {
+            ValidateCollector(manifest.Collector!, requireCurrentRuntimeHost);
+        }
 
         for (var index = 0; index < RuntimeHostContract.ProposedFiles.Count; index++)
         {
@@ -242,6 +253,135 @@ internal static class RuntimeHostManifestService
             {
                 throw new InvalidDataException("Staging manifest contains an unsupported proposed file.");
             }
+        }
+    }
+
+    private static void ValidateProbe(ProbeIdentity probe, bool requireCurrentRuntimeHost)
+    {
+        if (probe.Source is null ||
+            probe.Name != RuntimeHostContract.ProbeName ||
+            string.IsNullOrWhiteSpace(probe.Version) ||
+            probe.Source.FileName != "main.lua" ||
+            probe.DiagnosticRelativePath != RuntimeHostContract.DiagnosticRelativePath)
+        {
+            throw new InvalidDataException("Staging manifest contains an unsupported probe identity.");
+        }
+
+        ValidateFileIdentity(probe.Source, "Probe source identity");
+        if (requireCurrentRuntimeHost &&
+            (probe.Version != RuntimeHostContract.ProbeVersion ||
+             probe.Source.SizeBytes != RuntimeHostContract.ProbeScriptSizeBytes ||
+             probe.Source.Sha256 != RuntimeHostContract.ProbeScriptSha256))
+        {
+            throw new InvalidDataException("Staging manifest does not match the current probe identity.");
+        }
+    }
+
+    private static void ValidateCollector(CollectorIdentity collector, bool requireCurrentRuntimeHost)
+    {
+        if (collector.Binary is null ||
+            collector.Config is null ||
+            collector.ObservationSchema is null ||
+            collector.TargetMechanics is null ||
+            collector.Name != RuntimeHostContract.CollectorName ||
+            collector.Binary.FileName != "main.dll" ||
+            collector.Config.FileName != "config.json" ||
+            collector.ObservationSchema.FileName != RuntimeHostContract.ObservationSchemaFileName ||
+            collector.TargetMechanics.FileName != RuntimeHostContract.TargetMechanicsFileName ||
+            collector.TargetMechanics.ArtifactType != RuntimeHostContract.TargetMechanicsArtifactType ||
+            string.IsNullOrWhiteSpace(collector.Version) ||
+            string.IsNullOrWhiteSpace(collector.ObservationOutputRootAbsolutePath) ||
+            !Path.IsPathFullyQualified(collector.ObservationOutputRootAbsolutePath))
+        {
+            throw new InvalidDataException("Staging manifest contains an unsupported collector identity.");
+        }
+
+        ValidateFileIdentity(collector.Binary, "Collector binary identity");
+        ValidateFileIdentity(collector.Config, "Collector config identity");
+        ValidateFileIdentity(collector.ObservationSchema, "Observation schema identity");
+        ValidateFileIdentity(
+            new FileIdentity(
+                collector.TargetMechanics.FileName,
+                collector.TargetMechanics.SizeBytes,
+                collector.TargetMechanics.Sha256),
+            "Target mechanics identity");
+
+        if (requireCurrentRuntimeHost && collector.Version != RuntimeHostContract.CollectorVersion)
+        {
+            throw new InvalidDataException("Staging manifest does not match the current collector identity.");
+        }
+    }
+
+    private static void VerifyPayloadFiles(string stagingDirectory, RuntimeHostStagingManifest manifest)
+    {
+        if (manifest.Probe is not null)
+        {
+            var source = ResolveContainedPath(
+                stagingDirectory,
+                $"mods/{RuntimeHostContract.ProbeName}/Scripts/main.lua",
+                "Staged probe source");
+            VerifyRegularFileIdentity(source, manifest.Probe.Source, "Staged probe source");
+            return;
+        }
+
+        var collector = manifest.Collector!;
+        var outputRoot = Path.TrimEndingDirectorySeparator(
+            Path.GetFullPath(collector.ObservationOutputRootAbsolutePath));
+        if (!Directory.Exists(outputRoot) || (File.GetAttributes(outputRoot) & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new InvalidDataException($"Collector observation output root is unavailable or unsafe: {outputRoot}");
+        }
+
+        VerifyRegularFileIdentity(
+            ResolveContainedPath(stagingDirectory, RuntimeHostContract.CollectorBinaryRelativePath, "Staged collector binary"),
+            collector.Binary,
+            "Staged collector binary");
+        var configPath = ResolveContainedPath(
+            stagingDirectory,
+            RuntimeHostContract.CollectorConfigRelativePath,
+            "Staged collector config");
+        VerifyRegularFileIdentity(configPath, collector.Config, "Staged collector config");
+        VerifyCollectorConfig(configPath, manifest, collector);
+        VerifyRegularFileIdentity(
+            ResolveContainedPath(stagingDirectory, RuntimeHostContract.CollectorSchemaRelativePath, "Staged observation schema"),
+            collector.ObservationSchema,
+            "Staged observation schema");
+        VerifyRegularFileIdentity(
+            ResolveContainedPath(stagingDirectory, RuntimeHostContract.CollectorMechanicsRelativePath, "Staged target mechanics"),
+            new FileIdentity(
+                collector.TargetMechanics.FileName,
+                collector.TargetMechanics.SizeBytes,
+                collector.TargetMechanics.Sha256),
+            "Staged target mechanics");
+    }
+
+    private static void VerifyCollectorConfig(
+        string path,
+        RuntimeHostStagingManifest manifest,
+        CollectorIdentity collector)
+    {
+        var config = JsonSerializer.Deserialize<RuntimeCollectorConfig>(File.ReadAllText(path), InputJsonOptions)
+            ?? throw new InvalidDataException("Staged collector config is empty.");
+        if (config.ArtifactType != "movie-return-runtime-collector-config" ||
+            config.Build is null ||
+            config.TargetMechanics is null ||
+            config.Collector is null ||
+            config.RuntimeHost is null ||
+            config.ObservationSchema is null ||
+            config.Build.SteamAppId != manifest.Build.SteamAppId ||
+            config.Build.SteamBuildId != manifest.Build.SteamBuildId ||
+            config.TargetMechanics != collector.TargetMechanics ||
+            config.Collector.Name != RuntimeHostContract.CollectorRecordName ||
+            config.Collector.Version != collector.Version ||
+            config.RuntimeHost.Name != manifest.RuntimeHost.Name ||
+            config.RuntimeHost.Version != manifest.RuntimeHost.Version ||
+            config.ObservationSchema.FileName != collector.ObservationSchema.FileName ||
+            config.ObservationSchema.SizeBytes != collector.ObservationSchema.SizeBytes ||
+            config.ObservationSchema.Sha256 != collector.ObservationSchema.Sha256 ||
+            config.ObservationSchema.StagedRelativePath != RuntimeHostContract.CollectorSchemaRelativePath ||
+            config.ObservationOutputRootAbsolutePath != collector.ObservationOutputRootAbsolutePath)
+        {
+            throw new InvalidDataException("Staged collector config does not match its staging manifest.");
         }
     }
 

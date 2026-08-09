@@ -10,6 +10,16 @@ internal static class RuntimeHostContract
     public const long ProbeScriptSizeBytes = 15068;
     public const string ProbeScriptSha256 = "5c8f29dfe42d5e2f7b8ba866d8df1bfd3c5620101f6253f697e3c1111f20657a";
     public const string DiagnosticRelativePath = "diagnostics/movie-return-compatibility-probe.json";
+    public const string CollectorName = "NeonRetroRewindMovieReturnCollector";
+    public const string CollectorRecordName = "NeonRetroRewind.MovieReturnRuntimeCollector";
+    public const string CollectorVersion = "0.0.1";
+    public const string CollectorBinaryRelativePath = "mods/NeonRetroRewindMovieReturnCollector/dlls/main.dll";
+    public const string CollectorConfigRelativePath = "mods/NeonRetroRewindMovieReturnCollector/config.json";
+    public const string CollectorSchemaRelativePath = "mods/NeonRetroRewindMovieReturnCollector/movie-return-observation.schema.json";
+    public const string CollectorMechanicsRelativePath = "inputs/movie-return-mechanics.json";
+    public const string ObservationSchemaFileName = "movie-return-observation.schema.json";
+    public const string TargetMechanicsFileName = "movie-return-mechanics.json";
+    public const string TargetMechanicsArtifactType = "movie-return-mechanics";
     public const string StagingManifestFileName = "runtime-host-staging.json";
     public const string InstallationManifestFileName = "runtime-host-installation.json";
 

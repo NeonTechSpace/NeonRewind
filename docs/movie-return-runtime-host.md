@@ -1,7 +1,8 @@
 # Movie-return runtime host
 
 This document records the runtime-host investigation for the first movie-return observation.
-The Lua compatibility probe source and approval-gated staging, installation, and cleanup commands exist.
+The Lua compatibility probe source and approval-gated probe lifecycle exist.
+Collector-specific staging, installation preview, and cleanup routing also exist, but the current C++ DLL remains load-only and must not be installed for an observation.
 The Lua probe produces a compatibility diagnostic, not a runtime observation.
 
 ## Investigation result
@@ -63,9 +64,9 @@ The `override.txt` file contains the absolute path to the staged `ue4ss` directo
 The pinned proxy appends `UE4SS.dll` to that directory path when it loads the runtime host.
 The staged UE4SS settings must keep the text console and graphical console disabled.
 Hot reload and automatic Lua-mod reload must be disabled.
-The enabled-mod list must contain only `NeonRetroRewindMovieReturnProbe`.
-The NeonRetroRewind mod source, controlling `mods.txt`, diagnostic output, and run metadata remain under an ignored repository `.local` directory.
-UE4SS must use its documented additional-mod-directory and controlling-mod-list settings to read only that probe.
+The enabled-mod list must contain exactly one NeonRetroRewind payload: `NeonRetroRewindMovieReturnProbe` for a probe stage or `NeonRetroRewindMovieReturnCollector` for a collector stage.
+The NeonRetroRewind mod source, controlling `mods.txt`, probe diagnostic or collector observation output, and run metadata remain under an ignored repository `.local` directory.
+UE4SS must use its documented additional-mod-directory and controlling-mod-list settings to read only the staged NeonRetroRewind payload.
 
 The installation must not use Steam launch arguments.
 The installation must not create persistent environment variables.
@@ -79,10 +80,14 @@ The game must be closed before staging or installation checks begin.
 The tooling must verify the exact supported executable and build identity.
 The tooling must refuse installation if `dwmapi.dll`, `override.txt`, or any proposed target already exists.
 The tooling must generate a manifest containing every proposed relative path, byte length, and SHA-256 hash.
-The offline `stage-probe` command writes that record using [`runtime-host-staging.schema.json`](../projects/game-data-exporter/schemas/runtime/runtime-host-staging.schema.json) without copying either proposed file.
+The offline `stage-probe` and `stage-collector` commands write that record using [`runtime-host-staging.schema.json`](../projects/game-data-exporter/schemas/runtime/runtime-host-staging.schema.json) without copying either proposed file.
+Collector staging copies the supplied `main.dll`, generated collector config, observation schema, and target movie-return mechanics artifact into ignored local staging.
+The collector payload records each file's byte length and SHA-256 hash, the exact game build, the UE4SS version, and the absolute ignored output root.
+The generated config follows [`movie-return-runtime-collector-config.schema.json`](../projects/game-data-exporter/schemas/runtime/movie-return-runtime-collector-config.schema.json).
 The person using the computer must see that manifest and explicitly approve the copy before any game-directory file is added.
 Installation is copy-only and must not replace an existing file.
-Running `install-probe` without an approval hash prints the exact copy list and changes nothing.
+Running `install-probe` or `install-collector` without an approval hash prints the exact copy list and changes nothing.
+Each install command rejects the other payload kind.
 An approved run requires the SHA-256 hash of the reviewed staging manifest and writes `runtime-host-installation.json` before copying.
 The command can resume only when that installation manifest and any existing targets still match the same approved staging manifest.
 
@@ -97,12 +102,15 @@ The tooling must recalculate every installed file hash after the game has closed
 Cleanup must stop if a file changed, an expected file is missing, or an unowned file exists inside an installed directory.
 The person using the computer must see and explicitly approve the exact removal list.
 Cleanup may remove only the two game-directory files whose paths and hashes match the installation manifest.
-Running `cleanup-probe` without an approval hash prints that list and changes nothing.
+Running `cleanup-probe` or `cleanup-collector` without an approval hash prints that list and changes nothing.
+Each cleanup command rejects the other payload kind.
 An approved run requires the SHA-256 hash of the reviewed installation manifest, removes the proxy first, and preserves the private installation manifest.
 
 ## Decision after the probe
 
-The probe is successful only if the diagnostic report proves the required objects, fields, arrays, Blueprint hook paths, and private output behavior.
-A successful probe leads to a purpose-specific C++ collector using the observation contract because Lua cannot provide the exact Blueprint pre-call state.
+The completed compatibility probe proved the required objects, fields, arrays, Blueprint hook paths, and private output behavior for Steam build `23896268`.
+That result leads to a purpose-specific C++ collector using the observation contract because Lua cannot provide the exact Blueprint pre-call state.
 The probe's 16-element diagnostic limit does not define the collector limit. The contract permits at most 256 captured references per collection and requires the collector to record the actual count and whether references were omitted.
 If required fields or hooks are unavailable, the collector design must stop and be revised from the diagnostic evidence.
+The current collector version `0.0.1` is still the load-only scaffold.
+Collector staging proves payload identity and lifecycle routing; it does not prove that gameplay hooks or observation writing exist.

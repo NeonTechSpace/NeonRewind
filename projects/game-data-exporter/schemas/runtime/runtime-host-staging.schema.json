@@ -8,7 +8,6 @@
     "artifactType",
     "build",
     "runtimeHost",
-    "probe",
     "gameDirectory",
     "proposedFiles"
   ],
@@ -24,6 +23,9 @@
     },
     "probe": {
       "$ref": "#/$defs/probe"
+    },
+    "collector": {
+      "$ref": "#/$defs/collector"
     },
     "gameDirectory": {
       "$ref": "#/$defs/gameDirectory"
@@ -73,6 +75,30 @@
       "items": false
     }
   },
+  "oneOf": [
+    {
+      "required": [
+        "probe"
+      ],
+      "properties": {
+        "probe": {
+          "$ref": "#/$defs/probe"
+        },
+        "collector": false
+      }
+    },
+    {
+      "required": [
+        "collector"
+      ],
+      "properties": {
+        "probe": false,
+        "collector": {
+          "$ref": "#/$defs/collector"
+        }
+      }
+    }
+  ],
   "$defs": {
     "sha256": {
       "type": "string",
@@ -187,10 +213,10 @@
                   "const": "main.lua"
                 },
                 "sizeBytes": {
-                  "const": 15091
+                  "const": 15068
                 },
                 "sha256": {
-                  "const": "60be1578a2c5632a5967cbf139e7e13382e9772fac6fc6ee99d52d0ec5e0f2f8"
+                  "const": "5c8f29dfe42d5e2f7b8ba866d8df1bfd3c5620101f6253f697e3c1111f20657a"
                 }
               }
             }
@@ -198,6 +224,101 @@
         },
         "diagnosticRelativePath": {
           "const": "diagnostics/movie-return-compatibility-probe.json"
+        }
+      }
+    },
+    "collector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "binary",
+        "config",
+        "observationSchema",
+        "targetMechanics",
+        "observationOutputRootAbsolutePath"
+      ],
+      "properties": {
+        "name": {
+          "const": "NeonRetroRewindMovieReturnCollector"
+        },
+        "version": {
+          "const": "0.0.1"
+        },
+        "binary": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileIdentity"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "fileName": {
+                  "const": "main.dll"
+                }
+              }
+            }
+          ]
+        },
+        "config": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileIdentity"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "fileName": {
+                  "const": "config.json"
+                }
+              }
+            }
+          ]
+        },
+        "observationSchema": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/fileIdentity"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "fileName": {
+                  "const": "movie-return-observation.schema.json"
+                }
+              }
+            }
+          ]
+        },
+        "targetMechanics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fileName",
+            "sizeBytes",
+            "sha256",
+            "artifactType"
+          ],
+          "properties": {
+            "fileName": {
+              "const": "movie-return-mechanics.json"
+            },
+            "sizeBytes": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            },
+            "artifactType": {
+              "const": "movie-return-mechanics"
+            }
+          }
+        },
+        "observationOutputRootAbsolutePath": {
+          "type": "string",
+          "minLength": 1
         }
       }
     },

@@ -7,7 +7,10 @@ internal static partial class IniSettingsEditor
 {
     private static readonly UTF8Encoding Utf8WithoutBom = new(false);
 
-    public static void ConfigureForProbe(string settingsPath, string modsDirectory, string modsListPath)
+    public static void ConfigureForProbe(string settingsPath, string modsDirectory, string modsListPath) =>
+        ConfigureForSingleMod(settingsPath, modsDirectory, modsListPath);
+
+    public static void ConfigureForSingleMod(string settingsPath, string modsDirectory, string modsListPath)
     {
         var lines = File.ReadAllText(settingsPath, Encoding.UTF8)
             .Replace("\r\n", "\n", StringComparison.Ordinal)

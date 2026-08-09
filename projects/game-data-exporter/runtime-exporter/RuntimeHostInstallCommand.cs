@@ -7,9 +7,9 @@ internal static class RuntimeHostInstallCommand
     private const int ConflictExitCode = 4;
     private const int ApprovalRequiredExitCode = 5;
 
-    public static int Run(string[] args)
+    public static int Run(string[] args, string commandName, RuntimeHostPayloadKind payloadKind)
     {
-        if (!InstallProbeOptions.TryParse(args, out var options, out var error))
+        if (!InstallProbeOptions.TryParse(args, commandName, out var options, out var error))
         {
             Console.Error.WriteLine(error);
             return InvalidArgumentsExitCode;
@@ -17,7 +17,7 @@ internal static class RuntimeHostInstallCommand
 
         try
         {
-            return Install(options!);
+            return Install(options!, payloadKind);
         }
         catch (RuntimeHostApprovalRequiredException exception)
         {
@@ -36,9 +36,9 @@ internal static class RuntimeHostInstallCommand
         }
     }
 
-    private static int Install(InstallProbeOptions options)
+    private static int Install(InstallProbeOptions options, RuntimeHostPayloadKind payloadKind)
     {
-        var staging = RuntimeHostManifestService.ReadStaging(options.StagingManifestPath);
+        var staging = RuntimeHostManifestService.ReadStaging(options.StagingManifestPath, payloadKind);
         RuntimeHostManifestService.EnsureGameIsClosed(staging.ExecutablePath);
         WritePreview(staging);
 
@@ -55,7 +55,7 @@ internal static class RuntimeHostInstallCommand
         }
 
         using var operationLock = RuntimeHostOperationLock.Acquire(staging.GameDirectory);
-        staging = RuntimeHostManifestService.ReadStaging(staging.Path);
+        staging = RuntimeHostManifestService.ReadStaging(staging.Path, payloadKind);
         if (!string.Equals(options.ApprovalSha256, staging.Identity.Sha256, StringComparison.Ordinal))
         {
             throw new RuntimeHostApprovalRequiredException("The staging manifest changed after approval. Review it again before installation.");

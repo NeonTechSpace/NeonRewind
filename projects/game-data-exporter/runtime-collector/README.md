@@ -149,4 +149,6 @@ If a build is interrupted, rerun the same build command.
 Ninja keeps completed outputs and schedules unfinished or invalid targets again; no manual process or cache cleanup is required.
 
 Building does not copy anything into the game directory.
-The DLL must not be installed until the runtime-host staging contract includes its exact path, size, and SHA-256 hash.
+The runtime exporter can now stage the DLL with its exact path, size, SHA-256 hash, generated config, observation schema, target-mechanics identity, and output root.
+The current `0.0.1` DLL is still load-only, so do not install it for an observation.
+Installation becomes meaningful only after the collector registers the bounded hooks and writes the contracted record.

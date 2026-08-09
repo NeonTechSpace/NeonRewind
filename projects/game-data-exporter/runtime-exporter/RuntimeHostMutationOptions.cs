@@ -2,14 +2,14 @@ namespace NeonRetroRewind.RuntimeExporter;
 
 internal sealed record InstallProbeOptions(string StagingManifestPath, string? ApprovalSha256)
 {
-    public static bool TryParse(string[] args, out InstallProbeOptions? options, out string? error)
+    public static bool TryParse(string[] args, string commandName, out InstallProbeOptions? options, out string? error)
     {
         options = null;
         if (!NamedOptions.TryParse(
                 args,
                 ["--staging-manifest"],
                 ["--approve-staging-sha256"],
-                "install-probe",
+                commandName,
                 out var values,
                 out error))
         {
@@ -25,14 +25,14 @@ internal sealed record InstallProbeOptions(string StagingManifestPath, string? A
 
 internal sealed record CleanupProbeOptions(string InstallationManifestPath, string? ApprovalSha256)
 {
-    public static bool TryParse(string[] args, out CleanupProbeOptions? options, out string? error)
+    public static bool TryParse(string[] args, string commandName, out CleanupProbeOptions? options, out string? error)
     {
         options = null;
         if (!NamedOptions.TryParse(
                 args,
                 ["--installation-manifest"],
                 ["--approve-installation-sha256"],
-                "cleanup-probe",
+                commandName,
                 out var values,
                 out error))
         {

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace NeonRetroRewind.RuntimeExporter;
 
@@ -17,6 +18,7 @@ internal static class RuntimeHostStageCommand
     };
     private static readonly JsonSerializerOptions OutputJsonOptions = new()
     {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
     };
@@ -193,6 +195,7 @@ internal static class RuntimeHostStageCommand
                 RuntimeHostContract.ProbeVersion,
                 probeIdentity,
                 RuntimeHostContract.DiagnosticRelativePath),
+            null,
             new GameDirectoryIdentity(gameDirectory),
             proposedFiles);
 
@@ -201,7 +204,7 @@ internal static class RuntimeHostStageCommand
         File.WriteAllText(Path.Combine(temporaryPath, RuntimeHostContract.StagingManifestFileName), manifestJson, Utf8WithoutBom);
     }
 
-    private static BuildManifestInput ReadAndValidateBuildManifest(string path)
+    internal static BuildManifestInput ReadAndValidateBuildManifest(string path)
     {
         var manifest = JsonSerializer.Deserialize<BuildManifestInput>(File.ReadAllText(path), InputJsonOptions)
             ?? throw new InvalidDataException("Build manifest is empty.");
@@ -221,7 +224,7 @@ internal static class RuntimeHostStageCommand
         return manifest;
     }
 
-    private static void ValidateExecutableIdentity(BuildManifestInput manifest, FileIdentity actual)
+    internal static void ValidateExecutableIdentity(BuildManifestInput manifest, FileIdentity actual)
     {
         if (string.IsNullOrWhiteSpace(manifest.Executable.FileName) ||
             Path.GetFileName(manifest.Executable.FileName) != manifest.Executable.FileName ||
@@ -237,7 +240,7 @@ internal static class RuntimeHostStageCommand
         }
     }
 
-    private static void ExtractVerifiedArchive(string archivePath, string destinationRoot)
+    internal static void ExtractVerifiedArchive(string archivePath, string destinationRoot)
     {
         using var archive = ZipFile.OpenRead(archivePath);
         var destinations = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -301,13 +304,13 @@ internal static class RuntimeHostStageCommand
         return destinationPath;
     }
 
-    private static ProposedGameFile CreateProposedFile(string relativePath, string sourceRelativePath, string sourcePath)
+    internal static ProposedGameFile CreateProposedFile(string relativePath, string sourceRelativePath, string sourcePath)
     {
         var identity = FileIdentityFactory.Create(sourcePath);
         return new ProposedGameFile(relativePath, sourceRelativePath, identity.SizeBytes, identity.Sha256);
     }
 
-    private static void VerifyUnchanged(string path, FileIdentity expected, string name)
+    internal static void VerifyUnchanged(string path, FileIdentity expected, string name)
     {
         var actual = FileIdentityFactory.Create(path);
         if (actual != expected)
@@ -328,10 +331,10 @@ internal static class RuntimeHostStageCommand
     private static string ToLuaString(string value) =>
         "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
 
-    private static string ToPortablePath(string path) =>
+    internal static string ToPortablePath(string path) =>
         Path.GetFullPath(path).Replace('\\', '/');
 
-    private static string ResolveExistingFile(string path, string name)
+    internal static string ResolveExistingFile(string path, string name)
     {
         var resolved = Path.GetFullPath(path);
         if (!File.Exists(resolved))
@@ -342,7 +345,7 @@ internal static class RuntimeHostStageCommand
         return resolved;
     }
 
-    private static string ResolveNewOutputDirectory(string path)
+    internal static string ResolveNewOutputDirectory(string path)
     {
         var resolved = Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var parent = Path.GetDirectoryName(resolved);
@@ -360,7 +363,7 @@ internal static class RuntimeHostStageCommand
         return resolved;
     }
 
-    private static string ValidateGameDirectory(string executablePath)
+    internal static string ValidateGameDirectory(string executablePath)
     {
         var win64Directory = Directory.GetParent(executablePath)
             ?? throw new InvalidDataException("Game executable has no parent directory.");
@@ -376,7 +379,7 @@ internal static class RuntimeHostStageCommand
         return win64Directory.FullName;
     }
 
-    private static void EnsureTargetsAreAbsent(string gameDirectory)
+    internal static void EnsureTargetsAreAbsent(string gameDirectory)
     {
         foreach (var relativePath in new[] { "dwmapi.dll", "override.txt" })
         {
@@ -388,7 +391,7 @@ internal static class RuntimeHostStageCommand
         }
     }
 
-    private static void EnsureGameIsClosed(string executablePath)
+    internal static void EnsureGameIsClosed(string executablePath)
     {
         var processName = Path.GetFileNameWithoutExtension(executablePath);
         foreach (var process in Process.GetProcessesByName(processName))

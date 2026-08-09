@@ -890,6 +890,58 @@ Cleanup removes `dwmapi.dll` first and then removes `override.txt`.
 It stops before removal if the game is running, either file is missing, or either path or hash differs from the installation manifest.
 The ignored installation manifest remains as the local record of the approved copy.
 
+## Prepare the collector payload contract
+
+The collector staging command uses the same verified UE4SS archive, game executable, two-file game footprint, and approval boundary as the probe.
+It additionally copies a source-built `main.dll`, the observation schema, and one exact `movie-return-mechanics.json` into ignored local staging and generates a closed collector config.
+The staging manifest binds all of those inputs by byte length and SHA-256 hash.
+
+The current collector version `0.0.1` is load-only.
+The following command is suitable for checking the staging contract, but the resulting payload must not be installed for an observation until the collector implements its hooks and output writer.
+
+```powershell
+$collectorDll = "projects/game-data-exporter/.local/rc-build/<build-id>/artifact/NeonRetroRewindMovieReturnCollector/dlls/main.dll"
+$observationSchema = "projects/game-data-exporter/schemas/runtime/movie-return-observation.schema.json"
+$targetMechanics = Join-Path $domainDirectory "movie-return-mechanics.json"
+$observationOutputRoot = "projects/game-data-exporter/.local/runtime/$buildId"
+$collectorStage = "projects/game-data-exporter/.local/runtime-host/runs/$runtimeStageId/collector"
+
+New-Item -ItemType Directory -Force -Path $observationOutputRoot | Out-Null
+
+dotnet run --project $runtimeExporter -- stage-collector `
+  --ue4ss-archive $ue4ssArchive `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --game-executable $executable `
+  --collector-dll $collectorDll `
+  --observation-schema $observationSchema `
+  --target-mechanics $targetMechanics `
+  --observation-output-root $observationOutputRoot `
+  --output $collectorStage
+```
+
+```bash
+collectorDll="projects/game-data-exporter/.local/rc-build/<build-id>/artifact/NeonRetroRewindMovieReturnCollector/dlls/main.dll"
+observationSchema="projects/game-data-exporter/schemas/runtime/movie-return-observation.schema.json"
+targetMechanics="$domainDirectory/movie-return-mechanics.json"
+observationOutputRoot="projects/game-data-exporter/.local/runtime/$buildId"
+collectorStage="projects/game-data-exporter/.local/runtime-host/runs/$runtimeStageId/collector"
+
+mkdir -p "$observationOutputRoot"
+
+dotnet run --project "$runtimeExporter" -- stage-collector \
+  --ue4ss-archive "$ue4ssArchive" \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --game-executable "$executable" \
+  --collector-dll "$collectorDll" \
+  --observation-schema "$observationSchema" \
+  --target-mechanics "$targetMechanics" \
+  --observation-output-root "$observationOutputRoot" \
+  --output "$collectorStage"
+```
+
+`install-collector` and `cleanup-collector` use the same preview and exact-manifest approval options as the probe commands.
+They accept only collector staging manifests; the probe commands accept only probe manifests.
+
 ## Common problems
 
 ### A command says that a file does not exist
@@ -917,7 +969,7 @@ Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --v
 - `projects/game-data-exporter/schemas/acquisition` contains the acquisition JSON Schemas.
 - `projects/game-data-exporter/schemas/runtime` contains the runtime observation JSON Schemas.
 - `projects/game-data-exporter/schemas/validation` contains the validation-report JSON Schemas.
-- `projects/game-data-exporter/runtime-exporter` contains the offline runtime-host staging command and Lua compatibility probe source.
+- `projects/game-data-exporter/runtime-exporter` contains the offline probe and collector runtime-host lifecycle commands and the Lua compatibility probe source.
 - `projects/game-data-exporter/runtime-collector` contains the load-only UE4SS C++ collector and its local Windows build entry points.
 - [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the limits on its future collector.
 - `projects/typescript/packages/core` owns the normalized domain types and schemas.

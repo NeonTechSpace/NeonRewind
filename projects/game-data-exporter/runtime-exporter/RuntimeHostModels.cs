@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace NeonRetroRewind.RuntimeExporter;
@@ -24,7 +25,8 @@ internal sealed record RuntimeHostStagingManifest(
     string ArtifactType,
     RuntimeBuildIdentity Build,
     RuntimeHostIdentity RuntimeHost,
-    ProbeIdentity Probe,
+    ProbeIdentity? Probe,
+    CollectorIdentity? Collector,
     GameDirectoryIdentity GameDirectory,
     IReadOnlyList<ProposedGameFile> ProposedFiles);
 
@@ -44,6 +46,56 @@ internal sealed record ProbeIdentity(
     string Version,
     FileIdentity Source,
     string DiagnosticRelativePath);
+
+internal sealed record CollectorIdentity(
+    string Name,
+    string Version,
+    FileIdentity Binary,
+    FileIdentity Config,
+    FileIdentity ObservationSchema,
+    TargetMechanicsIdentity TargetMechanics,
+    string ObservationOutputRootAbsolutePath);
+
+internal sealed record TargetMechanicsIdentity(
+    string FileName,
+    long SizeBytes,
+    string Sha256,
+    string ArtifactType);
+
+internal sealed record RuntimeCollectorConfig(
+    string ArtifactType,
+    RuntimeCollectorBuildIdentity Build,
+    TargetMechanicsIdentity TargetMechanics,
+    RuntimeCollectorIdentity Collector,
+    RuntimeCollectorHostIdentity RuntimeHost,
+    RuntimeCollectorSchemaIdentity ObservationSchema,
+    string ObservationOutputRootAbsolutePath);
+
+internal sealed record RuntimeCollectorBuildIdentity(string SteamAppId, string SteamBuildId);
+
+internal sealed record RuntimeCollectorIdentity(string Name, string Version);
+
+internal sealed record RuntimeCollectorHostIdentity(string Name, string Version);
+
+internal sealed record RuntimeCollectorSchemaIdentity(
+    string FileName,
+    long SizeBytes,
+    string Sha256,
+    string StagedRelativePath);
+
+internal sealed record TargetMechanicsInput(
+    [property: JsonPropertyName("artifactType")] string ArtifactType,
+    [property: JsonPropertyName("build")] RuntimeMechanicsBuildInput Build,
+    [property: JsonPropertyName("sources")] JsonElement Sources,
+    [property: JsonPropertyName("scope")] string Scope,
+    [property: JsonPropertyName("evidenceLevel")] string EvidenceLevel,
+    [property: JsonPropertyName("runtimeValidation")] string RuntimeValidation,
+    [property: JsonPropertyName("readiness")] JsonElement Readiness,
+    [property: JsonPropertyName("selection")] JsonElement Selection);
+
+internal sealed record RuntimeMechanicsBuildInput(
+    [property: JsonPropertyName("steamAppId")] string SteamAppId,
+    [property: JsonPropertyName("steamBuildId")] string SteamBuildId);
 
 internal sealed record GameDirectoryIdentity(string AbsolutePath);
 
@@ -86,3 +138,9 @@ internal sealed record VerifiedInstallationManifest(
     VerifiedStagingManifest Staging);
 
 internal sealed record FileIdentity(string FileName, long SizeBytes, string Sha256);
+
+internal enum RuntimeHostPayloadKind
+{
+    Probe,
+    Collector,
+}
