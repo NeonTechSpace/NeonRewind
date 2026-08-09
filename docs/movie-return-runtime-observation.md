@@ -157,8 +157,43 @@ The report is deterministic and is created only when the output path is absent o
 An `incomplete` or `mismatch` report is written and returns exit code `8` so automated checks do not treat it as passed.
 Different existing output is retained and returns exit code `7`.
 
+## Link passing evidence to the normalized mechanics
+
+Only a clean `passed` report can be linked into a normalized mechanics artifact.
+Use a new generation directory so the exact base mechanics bytes named by the report remain immutable.
+
+```powershell
+$validatedRunId = "replace-with-new-generation-ID"
+$validatedMechanics = ".local/domain/runs/$validatedRunId/movie-return-mechanics.json"
+
+pnpm movie-return-validated-mechanics `
+  --mechanics $mechanics `
+  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" `
+  --validation $report `
+  --validation-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" `
+  --output $validatedMechanics
+```
+
+```bash
+validatedRunId="replace-with-new-generation-ID"
+validatedMechanics=".local/domain/runs/$validatedRunId/movie-return-mechanics.json"
+
+pnpm movie-return-validated-mechanics \
+  --mechanics "$mechanics" \
+  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" \
+  --validation "$report" \
+  --validation-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" \
+  --output "$validatedMechanics"
+```
+
+The linker validates both artifacts and schemas, requires matching builds and the exact mechanics identity recorded by the report, and rechecks all four inputs before writing.
+The output records the base mechanics, observation, and report identities under `runtimeValidation` while retaining `evidenceLevel: "decompiled-blueprint"`.
+The original mechanics remain the source of truth for static rules and the collector target; the linked artifact is derived evidence for downstream use.
+An incomplete or mismatched report cannot produce a linked artifact.
+Identical output is unchanged, and different existing output is retained with exit code `7`.
+
 ## Evidence effect
 
 A passing run supports only the deterministic claims exercised by that run and its exact game build.
-The normalized artifact remains `decompiled-blueprint` until its schema can reference a validated runtime observation.
+The linked normalized artifact remains `decompiled-blueprint` because the rule definitions still come from static Blueprint evidence; its `runtimeValidation` field identifies the exact passing runtime evidence.
 The probability values remain supported by typed Blueprint evidence until a separate statistical validation is designed and completed.

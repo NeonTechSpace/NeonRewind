@@ -31,7 +31,14 @@
       "const": "decompiled-blueprint"
     },
     "runtimeValidation": {
-      "const": "not-run"
+      "oneOf": [
+        {
+          "const": "not-run"
+        },
+        {
+          "$ref": "#/$defs/passedRuntimeValidation"
+        }
+      ]
     },
     "readiness": {
       "$ref": "#/$defs/readiness"
@@ -124,6 +131,130 @@
           ]
         }
       }
+    },
+    "passedRuntimeValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "checkedEventCount",
+        "sources"
+      ],
+      "properties": {
+        "outcome": {
+          "const": "passed"
+        },
+        "checkedEventCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "sources": {
+          "$ref": "#/$defs/runtimeValidationSources"
+        }
+      }
+    },
+    "runtimeValidationSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseMechanics",
+        "observation",
+        "report"
+      ],
+      "properties": {
+        "baseMechanics": {
+          "$ref": "#/$defs/baseMechanicsSource"
+        },
+        "observation": {
+          "$ref": "#/$defs/runtimeObservationSource"
+        },
+        "report": {
+          "$ref": "#/$defs/runtimeValidationReportSource"
+        }
+      }
+    },
+    "runtimeSourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fileName",
+        "sha256",
+        "sizeBytes",
+        "artifactType"
+      ],
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/\\\\]+\\.json$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactType": {
+          "enum": [
+            "movie-return-mechanics",
+            "movie-return-runtime-observation",
+            "movie-return-runtime-validation"
+          ]
+        }
+      }
+    },
+    "baseMechanicsSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/runtimeSourceIdentity"
+        },
+        {
+          "properties": {
+            "fileName": {
+              "const": "movie-return-mechanics.json"
+            },
+            "artifactType": {
+              "const": "movie-return-mechanics"
+            }
+          }
+        }
+      ]
+    },
+    "runtimeObservationSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/runtimeSourceIdentity"
+        },
+        {
+          "properties": {
+            "fileName": {
+              "const": "movie-return-observation.json"
+            },
+            "artifactType": {
+              "const": "movie-return-runtime-observation"
+            }
+          }
+        }
+      ]
+    },
+    "runtimeValidationReportSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/runtimeSourceIdentity"
+        },
+        {
+          "properties": {
+            "fileName": {
+              "const": "movie-return-validation.json"
+            },
+            "artifactType": {
+              "const": "movie-return-runtime-validation"
+            }
+          }
+        }
+      ]
     },
     "rentalEvidenceSource": {
       "allOf": [

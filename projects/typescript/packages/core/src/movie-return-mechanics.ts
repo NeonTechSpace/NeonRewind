@@ -9,16 +9,32 @@ export interface MovieReturnArtifactIdentity<
     | "blueprint-call-sites"
     | "blueprint-caller-bodies"
     | "blueprint-function-trace"
-    | "rental-function-trace" =
+    | "rental-function-trace"
+    | "movie-return-mechanics"
+    | "movie-return-runtime-observation"
+    | "movie-return-runtime-validation" =
     | "blueprint-call-sites"
     | "blueprint-caller-bodies"
     | "blueprint-function-trace"
-    | "rental-function-trace",
+    | "rental-function-trace"
+    | "movie-return-mechanics"
+    | "movie-return-runtime-observation"
+    | "movie-return-runtime-validation",
 > {
   readonly fileName: string;
   readonly sha256: string;
   readonly sizeBytes: number;
   readonly artifactType: ArtifactType;
+}
+
+export interface PassedMovieReturnRuntimeValidation {
+  readonly outcome: "passed";
+  readonly checkedEventCount: number;
+  readonly sources: {
+    readonly baseMechanics: MovieReturnArtifactIdentity<"movie-return-mechanics">;
+    readonly observation: MovieReturnArtifactIdentity<"movie-return-runtime-observation">;
+    readonly report: MovieReturnArtifactIdentity<"movie-return-runtime-validation">;
+  };
 }
 
 export interface BlueprintTraceEvidence {
@@ -107,7 +123,7 @@ export interface MovieReturnMechanics {
   };
   readonly scope: "movie-return-readiness-and-selection";
   readonly evidenceLevel: "decompiled-blueprint";
-  readonly runtimeValidation: "not-run";
+  readonly runtimeValidation: "not-run" | PassedMovieReturnRuntimeValidation;
   readonly readiness: {
     readonly trigger: "new-day-event";
     readonly source: {

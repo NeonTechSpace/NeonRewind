@@ -649,7 +649,7 @@ It separately records the weighted selector's configured probabilities, override
 It records complete caller-search coverage, the BeginPlay entry path, the console-first customer branch, both selector calls, and movement of selected cartridges from the ready queue into customer inventory.
 The compiler validates calls, arguments, branch targets, branch symbols, queue operations, selection outcomes, loop structure, and input hashes from the typed traces.
 It does not parse rental or customer-flow pseudocode.
-The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
+The base artifact's evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run` until a clean passing report is linked into a separate derived artifact.
 
 Move into the TypeScript workspace if you are not already there.
 
@@ -710,6 +710,9 @@ popd >/dev/null
 ```
 
 The output contains normalized game rules and remains private and uncommitted.
+
+After a runtime observation passes, use `pnpm movie-return-validated-mechanics` as documented in [Movie-return runtime observation](movie-return-runtime-observation.md).
+That command writes a new immutable mechanics artifact which identifies the exact base mechanics, observation, and passing validation report without rewriting the base file named by the report.
 
 ## 20. Compile the normalized film catalog
 

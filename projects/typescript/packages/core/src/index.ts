@@ -25,6 +25,7 @@ export type {
   BlueprintTraceEvidence,
   MovieReturnArtifactIdentity,
   MovieReturnMechanics,
+  PassedMovieReturnRuntimeValidation,
   RentalReadinessTraceEvidence,
   RentalSelectionTraceEvidence,
 } from "./movie-return-mechanics.ts";
