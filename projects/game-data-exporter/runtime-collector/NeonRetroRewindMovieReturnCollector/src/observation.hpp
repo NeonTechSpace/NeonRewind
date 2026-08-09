@@ -9,7 +9,7 @@
 namespace NeonRetroRewind
 {
     inline constexpr auto CollectorName = "NeonRetroRewind.MovieReturnRuntimeCollector";
-    inline constexpr auto CollectorVersion = "0.1.0";
+    inline constexpr auto CollectorVersion = "0.1.7";
     inline constexpr auto RuntimeHostName = "UE4SS";
     inline constexpr auto RuntimeHostVersion = "3.0.1-1018-g662df915";
 

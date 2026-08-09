@@ -896,7 +896,7 @@ The collector staging command uses the same verified UE4SS archive, game executa
 It additionally copies a source-built `main.dll`, the observation schema, and one exact `movie-return-mechanics.json` into ignored local staging and generates a closed collector config.
 The staging manifest binds all of those inputs by byte length and SHA-256 hash.
 
-Collector `0.1.0` implements the bounded hooks and observation writer. The following command prepares its ignored staging payload without changing the game directory.
+Collector `0.1.7` implements the bounded hooks and observation writer, resolves the inherited inventory function through the customer class hierarchy, scopes inventory reads to active customer returns, and reports bounded target, callable-dispatch, reflected-contract, registration, and callback labels without enumerating unrelated runtime objects. Resolved functions whose callable dispatch is not yet available are retried; unsupported flag and dispatch combinations fail closed. A customer frame binds its ExampleQueueSystem and pre-ready queue only when the nested movie selector runs, and customer calls that never enter the movie branch produce no movie-return event. Selector post-hooks read Blueprint out-parameters through UE4SS's `FFrame::OutParms` lookup rather than the temporary locals container. A user-operated run for Steam build `23896268` completed and passed the repository's semantic validator; the observation and validation report remain private ignored artifacts. The following command prepares its ignored staging payload without changing the game directory.
 
 ```powershell
 $collectorDll = "projects/game-data-exporter/.local/rc-build/<build-id>/artifact/NeonRetroRewindMovieReturnCollector/dlls/main.dll"

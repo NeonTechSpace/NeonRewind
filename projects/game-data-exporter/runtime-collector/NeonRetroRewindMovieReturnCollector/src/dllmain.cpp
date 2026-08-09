@@ -6,6 +6,7 @@
 #include <Unreal/Core/Containers/Array.hpp>
 #include <Unreal/CoreUObject/UObject/Class.hpp>
 #include <Unreal/CoreUObject/UObject/UnrealType.hpp>
+#include <Unreal/FFrame.hpp>
 #include <Unreal/UFunctionStructs.hpp>
 #include <Unreal/UObject.hpp>
 #include <Unreal/UObjectGlobals.hpp>
@@ -31,13 +32,61 @@ namespace NeonRetroRewind
                 STR("/Game/ExampleProject/core/blueprint/ExampleQueueSystem/ExampleQueueSystem.ExampleQueueSystem_C:Select Example Items");
         constexpr auto CustomerReturnFunctionPath = STR(
                 "/Game/ExampleProject/core/ai/pawn/ExampleActor.ExampleActor_C:Initialize Example Return");
-        constexpr auto AddInventoryFunctionPath =
-                STR("/Game/ExampleProject/core/ai/pawn/ExampleActor.ExampleActor_C:ExampleAddInventoryItem");
+        constexpr auto AddInventoryFunctionName = STR("ExampleAddInventoryItem");
         constexpr auto RentedQueueProperty = STR("Example Active Items");
         constexpr auto ReadyQueueProperty = STR("Example Ready Items");
-        constexpr auto ExampleQueueSystemProperty = STR("ref to Rent system");
         constexpr auto MaxMovies = 256;
         constexpr auto MaxNestedHookDepth = 16U;
+        constexpr std::uint8_t MissingReadinessHook = 1U << 0;
+        constexpr std::uint8_t MissingSelectionHook = 1U << 1;
+        constexpr std::uint8_t MissingCustomerReturnHook = 1U << 2;
+        constexpr std::uint8_t MissingAddInventoryHook = 1U << 3;
+
+        enum class HookDispatchState
+        {
+            Unavailable,
+            Ready,
+            Unsupported,
+        };
+
+        auto hook_dispatch_state(Unreal::UFunction* function) -> HookDispatchState
+        {
+            if (!function)
+            {
+                return HookDispatchState::Unavailable;
+            }
+            const auto native_function = function->GetFunc();
+            if (!native_function)
+            {
+                return HookDispatchState::Unavailable;
+            }
+            const auto uses_blueprint_dispatch =
+                    native_function == Unreal::UObject::ProcessInternalInternal.get_function_address();
+            const auto has_native_flag = function->HasAnyFunctionFlags(Unreal::EFunctionFlags::FUNC_Native);
+            if ((uses_blueprint_dispatch && !has_native_flag) || (!uses_blueprint_dispatch && has_native_flag))
+            {
+                return HookDispatchState::Ready;
+            }
+            return HookDispatchState::Unsupported;
+        }
+
+        auto find_function_in_class_chain(Unreal::UClass* object_class, const TCHAR* function_name) -> Unreal::UFunction*
+        {
+            if (!object_class)
+            {
+                return nullptr;
+            }
+            const Unreal::FName target_name{function_name};
+            for (auto* function : Unreal::TFieldRange<Unreal::UFunction>(
+                         object_class, Unreal::EFieldIterationFlags::IncludeInterfaces | Unreal::EFieldIterationFlags::IncludeSuper))
+            {
+                if (function->GetNamePrivate() == target_name)
+                {
+                    return function;
+                }
+            }
+            return nullptr;
+        }
 
         struct Hook
         {
@@ -112,26 +161,6 @@ namespace NeonRetroRewind
             return RentalQueues{capture_property_array(rent_system, RentedQueueProperty), capture_property_array(rent_system, ReadyQueueProperty)};
         }
 
-        auto rent_system_from_customer(Unreal::UObject* customer) -> Unreal::UObject*
-        {
-            if (!customer || !Unreal::UObject::IsReal(customer))
-            {
-                throw std::runtime_error{"Customer object is unavailable."};
-            }
-            const auto property = customer->GetPropertyByNameInChain(ExampleQueueSystemProperty);
-            const auto object_property = Unreal::CastField<Unreal::FObjectProperty>(property);
-            if (!object_property)
-            {
-                throw std::runtime_error{"Customer rent-system property does not match the expected object shape."};
-            }
-            const auto value = object_property->ContainerPtrToValuePtr<void>(customer);
-            auto* rent_system = object_property->GetObjectPropertyValue(value);
-            if (!rent_system || !Unreal::UObject::IsReal(rent_system))
-            {
-                throw std::runtime_error{"Customer rent system is unavailable."};
-            }
-            return rent_system;
-        }
     }
 
     class MovieReturnCollector final : public RC::CppUserModBase
@@ -140,7 +169,7 @@ namespace NeonRetroRewind
         MovieReturnCollector()
         {
             ModName = STR("NeonRetroRewindMovieReturnCollector");
-            ModVersion = STR("0.1.0");
+            ModVersion = STR("0.1.7");
             ModDescription = STR("Bounded movie-return runtime observation collector for NeonRetroRewind");
             ModAuthors = STR("NeonRetroRewind contributors");
             RC::Output::send<RC::LogLevel::Verbose>(STR("[NeonRetroRewindMovieReturnCollector] Loaded.\n"));
@@ -233,12 +262,15 @@ namespace NeonRetroRewind
         Unreal::FArrayProperty* m_selection_movies_property{};
         Unreal::FObjectProperty* m_inventory_object_property{};
         std::chrono::steady_clock::time_point m_next_registration_attempt{};
+        std::uint32_t m_registration_attempt_count{};
+        std::uint8_t m_last_missing_hooks{std::numeric_limits<std::uint8_t>::max()};
+        std::uint8_t m_last_unavailable_dispatch{std::numeric_limits<std::uint8_t>::max()};
         int m_callback_depth{};
         bool m_unreal_ready{};
         bool m_disabled{};
 
         template <typename Callback>
-        auto guarded_callback(Callback&& callback) noexcept -> void
+        auto guarded_callback(const TCHAR* callback_label, Callback&& callback) noexcept -> void
         {
             if (m_disabled)
             {
@@ -256,7 +288,8 @@ namespace NeonRetroRewind
                     m_writer->fail("collector-error");
                 }
                 m_disabled = true;
-                RC::Output::send<RC::LogLevel::Error>(STR("[NeonRetroRewindMovieReturnCollector] Runtime observation failed.\n"));
+                RC::Output::send<RC::LogLevel::Error>(
+                        STR("[NeonRetroRewindMovieReturnCollector] Runtime observation failed in {}.\n"), callback_label);
             }
             --m_callback_depth;
         }
@@ -266,8 +299,49 @@ namespace NeonRetroRewind
             auto* readiness = Unreal::UObjectGlobals::StaticFindObject<Unreal::UFunction*>(nullptr, nullptr, ReadinessFunctionPath);
             auto* selection = Unreal::UObjectGlobals::StaticFindObject<Unreal::UFunction*>(nullptr, nullptr, SelectionFunctionPath);
             auto* customer_return = Unreal::UObjectGlobals::StaticFindObject<Unreal::UFunction*>(nullptr, nullptr, CustomerReturnFunctionPath);
-            auto* add_inventory = Unreal::UObjectGlobals::StaticFindObject<Unreal::UFunction*>(nullptr, nullptr, AddInventoryFunctionPath);
-            if (!readiness || !selection || !customer_return || !add_inventory)
+            auto* customer_class = customer_return ? customer_return->GetTypedOuter<Unreal::UClass>() : nullptr;
+            auto* add_inventory = find_function_in_class_chain(customer_class, AddInventoryFunctionName);
+            const auto missing_hooks = static_cast<std::uint8_t>((readiness ? 0U : MissingReadinessHook) |
+                                                                 (selection ? 0U : MissingSelectionHook) |
+                                                                 (customer_return ? 0U : MissingCustomerReturnHook) |
+                                                                 (add_inventory ? 0U : MissingAddInventoryHook));
+            report_hook_resolution(missing_hooks);
+            if (missing_hooks != 0)
+            {
+                return;
+            }
+
+            const auto readiness_dispatch = hook_dispatch_state(readiness);
+            const auto selection_dispatch = hook_dispatch_state(selection);
+            const auto customer_return_dispatch = hook_dispatch_state(customer_return);
+            const auto add_inventory_dispatch = hook_dispatch_state(add_inventory);
+            if (readiness_dispatch == HookDispatchState::Unsupported)
+            {
+                fail_registration(STR("readiness-hook-dispatch-unsupported"));
+                return;
+            }
+            if (selection_dispatch == HookDispatchState::Unsupported)
+            {
+                fail_registration(STR("selection-hook-dispatch-unsupported"));
+                return;
+            }
+            if (customer_return_dispatch == HookDispatchState::Unsupported)
+            {
+                fail_registration(STR("customer-return-hook-dispatch-unsupported"));
+                return;
+            }
+            if (add_inventory_dispatch == HookDispatchState::Unsupported)
+            {
+                fail_registration(STR("add-inventory-hook-dispatch-unsupported"));
+                return;
+            }
+            const auto unavailable_dispatch = static_cast<std::uint8_t>(
+                    (readiness_dispatch == HookDispatchState::Unavailable ? MissingReadinessHook : 0U) |
+                    (selection_dispatch == HookDispatchState::Unavailable ? MissingSelectionHook : 0U) |
+                    (customer_return_dispatch == HookDispatchState::Unavailable ? MissingCustomerReturnHook : 0U) |
+                    (add_inventory_dispatch == HookDispatchState::Unavailable ? MissingAddInventoryHook : 0U));
+            report_hook_dispatch(unavailable_dispatch);
+            if (unavailable_dispatch != 0)
             {
                 return;
             }
@@ -285,7 +359,7 @@ namespace NeonRetroRewind
                 {
                     if (m_selection_found_property)
                     {
-                        fail_registration();
+                        fail_registration(STR("selection-multiple-bool-out-parameters"));
                         return;
                     }
                     m_selection_found_property = boolean_property;
@@ -295,7 +369,7 @@ namespace NeonRetroRewind
                 {
                     if (m_selection_movies_property)
                     {
-                        fail_registration();
+                        fail_registration(STR("selection-multiple-object-array-out-parameters"));
                         return;
                     }
                     m_selection_movies_property = array_property;
@@ -311,39 +385,125 @@ namespace NeonRetroRewind
                     {
                         if (m_inventory_object_property)
                         {
-                            fail_registration();
+                            fail_registration(STR("add-inventory-multiple-object-input-parameters"));
                             return;
                         }
                         m_inventory_object_property = object_property;
                     }
                 }
             }
-            if (!m_selection_found_property || !m_selection_movies_property || !m_inventory_object_property)
+            if (!m_selection_found_property)
             {
-                fail_registration();
+                fail_registration(STR("selection-bool-out-parameter-missing"));
+                return;
+            }
+            if (!m_selection_movies_property)
+            {
+                fail_registration(STR("selection-object-array-out-parameter-missing"));
+                return;
+            }
+            if (!m_inventory_object_property)
+            {
+                fail_registration(STR("add-inventory-object-input-parameter-missing"));
                 return;
             }
 
+            const TCHAR* registration_failure = STR("readiness-hook-registration-exception");
             try
             {
                 register_hook(readiness, &pre_readiness, &post_readiness);
+                registration_failure = STR("selection-hook-registration-exception");
                 register_hook(selection, &pre_selection, &post_selection);
+                registration_failure = STR("customer-return-hook-registration-exception");
                 register_hook(customer_return, &pre_customer_return, &post_customer_return);
+                registration_failure = STR("add-inventory-hook-registration-exception");
                 register_hook(add_inventory, &pre_add_inventory, &post_noop);
-                RC::Output::send<RC::LogLevel::Verbose>(STR("[NeonRetroRewindMovieReturnCollector] Runtime hooks registered.\n"));
             }
             catch (...)
             {
                 unregister_hooks();
-                fail_registration();
+                fail_registration(registration_failure);
+                return;
+            }
+            RC::Output::send<RC::LogLevel::Verbose>(STR("[NeonRetroRewindMovieReturnCollector] Runtime hooks registered.\n"));
+        }
+
+        auto report_hook_resolution(const std::uint8_t missing_hooks) -> void
+        {
+            ++m_registration_attempt_count;
+            const auto changed = missing_hooks != m_last_missing_hooks;
+            const auto periodic = missing_hooks != 0 && m_registration_attempt_count % 30 == 0;
+            if (!changed && !periodic)
+            {
+                return;
+            }
+            m_last_missing_hooks = missing_hooks;
+            if (missing_hooks == 0)
+            {
+                RC::Output::send<RC::LogLevel::Verbose>(
+                        STR("[NeonRetroRewindMovieReturnCollector] All hook targets resolved; validating callable dispatch.\n"));
+                return;
+            }
+            RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector] Waiting for unresolved hook targets:\n"));
+            if ((missing_hooks & MissingReadinessHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   readiness\n"));
+            }
+            if ((missing_hooks & MissingSelectionHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   selection\n"));
+            }
+            if ((missing_hooks & MissingCustomerReturnHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   customer-return\n"));
+            }
+            if ((missing_hooks & MissingAddInventoryHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   add-inventory\n"));
             }
         }
 
-        auto fail_registration() -> void
+        auto report_hook_dispatch(const std::uint8_t unavailable_dispatch) -> void
+        {
+            const auto changed = unavailable_dispatch != m_last_unavailable_dispatch;
+            const auto periodic = unavailable_dispatch != 0 && m_registration_attempt_count % 30 == 0;
+            if (!changed && !periodic)
+            {
+                return;
+            }
+            m_last_unavailable_dispatch = unavailable_dispatch;
+            if (unavailable_dispatch == 0)
+            {
+                RC::Output::send<RC::LogLevel::Verbose>(
+                        STR("[NeonRetroRewindMovieReturnCollector] Hook dispatch is ready; validating reflected contracts.\n"));
+                return;
+            }
+            RC::Output::send<RC::LogLevel::Warning>(
+                    STR("[NeonRetroRewindMovieReturnCollector] Waiting for callable hook dispatch:\n"));
+            if ((unavailable_dispatch & MissingReadinessHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   readiness\n"));
+            }
+            if ((unavailable_dispatch & MissingSelectionHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   selection\n"));
+            }
+            if ((unavailable_dispatch & MissingCustomerReturnHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   customer-return\n"));
+            }
+            if ((unavailable_dispatch & MissingAddInventoryHook) != 0)
+            {
+                RC::Output::send<RC::LogLevel::Warning>(STR("[NeonRetroRewindMovieReturnCollector]   add-inventory\n"));
+            }
+        }
+
+        auto fail_registration(const TCHAR* failure_label) -> void
         {
             m_writer->fail("hook-failed");
             m_disabled = true;
-            RC::Output::send<RC::LogLevel::Error>(STR("[NeonRetroRewindMovieReturnCollector] Hook contract validation failed.\n"));
+            RC::Output::send<RC::LogLevel::Error>(
+                    STR("[NeonRetroRewindMovieReturnCollector] Hook setup failed: {}.\n"), failure_label);
         }
 
         auto register_hook(Unreal::UFunction* function,
@@ -385,7 +545,7 @@ namespace NeonRetroRewind
         static auto pre_readiness(Unreal::UnrealScriptFunctionCallableContext& context, void* custom_data) -> void
         {
             auto& collector = self(custom_data);
-            collector.guarded_callback([&] {
+            collector.guarded_callback(STR("pre-readiness"), [&] {
                 if (collector.m_readiness_frames.size() >= MaxNestedHookDepth)
                 {
                     throw std::runtime_error{"Readiness hook nesting limit was exceeded."};
@@ -397,7 +557,7 @@ namespace NeonRetroRewind
         static auto post_readiness(Unreal::UnrealScriptFunctionCallableContext& context, void* custom_data) -> void
         {
             auto& collector = self(custom_data);
-            collector.guarded_callback([&] {
+            collector.guarded_callback(STR("post-readiness"), [&] {
                 if (collector.m_readiness_frames.empty() || collector.m_readiness_frames.back().context != context.Context)
                 {
                     throw std::runtime_error{"Readiness hook frames are unbalanced."};
@@ -419,36 +579,47 @@ namespace NeonRetroRewind
         static auto pre_selection(Unreal::UnrealScriptFunctionCallableContext& context, void* custom_data) -> void
         {
             auto& collector = self(custom_data);
-            collector.guarded_callback([&] {
+            collector.guarded_callback(STR("pre-selection"), [&] {
                 if (collector.m_selection_frames.size() >= MaxNestedHookDepth)
                 {
                     throw std::runtime_error{"Selection hook nesting limit was exceeded."};
                 }
-                collector.m_selection_frames.push_back({context.Context, capture_queues(context.Context)});
+                auto pre_queues = capture_queues(context.Context);
+                if (!collector.m_customer_frames.empty())
+                {
+                    auto& customer_frame = collector.m_customer_frames.back();
+                    if (!customer_frame.rentSystem)
+                    {
+                        customer_frame.rentSystem = context.Context;
+                        customer_frame.preReady = pre_queues.readyMovies;
+                    }
+                    else if (customer_frame.rentSystem != context.Context)
+                    {
+                        throw std::runtime_error{"Customer-return selections used different rent systems."};
+                    }
+                }
+                collector.m_selection_frames.push_back({context.Context, std::move(pre_queues)});
             });
         }
 
         static auto post_selection(Unreal::UnrealScriptFunctionCallableContext& context, void* custom_data) -> void
         {
             auto& collector = self(custom_data);
-            collector.guarded_callback([&] {
+            collector.guarded_callback(STR("post-selection"), [&] {
                 if (collector.m_selection_frames.empty() || collector.m_selection_frames.back().context != context.Context)
                 {
                     throw std::runtime_error{"Selection hook frames are unbalanced."};
                 }
                 auto frame = std::move(collector.m_selection_frames.back());
                 collector.m_selection_frames.pop_back();
-                auto* locals = context.TheStack.Locals();
-                if (!locals)
+                const auto found_address = Unreal::FindOutParamValueAddress(context.TheStack, collector.m_selection_found_property);
+                const auto movies_address = Unreal::FindOutParamValueAddress(context.TheStack, collector.m_selection_movies_property);
+                if (!found_address || !movies_address)
                 {
                     throw std::runtime_error{"Selection output parameters are unavailable."};
                 }
-                auto* values = collector.m_selection_movies_property->ContainerPtrToValuePtr<Unreal::TArray<Unreal::UObject*>>(locals);
-                if (!values)
-                {
-                    throw std::runtime_error{"Selection output parameters are unavailable."};
-                }
-                SelectionResult result{collector.m_selection_found_property->GetPropertyValueInContainer(locals), capture_array(*values)};
+                const auto* values = static_cast<const Unreal::TArray<Unreal::UObject*>*>(movies_address);
+                SelectionResult result{collector.m_selection_found_property->GetPropertyValue(found_address), capture_array(*values)};
                 for (auto iterator = collector.m_customer_frames.rbegin(); iterator != collector.m_customer_frames.rend(); ++iterator)
                 {
                     if (iterator->rentSystem == context.Context)
@@ -472,21 +643,25 @@ namespace NeonRetroRewind
         static auto pre_customer_return(Unreal::UnrealScriptFunctionCallableContext& context, void* custom_data) -> void
         {
             auto& collector = self(custom_data);
-            collector.guarded_callback([&] {
-                auto* rent_system = rent_system_from_customer(context.Context);
+            collector.guarded_callback(STR("pre-customer-return"), [&] {
+                if (!context.Context || !Unreal::UObject::IsReal(context.Context))
+                {
+                    throw std::runtime_error{"Customer object is unavailable."};
+                }
                 if (collector.m_customer_frames.size() >= MaxNestedHookDepth)
                 {
                     throw std::runtime_error{"Customer-return hook nesting limit was exceeded."};
                 }
-                collector.m_customer_frames.push_back(
-                        CustomerFrame{context.Context, rent_system, capture_property_array(rent_system, ReadyQueueProperty), {}, 0, std::nullopt});
+                CustomerFrame frame;
+                frame.customer = context.Context;
+                collector.m_customer_frames.push_back(std::move(frame));
             });
         }
 
         static auto post_customer_return(Unreal::UnrealScriptFunctionCallableContext& context, void* custom_data) -> void
         {
             auto& collector = self(custom_data);
-            collector.guarded_callback([&] {
+            collector.guarded_callback(STR("post-customer-return"), [&] {
                 if (collector.m_customer_frames.empty() || collector.m_customer_frames.back().customer != context.Context)
                 {
                     throw std::runtime_error{"Customer-return hook frames are unbalanced."};
@@ -495,7 +670,11 @@ namespace NeonRetroRewind
                 collector.m_customer_frames.pop_back();
                 if (!frame.selection)
                 {
-                    throw std::runtime_error{"Customer-return selection was not observed."};
+                    return;
+                }
+                if (!frame.rentSystem)
+                {
+                    throw std::runtime_error{"Customer-return selection has no rent system."};
                 }
                 MovieCollection added;
                 added.totalCount = frame.inventoryAdditionCount;
@@ -517,7 +696,14 @@ namespace NeonRetroRewind
         static auto pre_add_inventory(Unreal::UnrealScriptFunctionCallableContext& context, void* custom_data) -> void
         {
             auto& collector = self(custom_data);
-            collector.guarded_callback([&] {
+            collector.guarded_callback(STR("pre-add-inventory"), [&] {
+                const auto active_frame = std::find_if(
+                        collector.m_customer_frames.rbegin(), collector.m_customer_frames.rend(),
+                        [&](const CustomerFrame& frame) { return frame.customer == context.Context; });
+                if (active_frame == collector.m_customer_frames.rend())
+                {
+                    return;
+                }
                 auto* locals = context.TheStack.Locals();
                 if (!locals)
                 {
@@ -525,21 +711,14 @@ namespace NeonRetroRewind
                 }
                 const auto value_address = collector.m_inventory_object_property->ContainerPtrToValuePtr<void>(locals);
                 auto* added_object = collector.m_inventory_object_property->GetObjectPropertyValue(value_address);
-                for (auto iterator = collector.m_customer_frames.rbegin(); iterator != collector.m_customer_frames.rend(); ++iterator)
+                if (active_frame->inventoryAdditionCount == std::numeric_limits<std::int32_t>::max())
                 {
-                    if (iterator->customer == context.Context)
-                    {
-                        if (iterator->inventoryAdditionCount == std::numeric_limits<std::int32_t>::max())
-                        {
-                            throw std::runtime_error{"Inventory addition count exceeded the observation contract."};
-                        }
-                        ++iterator->inventoryAdditionCount;
-                        if (iterator->inventoryAdditions.size() < MaxMovies)
-                        {
-                            iterator->inventoryAdditions.emplace_back(object_path(added_object));
-                        }
-                        break;
-                    }
+                    throw std::runtime_error{"Inventory addition count exceeded the observation contract."};
+                }
+                ++active_frame->inventoryAdditionCount;
+                if (active_frame->inventoryAdditions.size() < MaxMovies)
+                {
+                    active_frame->inventoryAdditions.emplace_back(object_path(added_object));
                 }
             });
         }

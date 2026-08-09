@@ -2,7 +2,7 @@
 
 This document records the runtime-host investigation for the first movie-return observation.
 The Lua compatibility probe source and approval-gated probe lifecycle exist.
-Collector-specific staging, installation preview, cleanup routing, and the bounded `0.1.0` C++ collector now exist. Native compilation is complete; an observation still requires a separate user-operated game run.
+Collector-specific staging, installation preview, cleanup routing, and the bounded `0.1.7` C++ collector now exist. A user-operated observation for Steam build `23896268` completed and passed semantic validation; its observation, report, and runtime log remain private ignored artifacts.
 The Lua probe produces a compatibility diagnostic, not a runtime observation.
 
 ## Investigation result
@@ -112,4 +112,4 @@ The completed compatibility probe proved the required objects, fields, arrays, B
 That result leads to a purpose-specific C++ collector using the observation contract because Lua cannot provide the exact Blueprint pre-call state.
 The probe's 16-element diagnostic limit does not define the collector limit. The contract permits at most 256 captured references per collection and requires the collector to record the actual count and whether references were omitted.
 If required fields or hooks are unavailable, the collector design must stop and be revised from the diagnostic evidence.
-Collector `0.1.0` implements the bounded gameplay hooks and atomic observation writer. Its native build and offline staging checks do not prove behavior inside the game; that requires the user-operated observation run.
+Collector `0.1.7` implements the bounded gameplay hooks and atomic observation writer. It resolves the local-virtual inventory function by exact name through the already resolved customer class hierarchy, then checks each function against the pinned UE4SS callable-dispatch rules before reflected-parameter validation. A resolved function with no callable dispatch is retried as load readiness; an unsupported dispatch and native-flag combination fails closed with a fixed label. A customer frame starts with only its customer context; the first nested movie-selection pre-hook supplies the actual ExampleQueueSystem and pre-ready queue before selection or removal. Calls that do not enter the movie branch are discarded. It ignores inventory calls outside an active customer-return frame before reading their parameters. Selector post-hooks resolve both Blueprint out-parameter addresses from `FFrame::OutParms` with UE4SS's exported `FindOutParamValueAddress`, matching the runtime host's own post-hook handling. It reports exact unresolved-target, dispatch-readiness, reflected-contract, hook-registration, and guarded-callback labels without enumerating unrelated objects. Native and offline checks establish the build and contracts; the completed user-operated run establishes the observed in-game path for the pinned build.

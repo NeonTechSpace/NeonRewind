@@ -64,7 +64,7 @@ test("accepts the generated collector config contract", async () => {
     targetMechanics: createCollectorIdentity().targetMechanics,
     collector: {
       name: "NeonRetroRewind.MovieReturnRuntimeCollector",
-      version: "0.1.0",
+      version: "0.1.7",
     },
     runtimeHost: {
       name: "UE4SS",
@@ -136,7 +136,7 @@ function createStagingManifest(): {
 function createCollectorIdentity() {
   return {
     name: "NeonRetroRewindMovieReturnCollector",
-    version: "0.1.0",
+    version: "0.1.7",
     binary: file("main.dll", 100, "a"),
     config: file("config.json", 100, "b"),
     observationSchema: file("movie-return-observation.schema.json", 100, "c"),

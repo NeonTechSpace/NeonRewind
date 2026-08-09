@@ -1,7 +1,7 @@
 # Movie-return runtime observation
 
 This document defines the first controlled runtime observation for movie returns.
-Collector `0.1.0`, its observation schema, build instructions, and exact install and cleanup commands are implemented. The remaining integration check is a user-operated game run.
+Collector `0.1.7`, its observation schema, build instructions, and exact install and cleanup commands are implemented. A user-operated run for Steam build `23896268` completed and passed the semantic validator with all required event kinds and no issues; the private artifacts remain ignored.
 The [runtime-host investigation](movie-return-runtime-host.md) defines the compatibility probe, temporary installation footprint, and approval gates that precede the collector.
 
 ## Goal
