@@ -10,7 +10,6 @@ internal static partial class BuildManifestCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
-    private const int SchemaVersion = 1;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -83,7 +82,6 @@ internal static partial class BuildManifestCommand
 
         return new BuildManifest(
             ArtifactType: "build-manifest",
-            SchemaVersion,
             Steam: new SteamBuildIdentity(
                 AppId: steamFieldsAfterHashing["appid"],
                 BuildId: steamFieldsAfterHashing["buildid"],

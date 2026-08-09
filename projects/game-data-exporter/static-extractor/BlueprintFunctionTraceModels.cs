@@ -2,7 +2,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record BlueprintFunctionTrace(
     string ArtifactType,
-    int SchemaVersion,
     CensusBuildReference Build,
     IReadOnlyList<BlueprintFunctionTraceInput> CallerBodies,
     MappingIdentity Mappings,
@@ -15,7 +14,6 @@ internal sealed record BlueprintFunctionTraceInput(
     string FileName,
     long SizeBytes,
     string Sha256,
-    int SchemaVersion,
     string TargetFunctionName);
 
 internal sealed record BlueprintFunctionTraceTotals(

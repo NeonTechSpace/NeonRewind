@@ -14,7 +14,6 @@ internal static class StaticCensusCommand
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
     private const int ParseFailuresExitCode = 8;
-    private const int SchemaVersion = 1;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -89,9 +88,9 @@ internal static class StaticCensusCommand
             File.ReadAllText(path),
             JsonOptions) ?? throw new InvalidDataException("Build manifest is empty.");
 
-        if (manifest.ArtifactType != "build-manifest" || manifest.SchemaVersion != 1)
+        if (manifest.ArtifactType != "build-manifest")
         {
-            throw new InvalidDataException("Expected build-manifest schema version 1.");
+            throw new InvalidDataException("Expected a build-manifest artifact.");
         }
 
         if (manifest.Steam is null ||
@@ -240,10 +239,8 @@ internal static class StaticCensusCommand
 
         return new StaticCensus(
             ArtifactType: "static-census",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             Engine: manifest.Engine,

@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:structured-asset-index:1",
+  "$id": "urn:neonretrorewind:schema:acquisition:structured-asset-index",
   "title": "NeonRetroRewind structured asset index",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "staticCensus",
     "mappings",
@@ -19,9 +18,6 @@
   "properties": {
     "artifactType": {
       "const": "structured-asset-index"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/buildReference"
@@ -55,13 +51,14 @@
     "buildReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "manifestSha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "manifestSchemaVersion": {
-          "const": 1
         },
         "steamAppId": {
           "type": "string",
@@ -76,7 +73,11 @@
     "staticCensusIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "$ref": "#/$defs/fileName"
@@ -87,16 +88,18 @@
         },
         "sha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
     "mappingIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "formatVersion"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -123,7 +126,12 @@
     "engineIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "required": [
+        "version",
+        "cue4ParseProfile",
+        "source",
+        "confidence"
+      ],
       "properties": {
         "version": {
           "const": "5.4"
@@ -142,7 +150,11 @@
     "extractorIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "cue4ParseVersion"],
+      "required": [
+        "name",
+        "version",
+        "cue4ParseVersion"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.StaticExtractor"
@@ -228,7 +240,10 @@
           "pattern": "^[^\\\\]+\\.(uasset|umap)$"
         },
         "status": {
-          "enum": ["parsed", "failed"]
+          "enum": [
+            "parsed",
+            "failed"
+          ]
         },
         "candidateClasses": {
           "type": "array",
@@ -272,7 +287,10 @@
           }
         },
         "errorType": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1
         }
       },
@@ -321,7 +339,15 @@
     "assetRecord": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "type", "kind", "exportPropertyCount", "entryCount", "entryPropertyCount", "rowStruct"],
+      "required": [
+        "name",
+        "type",
+        "kind",
+        "exportPropertyCount",
+        "entryCount",
+        "entryPropertyCount",
+        "rowStruct"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -332,7 +358,11 @@
           "minLength": 1
         },
         "kind": {
-          "enum": ["data-asset", "data-table", "string-table"]
+          "enum": [
+            "data-asset",
+            "data-table",
+            "string-table"
+          ]
         },
         "exportPropertyCount": {
           "$ref": "#/$defs/nonNegativeInteger"
@@ -358,7 +388,10 @@
           ]
         },
         "rowStruct": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1
         }
       },
@@ -439,7 +472,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "count"],
+        "required": [
+          "name",
+          "count"
+        ],
         "properties": {
           "name": {
             "type": "string",

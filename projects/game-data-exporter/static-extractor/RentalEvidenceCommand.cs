@@ -11,7 +11,6 @@ internal static class RentalEvidenceCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
-    private const int SchemaVersion = 1;
 
     private static readonly RentalTarget[] Targets =
     [
@@ -139,17 +138,14 @@ internal static class RentalEvidenceCommand
 
         return new RentalEvidence(
             ArtifactType: "rental-evidence",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             StaticCensus: new RentalEvidenceInput(
                 FileName: censusIdentity.FileName,
                 SizeBytes: censusIdentity.SizeBytes,
-                Sha256: censusIdentity.Sha256,
-                SchemaVersion: 1),
+                Sha256: censusIdentity.Sha256),
             Mappings: mappingIdentity,
             Engine: manifest.Engine,
             Extractor: new ExtractorIdentity(
@@ -211,9 +207,9 @@ internal static class RentalEvidenceCommand
 
     private static void ValidateCensus(StaticCensus census, BuildManifest manifest, string manifestSha256)
     {
-        if (census.ArtifactType != "static-census" || census.SchemaVersion != 1)
+        if (census.ArtifactType != "static-census")
         {
-            throw new InvalidDataException("Expected static-census schema version 1.");
+            throw new InvalidDataException("Expected a static-census artifact.");
         }
 
         if (census.Build is null ||

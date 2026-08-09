@@ -4,7 +4,6 @@ namespace NeonRetroRewind.RuntimeExporter;
 
 internal sealed record BuildManifestInput(
     [property: JsonPropertyName("artifactType")] string ArtifactType,
-    [property: JsonPropertyName("schemaVersion")] int SchemaVersion,
     [property: JsonPropertyName("steam")] SteamIdentityInput Steam,
     [property: JsonPropertyName("executable")] FileIdentityInput Executable,
     [property: JsonPropertyName("engine")] EngineIdentityInput Engine);
@@ -23,7 +22,6 @@ internal sealed record FileIdentityInput(
 
 internal sealed record RuntimeHostStagingManifest(
     string ArtifactType,
-    int SchemaVersion,
     RuntimeBuildIdentity Build,
     RuntimeHostIdentity RuntimeHost,
     ProbeIdentity Probe,
@@ -57,7 +55,6 @@ internal sealed record ProposedGameFile(
 
 internal sealed record RuntimeHostInstallationManifest(
     string ArtifactType,
-    int SchemaVersion,
     FileIdentity StagingManifest,
     RuntimeBuildIdentity Build,
     GameDirectoryIdentity GameDirectory,

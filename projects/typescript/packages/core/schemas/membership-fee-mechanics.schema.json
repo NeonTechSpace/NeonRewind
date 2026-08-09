@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:domain:membership-fee-mechanics:1",
+  "$id": "urn:neonretrorewind:schema:domain:membership-fee-mechanics",
   "title": "NeonRetroRewind membership fee mechanics",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "sources",
     "scope",
@@ -20,9 +19,6 @@
   "properties": {
     "artifactType": {
       "const": "membership-fee-mechanics"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/build"
@@ -56,7 +52,10 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId"],
+      "required": [
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "steamAppId": {
           "type": "string",
@@ -71,7 +70,10 @@
     "sources": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["rentalEvidence", "rentalBlueprintBodies"],
+      "required": [
+        "rentalEvidence",
+        "rentalBlueprintBodies"
+      ],
       "properties": {
         "rentalEvidence": {
           "allOf": [
@@ -106,7 +108,12 @@
     "sourceIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sha256", "sizeBytes", "artifactType", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sha256",
+        "sizeBytes",
+        "artifactType"
+      ],
       "properties": {
         "fileName": {
           "type": "string",
@@ -121,17 +128,22 @@
           "minimum": 1
         },
         "artifactType": {
-          "enum": ["rental-evidence", "rental-blueprint-bodies"]
-        },
-        "schemaVersion": {
-          "const": 1
+          "enum": [
+            "rental-evidence",
+            "rental-blueprint-bodies"
+          ]
         }
       }
     },
     "storage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["container", "key", "value", "evidence"],
+      "required": [
+        "container",
+        "key",
+        "value",
+        "evidence"
+      ],
       "properties": {
         "container": {
           "const": "map"
@@ -150,7 +162,13 @@
     "feeRecord": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["late", "broken", "rewind", "consoleLate", "consoleBroken"],
+      "required": [
+        "late",
+        "broken",
+        "rewind",
+        "consoleLate",
+        "consoleBroken"
+      ],
       "properties": {
         "late": {
           "$ref": "#/$defs/feeField"
@@ -172,7 +190,10 @@
     "feeField": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["defaultValue", "evidence"],
+      "required": [
+        "defaultValue",
+        "evidence"
+      ],
       "properties": {
         "defaultValue": {
           "const": 0
@@ -185,7 +206,12 @@
     "addition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["zeroMembershipId", "mapWrite", "fieldUpdates", "evidence"],
+      "required": [
+        "zeroMembershipId",
+        "mapWrite",
+        "fieldUpdates",
+        "evidence"
+      ],
       "properties": {
         "zeroMembershipId": {
           "const": "no-op"
@@ -196,7 +222,13 @@
         "fieldUpdates": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["late", "broken", "rewind", "consoleLate", "consoleBroken"],
+          "required": [
+            "late",
+            "broken",
+            "rewind",
+            "consoleLate",
+            "consoleBroken"
+          ],
           "properties": {
             "late": {
               "const": "stored-plus-incoming"
@@ -223,7 +255,11 @@
     "removal": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["zeroMembershipId", "operation", "evidence"],
+      "required": [
+        "zeroMembershipId",
+        "operation",
+        "evidence"
+      ],
       "properties": {
         "zeroMembershipId": {
           "const": "no-op"
@@ -239,7 +275,11 @@
     "classFieldEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "classPath", "fieldName"],
+      "required": [
+        "artifactType",
+        "classPath",
+        "fieldName"
+      ],
       "properties": {
         "artifactType": {
           "const": "rental-evidence"
@@ -255,7 +295,11 @@
     "structFieldEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "structPath", "fieldName"],
+      "required": [
+        "artifactType",
+        "structPath",
+        "fieldName"
+      ],
       "properties": {
         "artifactType": {
           "const": "rental-evidence"
@@ -271,7 +315,11 @@
     "functionEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "classPath", "functionName"],
+      "required": [
+        "artifactType",
+        "classPath",
+        "functionName"
+      ],
       "properties": {
         "artifactType": {
           "const": "rental-blueprint-bodies"

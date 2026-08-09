@@ -1,11 +1,13 @@
 export {
   validateMovieReturnObservation,
+  type CapturedMovieReferences,
   type CustomerReturnObservationEvent,
   type MovieReference,
   type MovieReturnObservation,
   type MovieReturnObservationEvent,
   type MovieReturnValidationIssue,
   type MovieReturnValidationIssueCode,
+  type MovieReturnValidationMechanics,
   type MovieReturnValidationReport,
   type ReadinessObservationEvent,
   type SelectionObservationEvent,

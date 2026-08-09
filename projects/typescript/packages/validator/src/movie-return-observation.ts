@@ -1,21 +1,29 @@
+import type { MovieReturnMechanics } from "@neonretrorewind/core";
+
 export interface MovieReference {
   readonly referenceType: "object-path" | "run-local";
   readonly value: string;
 }
 
+export interface CapturedMovieReferences {
+  readonly totalCount: number;
+  readonly truncated: boolean;
+  readonly movies: readonly MovieReference[];
+}
+
 export interface RentalQueueState {
-  readonly rentedMovies: readonly MovieReference[];
-  readonly readyMovies: readonly MovieReference[];
+  readonly rentedMovies: CapturedMovieReferences;
+  readonly readyMovies: CapturedMovieReferences;
 }
 
 export interface CustomerReturnState {
-  readonly readyMovies: readonly MovieReference[];
-  readonly customerInventoryMovies: readonly MovieReference[];
+  readonly readyMovies: CapturedMovieReferences;
+  readonly customerInventoryMovies: CapturedMovieReferences;
 }
 
 export interface SelectionResult {
   readonly found: boolean;
-  readonly selectedMovies: readonly MovieReference[];
+  readonly selectedMovies: CapturedMovieReferences;
 }
 
 interface ObservationEventBase {
@@ -52,17 +60,15 @@ export type MovieReturnObservationEvent =
 
 export interface MovieReturnObservation {
   readonly artifactType: "movie-return-runtime-observation";
-  readonly schemaVersion: 1;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;
   };
   readonly targetMechanics: {
-    readonly fileName: "movie-return-mechanics.v4.json";
+    readonly fileName: "movie-return-mechanics.json";
     readonly sizeBytes: number;
     readonly sha256: string;
     readonly artifactType: "movie-return-mechanics";
-    readonly schemaVersion: 4;
   };
   readonly collector: {
     readonly name: "NeonRetroRewind.MovieReturnRuntimeCollector";
@@ -99,9 +105,14 @@ export type MovieReturnValidationIssueCode =
   | "event-time-before-run"
   | "event-time-after-run"
   | "event-time-moved-backward"
+  | "capture-truncated"
+  | "capture-count-mismatch"
   | "readiness-source-empty"
   | "readiness-source-not-cleared"
   | "readiness-destination-mismatch"
+  | "selection-result-count-exceeded"
+  | "selection-result-duplicate"
+  | "selection-found-result-mismatch"
   | "selection-outside-ready-queue"
   | "customer-selection-outside-ready-queue"
   | "customer-ready-queue-mismatch"
@@ -120,8 +131,28 @@ export interface MovieReturnValidationReport {
   readonly issues: readonly MovieReturnValidationIssue[];
 }
 
+export interface MovieReturnValidationMechanics {
+  readonly readiness: Pick<
+    MovieReturnMechanics["readiness"],
+    "transfer" | "clearsSource"
+  >;
+  readonly selection: Pick<
+    MovieReturnMechanics["selection"],
+    "candidateQueue" | "deduplication" | "outcomes"
+  > & {
+    readonly maximumUniqueMovies: number;
+    readonly customerFlow: {
+      readonly selectedMovies: Pick<
+        MovieReturnMechanics["selection"]["customerFlow"]["selectedMovies"],
+        "destination" | "removesFromCandidateQueue"
+      >;
+    };
+  };
+}
+
 export function validateMovieReturnObservation(
   observation: MovieReturnObservation,
+  mechanics: MovieReturnValidationMechanics,
 ): MovieReturnValidationReport {
   const issues: MovieReturnValidationIssue[] = [];
 
@@ -141,13 +172,13 @@ export function validateMovieReturnObservation(
   for (const event of observation.events) {
     switch (event.eventType) {
       case "readiness-observed":
-        validateReadiness(event, issues);
+        validateReadiness(event, mechanics, issues);
         break;
       case "selection-observed":
-        validateSelection(event, issues);
+        validateSelection(event, mechanics, issues);
         break;
       case "customer-return-observed":
-        validateCustomerReturn(event, issues);
+        validateCustomerReturn(event, mechanics, issues);
         break;
     }
   }
@@ -255,18 +286,47 @@ function validateTimeline(
 
 function validateReadiness(
   event: ReadinessObservationEvent,
+  mechanics: MovieReturnValidationMechanics,
   issues: MovieReturnValidationIssue[],
 ): void {
-  if (event.preState.rentedMovies.length === 0) {
+  const preRentedComplete = validateCapture(
+    event.preState.rentedMovies,
+    "readiness pre-state rented queue",
+    event.sequence,
+    issues,
+  );
+  const preReadyComplete = validateCapture(
+    event.preState.readyMovies,
+    "readiness pre-state ready queue",
+    event.sequence,
+    issues,
+  );
+  const postRentedComplete = validateCapture(
+    event.postState.rentedMovies,
+    "readiness post-state rented queue",
+    event.sequence,
+    issues,
+  );
+  const postReadyComplete = validateCapture(
+    event.postState.readyMovies,
+    "readiness post-state ready queue",
+    event.sequence,
+    issues,
+  );
+
+  if (event.preState.rentedMovies.totalCount === 0) {
     addIssue(
       issues,
-      "mismatch",
+      "incomplete",
       "readiness-source-empty",
       event.sequence,
-      "The readiness observation started with an empty rented queue.",
+      "The readiness observation started with an empty source queue, so it did not exercise a transfer.",
     );
   }
-  if (event.postState.rentedMovies.length !== 0) {
+  if (
+    mechanics.readiness.clearsSource &&
+    event.postState.rentedMovies.totalCount !== 0
+  ) {
     addIssue(
       issues,
       "mismatch",
@@ -276,26 +336,63 @@ function validateReadiness(
     );
   }
 
-  const expectedReady = union(
-    event.preState.readyMovies,
-    event.preState.rentedMovies,
-  );
-  if (!sameReferences(event.postState.readyMovies, expectedReady)) {
-    addIssue(
-      issues,
-      "mismatch",
-      "readiness-destination-mismatch",
-      event.sequence,
-      "The ready queue does not equal the previous ready and rented queues combined.",
-    );
+  if (
+    mechanics.readiness.transfer === "append-all" &&
+    event.preState.rentedMovies.totalCount > 0 &&
+    preRentedComplete &&
+    preReadyComplete &&
+    postRentedComplete &&
+    postReadyComplete
+  ) {
+    const expectedReady = [
+      ...event.preState.readyMovies.movies,
+      ...event.preState.rentedMovies.movies,
+    ];
+    if (!sameReferenceMultiset(event.postState.readyMovies.movies, expectedReady)) {
+      addIssue(
+        issues,
+        "mismatch",
+        "readiness-destination-mismatch",
+        event.sequence,
+        "The ready queue does not equal the previous ready and rented queues combined.",
+      );
+    }
   }
 }
 
 function validateSelection(
   event: SelectionObservationEvent,
+  mechanics: MovieReturnValidationMechanics,
   issues: MovieReturnValidationIssue[],
 ): void {
-  if (!isSubset(event.result.selectedMovies, event.preState.readyMovies)) {
+  validateCapture(
+    event.preState.rentedMovies,
+    "selection pre-state rented queue",
+    event.sequence,
+    issues,
+  );
+  const readyComplete = validateCapture(
+    event.preState.readyMovies,
+    "selection pre-state ready queue",
+    event.sequence,
+    issues,
+  );
+  const selectedComplete = validateSelectionResult(
+    event.result,
+    mechanics,
+    event.sequence,
+    issues,
+  );
+
+  if (
+    mechanics.selection.candidateQueue === "ready-to-return" &&
+    readyComplete &&
+    selectedComplete &&
+    !isReferenceMultisetSubset(
+      event.result.selectedMovies.movies,
+      event.preState.readyMovies.movies,
+    )
+  ) {
     addIssue(
       issues,
       "mismatch",
@@ -308,10 +405,47 @@ function validateSelection(
 
 function validateCustomerReturn(
   event: CustomerReturnObservationEvent,
+  mechanics: MovieReturnValidationMechanics,
   issues: MovieReturnValidationIssue[],
 ): void {
-  const selected = event.result.selectedMovies;
-  if (!isSubset(selected, event.preState.readyMovies)) {
+  const preReadyComplete = validateCapture(
+    event.preState.readyMovies,
+    "customer pre-state ready queue",
+    event.sequence,
+    issues,
+  );
+  const preInventoryComplete = validateCapture(
+    event.preState.customerInventoryMovies,
+    "customer pre-state inventory",
+    event.sequence,
+    issues,
+  );
+  const selectedComplete = validateSelectionResult(
+    event.result,
+    mechanics,
+    event.sequence,
+    issues,
+  );
+  const postReadyComplete = validateCapture(
+    event.postState.readyMovies,
+    "customer post-state ready queue",
+    event.sequence,
+    issues,
+  );
+  const postInventoryComplete = validateCapture(
+    event.postState.customerInventoryMovies,
+    "customer post-state inventory",
+    event.sequence,
+    issues,
+  );
+
+  const selected = event.result.selectedMovies.movies;
+  if (
+    mechanics.selection.candidateQueue === "ready-to-return" &&
+    preReadyComplete &&
+    selectedComplete &&
+    !isReferenceMultisetSubset(selected, event.preState.readyMovies.movies)
+  ) {
     addIssue(
       issues,
       "mismatch",
@@ -321,69 +455,223 @@ function validateCustomerReturn(
     );
   }
 
-  const expectedReady = event.result.found
-    ? without(event.preState.readyMovies, selected)
-    : event.preState.readyMovies;
-  if (!sameReferences(event.postState.readyMovies, expectedReady)) {
-    addIssue(
-      issues,
-      "mismatch",
-      "customer-ready-queue-mismatch",
-      event.sequence,
-      "The ready queue does not match the selected customer-return result.",
-    );
+  if (
+    mechanics.selection.customerFlow.selectedMovies.removesFromCandidateQueue &&
+    preReadyComplete &&
+    selectedComplete &&
+    postReadyComplete
+  ) {
+    const expectedReady = event.result.found
+      ? withoutReferenceOccurrences(event.preState.readyMovies.movies, selected)
+      : event.preState.readyMovies.movies;
+    if (!sameReferenceMultiset(event.postState.readyMovies.movies, expectedReady)) {
+      addIssue(
+        issues,
+        "mismatch",
+        "customer-ready-queue-mismatch",
+        event.sequence,
+        "The ready queue does not match the selected customer-return result.",
+      );
+    }
   }
 
-  const expectedInventory = event.result.found
-    ? union(event.preState.customerInventoryMovies, selected)
-    : event.preState.customerInventoryMovies;
-  if (!sameReferences(event.postState.customerInventoryMovies, expectedInventory)) {
+  if (
+    mechanics.selection.customerFlow.selectedMovies.destination ===
+      "customer-inventory" &&
+    preInventoryComplete &&
+    selectedComplete &&
+    postInventoryComplete
+  ) {
+    const expectedInventory = event.result.found
+      ? [...event.preState.customerInventoryMovies.movies, ...selected]
+      : event.preState.customerInventoryMovies.movies;
+    if (
+      !sameReferenceMultiset(
+        event.postState.customerInventoryMovies.movies,
+        expectedInventory,
+      )
+    ) {
+      addIssue(
+        issues,
+        "mismatch",
+        "customer-inventory-mismatch",
+        event.sequence,
+        "The customer inventory does not match the selected customer-return result.",
+      );
+    }
+  }
+}
+
+function validateSelectionResult(
+  result: SelectionResult,
+  mechanics: MovieReturnValidationMechanics,
+  sequence: number,
+  issues: MovieReturnValidationIssue[],
+): boolean {
+  const complete = validateCapture(
+    result.selectedMovies,
+    "selection result",
+    sequence,
+    issues,
+  );
+
+  if (
+    result.selectedMovies.totalCount > mechanics.selection.maximumUniqueMovies
+  ) {
     addIssue(
       issues,
       "mismatch",
-      "customer-inventory-mismatch",
-      event.sequence,
-      "The customer inventory does not match the selected customer-return result.",
+      "selection-result-count-exceeded",
+      sequence,
+      `The selector returned more than the normalized limit of ${mechanics.selection.maximumUniqueMovies} movies.`,
     );
   }
+  if (
+    mechanics.selection.deduplication === "add-unique" &&
+    hasDuplicateReferences(result.selectedMovies.movies)
+  ) {
+    addIssue(
+      issues,
+      "mismatch",
+      "selection-result-duplicate",
+      sequence,
+      "The selector returned the same movie reference more than once.",
+    );
+  }
+  if (
+    selectionFoundDisagrees(
+      result.found,
+      result.selectedMovies.totalCount,
+      mechanics,
+    )
+  ) {
+    addIssue(
+      issues,
+      "mismatch",
+      "selection-found-result-mismatch",
+      sequence,
+      "The selector found flag does not agree with its selected-movie count.",
+    );
+  }
+  return complete;
+}
+
+function selectionFoundDisagrees(
+  found: boolean,
+  selectedCount: number,
+  mechanics: MovieReturnValidationMechanics,
+): boolean {
+  if (selectedCount > 0) {
+    return (
+      mechanics.selection.outcomes.weightedFailureWithSelection ===
+        "found-selected" && !found
+    );
+  }
+  const emptyOutcomesAreNotFound =
+    mechanics.selection.outcomes.weightedFailureWithNoSelection ===
+      "not-found-empty" &&
+    mechanics.selection.outcomes.missingCandidate === "not-found-empty";
+  return emptyOutcomesAreNotFound && found;
+}
+
+function validateCapture(
+  capture: CapturedMovieReferences,
+  label: string,
+  sequence: number,
+  issues: MovieReturnValidationIssue[],
+): boolean {
+  let complete = true;
+  if (capture.truncated) {
+    addIssue(
+      issues,
+      "incomplete",
+      "capture-truncated",
+      sequence,
+      `The ${label} omitted movie references because it exceeded the capture limit.`,
+    );
+    complete = false;
+  }
+  if (!capture.truncated && capture.totalCount !== capture.movies.length) {
+    addIssue(
+      issues,
+      "incomplete",
+      "capture-count-mismatch",
+      sequence,
+      `The ${label} count does not equal the number of captured movie references.`,
+    );
+    complete = false;
+  }
+  if (capture.truncated && capture.totalCount <= capture.movies.length) {
+    addIssue(
+      issues,
+      "incomplete",
+      "capture-count-mismatch",
+      sequence,
+      `The truncated ${label} count must exceed the number of captured movie references.`,
+    );
+    complete = false;
+  }
+  return complete;
 }
 
 function referenceKey(reference: MovieReference): string {
   return `${reference.referenceType}\u0000${reference.value}`;
 }
 
-function isSubset(
+function referenceCounts(references: readonly MovieReference[]): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const reference of references) {
+    const key = referenceKey(reference);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+function hasDuplicateReferences(references: readonly MovieReference[]): boolean {
+  return referenceCounts(references).size !== references.length;
+}
+
+function isReferenceMultisetSubset(
   possibleSubset: readonly MovieReference[],
   possibleSuperset: readonly MovieReference[],
 ): boolean {
-  const superset = new Set(possibleSuperset.map(referenceKey));
-  return possibleSubset.every((reference) => superset.has(referenceKey(reference)));
-}
-
-function union(
-  left: readonly MovieReference[],
-  right: readonly MovieReference[],
-): readonly MovieReference[] {
-  const result = new Map<string, MovieReference>();
-  for (const reference of [...left, ...right]) {
-    result.set(referenceKey(reference), reference);
+  const available = referenceCounts(possibleSuperset);
+  for (const reference of possibleSubset) {
+    const key = referenceKey(reference);
+    const remaining = available.get(key) ?? 0;
+    if (remaining === 0) {
+      return false;
+    }
+    available.set(key, remaining - 1);
   }
-  return [...result.values()];
+  return true;
 }
 
-function without(
+function withoutReferenceOccurrences(
   source: readonly MovieReference[],
   removed: readonly MovieReference[],
 ): readonly MovieReference[] {
-  const removedKeys = new Set(removed.map(referenceKey));
-  return source.filter((reference) => !removedKeys.has(referenceKey(reference)));
+  const remainingToRemove = referenceCounts(removed);
+  return source.filter((reference) => {
+    const key = referenceKey(reference);
+    const remaining = remainingToRemove.get(key) ?? 0;
+    if (remaining === 0) {
+      return true;
+    }
+    remainingToRemove.set(key, remaining - 1);
+    return false;
+  });
 }
 
-function sameReferences(
+function sameReferenceMultiset(
   left: readonly MovieReference[],
   right: readonly MovieReference[],
 ): boolean {
-  return left.length === right.length && isSubset(left, right) && isSubset(right, left);
+  return (
+    left.length === right.length &&
+    isReferenceMultisetSubset(left, right) &&
+    isReferenceMultisetSubset(right, left)
+  );
 }
 
 function addIssue(

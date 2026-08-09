@@ -5,7 +5,7 @@ import test from "node:test";
 import { validateJsonSchema } from "../src/schema-validation.ts";
 
 const schemaUrl = new URL(
-  "../../../../game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json",
+  "../../../../game-data-exporter/schemas/runtime/movie-return-observation.schema.json",
   import.meta.url,
 );
 const schemaPromise = readFile(schemaUrl, "utf8").then(
@@ -58,29 +58,115 @@ test("rejects a completed run with a failure reason", async () => {
   });
 });
 
-test("rejects selected movies when the selector reports not found", async () => {
+test("accepts selected movies when the selector reports not found", async () => {
+  const schema = await schemaPromise;
+  const observation = createObservation();
+  const result = observation.events[1]?.result;
+  if (result === undefined) {
+    throw new Error("Fixture selection result is missing.");
+  }
+  result.found = false;
+
+  assert.doesNotThrow(() =>
+    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
+  );
+});
+
+test("accepts more than four selected movies as bounded runtime evidence", async () => {
+  const schema = await schemaPromise;
+  const observation = createObservation();
+  const result = observation.events[1]?.result;
+  if (result === undefined) {
+    throw new Error("Fixture selection result is missing.");
+  }
+  result.selectedMovies = captured(
+    movie("movie-0001"),
+    movie("movie-0002"),
+    movie("movie-0003"),
+    movie("movie-0004"),
+    movie("movie-0005"),
+  );
+
+  assert.doesNotThrow(() =>
+    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
+  );
+});
+
+test("accepts duplicate selected movies as bounded runtime evidence", async () => {
+  const schema = await schemaPromise;
+  const observation = createObservation();
+  const result = observation.events[1]?.result;
+  if (result === undefined) {
+    throw new Error("Fixture selection result is missing.");
+  }
+  result.selectedMovies = captured(movie("movie-0001"), movie("movie-0001"));
+
+  assert.doesNotThrow(() =>
+    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
+  );
+});
+
+test("accepts an explicitly truncated collection", async () => {
+  const schema = await schemaPromise;
+  const observation = createObservation();
+  const state = observation.events[1]?.preState;
+  if (state === undefined) {
+    throw new Error("Fixture selection pre-state is missing.");
+  }
+  state.readyMovies = {
+    totalCount: 257,
+    truncated: true,
+    movies: [movie("movie-0001")],
+  };
+
+  assert.doesNotThrow(() =>
+    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
+  );
+});
+
+test("accepts exactly 256 captured movie references", async () => {
+  const schema = await schemaPromise;
+  const observation = createObservation();
+  const state = observation.events[1]?.preState;
+  if (state === undefined) {
+    throw new Error("Fixture selection pre-state is missing.");
+  }
+  state.readyMovies = captured(
+    ...Array.from({ length: 256 }, (_, index) =>
+      movie(`movie-${index.toString().padStart(4, "0")}`),
+    ),
+  );
+
+  assert.doesNotThrow(() =>
+    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
+  );
+});
+
+test("rejects more than 256 captured movie references", async () => {
   await assertRejected((observation) => {
-    const result = observation.events[1]?.result;
-    if (result === undefined) {
-      throw new Error("Fixture selection result is missing.");
+    const state = observation.events[1]?.preState;
+    if (state === undefined) {
+      throw new Error("Fixture selection pre-state is missing.");
     }
-    result.found = false;
+    state.readyMovies = captured(
+      ...Array.from({ length: 257 }, (_, index) =>
+        movie(`movie-${index.toString().padStart(4, "0")}`),
+      ),
+    );
   });
 });
 
-test("rejects more than four selected movies", async () => {
+test("rejects selected collections outside the structural capture bound", async () => {
   await assertRejected((observation) => {
     const result = observation.events[1]?.result;
     if (result === undefined) {
       throw new Error("Fixture selection result is missing.");
     }
-    result.selectedMovies = [
-      movie("movie-0001"),
-      movie("movie-0002"),
-      movie("movie-0003"),
-      movie("movie-0004"),
-      movie("movie-0005"),
-    ];
+    result.selectedMovies = captured(
+      ...Array.from({ length: 257 }, (_, index) =>
+        movie(`movie-${index.toString().padStart(4, "0")}`),
+      ),
+    );
   });
 });
 
@@ -106,17 +192,15 @@ async function assertRejected(
 function createObservation() {
   return {
     artifactType: "movie-return-runtime-observation",
-    schemaVersion: 1,
     build: {
       steamAppId: "3552140",
       steamBuildId: "23896268",
     },
     targetMechanics: {
-      fileName: "movie-return-mechanics.v4.json",
+      fileName: "movie-return-mechanics.json",
       sizeBytes: 1234,
       sha256: "a".repeat(64),
       artifactType: "movie-return-mechanics",
-      schemaVersion: 4,
     },
     collector: {
       name: "NeonRetroRewind.MovieReturnRuntimeCollector",
@@ -142,12 +226,12 @@ function createObservation() {
         objectPath: "/Game/Map.PersistentLevel.ExampleQueueSystem_C_0",
         functionPath: "/Game/ExampleQueueSystem.ExampleQueueSystem_C:Prepare Example Items",
         preState: {
-          rentedMovies: [movie("movie-0001")],
-          readyMovies: [],
+          rentedMovies: captured(movie("movie-0001")),
+          readyMovies: captured(),
         },
         postState: {
-          rentedMovies: [],
-          readyMovies: [movie("movie-0001")],
+          rentedMovies: captured(),
+          readyMovies: captured(movie("movie-0001")),
         },
       },
       {
@@ -159,12 +243,12 @@ function createObservation() {
         functionPath:
           "/Game/ExampleQueueSystem.ExampleQueueSystem_C:Select Example Items",
         preState: {
-          rentedMovies: [],
-          readyMovies: [movie("movie-0001")],
+          rentedMovies: captured(),
+          readyMovies: captured(movie("movie-0001")),
         },
         result: {
           found: true,
-          selectedMovies: [movie("movie-0001")],
+          selectedMovies: captured(movie("movie-0001")),
         },
       },
       {
@@ -176,16 +260,16 @@ function createObservation() {
         functionPath:
           "/Game/ExampleActor.ExampleActor_C:Initialize Example Return",
         preState: {
-          readyMovies: [movie("movie-0001")],
-          customerInventoryMovies: [],
+          readyMovies: captured(movie("movie-0001")),
+          customerInventoryMovies: captured(),
         },
         result: {
           found: true,
-          selectedMovies: [movie("movie-0001")],
+          selectedMovies: captured(movie("movie-0001")),
         },
         postState: {
-          readyMovies: [],
-          customerInventoryMovies: [movie("movie-0001")],
+          readyMovies: captured(),
+          customerInventoryMovies: captured(movie("movie-0001")),
         },
       },
     ],
@@ -196,5 +280,13 @@ function movie(value: string) {
   return {
     referenceType: "run-local",
     value,
+  };
+}
+
+function captured(...movies: ReturnType<typeof movie>[]) {
+  return {
+    totalCount: movies.length,
+    truncated: false,
+    movies,
   };
 }

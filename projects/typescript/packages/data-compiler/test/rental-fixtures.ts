@@ -21,9 +21,9 @@ const feeFields = [
 ] as const;
 
 export const rentalSources = {
-  rentalEvidence: createIdentity("rental-evidence.v1.json", "rental-evidence"),
+  rentalEvidence: createIdentity("rental-evidence.json", "rental-evidence"),
   rentalBlueprintBodies: createIdentity(
-    "rental-blueprint-bodies.v1.json",
+    "rental-blueprint-bodies.json",
     "rental-blueprint-bodies",
   ),
 } as const;
@@ -31,7 +31,6 @@ export const rentalSources = {
 export function createRentalEvidence(): Mutable<RentalEvidenceArtifact> {
   return {
     artifactType: "rental-evidence",
-    schemaVersion: 1,
     build: createBuild(),
     mappings: createMappings(),
     packages: [
@@ -118,7 +117,6 @@ export function createRentalEvidence(): Mutable<RentalEvidenceArtifact> {
 export function createBlueprintBodies(): Mutable<RentalBlueprintBodiesArtifact> {
   return {
     artifactType: "rental-blueprint-bodies",
-    schemaVersion: 1,
     build: createBuild(),
     mappings: createMappings(),
     classes: [
@@ -248,7 +246,6 @@ function createIdentity(
     sha256: artifactType === "rental-evidence" ? "a".repeat(64) : "b".repeat(64),
     sizeBytes: 100,
     artifactType,
-    schemaVersion: 1,
   };
 }
 
@@ -264,7 +261,6 @@ function createFunction(name: string, bytecodeExpressionCount: number) {
 export function createBuild() {
   return {
     manifestSha256: "c".repeat(64),
-    manifestSchemaVersion: 1 as const,
     steamAppId: "3552140",
     steamBuildId: "23896268",
   };

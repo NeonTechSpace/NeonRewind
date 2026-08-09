@@ -12,7 +12,6 @@ internal static class BlueprintCallerBodiesCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
-    private const int SchemaVersion = 1;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -174,17 +173,14 @@ internal static class BlueprintCallerBodiesCommand
 
         return new BlueprintCallerBodies(
             ArtifactType: "blueprint-caller-bodies",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             CallSites: new BlueprintCallSitesInput(
                 FileName: callSitesIdentity.FileName,
                 SizeBytes: callSitesIdentity.SizeBytes,
-                Sha256: callSitesIdentity.Sha256,
-                SchemaVersion: callSites.SchemaVersion),
+                Sha256: callSitesIdentity.Sha256),
             Mappings: mappingIdentity,
             Engine: manifest.Engine,
             Extractor: new ExtractorIdentity(
@@ -289,9 +285,9 @@ internal static class BlueprintCallerBodiesCommand
         string manifestSha256,
         MappingIdentity mappingIdentity)
     {
-        if (callSites.ArtifactType != "blueprint-call-sites" || callSites.SchemaVersion != 1)
+        if (callSites.ArtifactType != "blueprint-call-sites")
         {
-            throw new InvalidDataException("Expected blueprint-call-sites schema version 1.");
+            throw new InvalidDataException("Expected a blueprint-call-sites artifact.");
         }
 
         if (callSites.Build is null ||
@@ -311,9 +307,7 @@ internal static class BlueprintCallerBodiesCommand
             !string.Equals(callSites.Build.SteamAppId, manifest.Steam.AppId, StringComparison.Ordinal) ||
             !string.Equals(callSites.Build.SteamBuildId, manifest.Steam.BuildId, StringComparison.Ordinal) ||
             callSites.Mappings != mappingIdentity ||
-            callSites.Engine != manifest.Engine ||
-            callSites.Build.ManifestSchemaVersion != manifest.SchemaVersion ||
-            callSites.StaticCensus.SchemaVersion != 1)
+            callSites.Engine != manifest.Engine)
         {
             throw new InvalidDataException("Blueprint call sites do not belong to the supplied build and mappings.");
         }

@@ -21,14 +21,13 @@ export function assertRentalInputIdentity(
   blueprintBodies: RentalBlueprintBodiesArtifact,
   sources: RentalMechanicSources,
 ): void {
-  if (rentalEvidence.artifactType !== "rental-evidence" || rentalEvidence.schemaVersion !== 1) {
-    throw new Error("Expected rental-evidence schema version 1.");
+  if (rentalEvidence.artifactType !== "rental-evidence") {
+    throw new Error("Expected a rental-evidence artifact.");
   }
   if (
-    blueprintBodies.artifactType !== "rental-blueprint-bodies" ||
-    blueprintBodies.schemaVersion !== 1
+    blueprintBodies.artifactType !== "rental-blueprint-bodies"
   ) {
-    throw new Error("Expected rental-blueprint-bodies schema version 1.");
+    throw new Error("Expected a rental-blueprint-bodies artifact.");
   }
   if (
     sources.rentalEvidence.artifactType !== rentalEvidence.artifactType ||

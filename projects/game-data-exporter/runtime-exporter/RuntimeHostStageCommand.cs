@@ -115,7 +115,7 @@ internal static class RuntimeHostStageCommand
         }
 
         Console.WriteLine($"Wrote runtime-host staging directory: {outputPath}");
-        Console.WriteLine($"Review the proposed files in: {Path.Combine(outputPath, "runtime-host-staging.v1.json")}");
+        Console.WriteLine($"Review the proposed files in: {Path.Combine(outputPath, "runtime-host-staging.json")}");
         Console.WriteLine("No files were copied into the game directory.");
     }
 
@@ -182,7 +182,6 @@ internal static class RuntimeHostStageCommand
 
         var stagingManifest = new RuntimeHostStagingManifest(
             "runtime-host-staging",
-            1,
             new RuntimeBuildIdentity(
                 buildManifest.Steam.AppId,
                 buildManifest.Steam.BuildId,
@@ -208,7 +207,6 @@ internal static class RuntimeHostStageCommand
             ?? throw new InvalidDataException("Build manifest is empty.");
 
         if (manifest.ArtifactType != "build-manifest" ||
-            manifest.SchemaVersion != 1 ||
             manifest.Steam is null ||
             manifest.Executable is null ||
             manifest.Engine is null ||

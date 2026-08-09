@@ -62,13 +62,11 @@ export interface BlueprintTraceFunctionInput {
 
 export interface BlueprintFunctionTraceArtifact {
   readonly artifactType: "blueprint-function-trace";
-  readonly schemaVersion: 2;
   readonly build: RentalBuildReference;
   readonly callerBodies: readonly {
     readonly fileName: string;
     readonly sizeBytes: number;
     readonly sha256: string;
-    readonly schemaVersion: 1;
     readonly targetFunctionName: string;
   }[];
   readonly mappings: RentalMappingIdentity;
@@ -97,13 +95,11 @@ export interface BlueprintFunctionTraceArtifact {
 
 export interface RentalFunctionTraceArtifact {
   readonly artifactType: "rental-function-trace";
-  readonly schemaVersion: 1;
   readonly build: RentalBuildReference;
   readonly rentalBlueprintBodies: {
     readonly fileName: string;
     readonly sizeBytes: number;
     readonly sha256: string;
-    readonly schemaVersion: 1;
   };
   readonly requestedFunctionPaths: readonly string[];
   readonly mappings: RentalMappingIdentity;

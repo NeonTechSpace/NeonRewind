@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:domain:console-return-mechanics:1",
+  "$id": "urn:neonretrorewind:schema:domain:console-return-mechanics",
   "title": "NeonRetroRewind console return mechanics",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "sources",
     "scope",
@@ -19,9 +18,6 @@
   "properties": {
     "artifactType": {
       "const": "console-return-mechanics"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/build"
@@ -52,7 +48,10 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId"],
+      "required": [
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "steamAppId": {
           "type": "string",
@@ -67,7 +66,10 @@
     "sources": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["rentalEvidence", "rentalBlueprintBodies"],
+      "required": [
+        "rentalEvidence",
+        "rentalBlueprintBodies"
+      ],
       "properties": {
         "rentalEvidence": {
           "allOf": [
@@ -102,7 +104,12 @@
     "sourceIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sha256", "sizeBytes", "artifactType", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sha256",
+        "sizeBytes",
+        "artifactType"
+      ],
       "properties": {
         "fileName": {
           "type": "string",
@@ -117,22 +124,27 @@
           "minimum": 1
         },
         "artifactType": {
-          "enum": ["rental-evidence", "rental-blueprint-bodies"]
-        },
-        "schemaVersion": {
-          "const": 1
+          "enum": [
+            "rental-evidence",
+            "rental-blueprint-bodies"
+          ]
         }
       }
     },
     "configuration": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["rentalDurationDays"],
+      "required": [
+        "rentalDurationDays"
+      ],
       "properties": {
         "rentalDurationDays": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["value", "evidence"],
+          "required": [
+            "value",
+            "evidence"
+          ],
           "properties": {
             "value": {
               "type": "integer",
@@ -148,7 +160,11 @@
     "eligibility": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["missingWeatherActorResult", "elapsedDays", "evidence"],
+      "required": [
+        "missingWeatherActorResult",
+        "elapsedDays",
+        "evidence"
+      ],
       "properties": {
         "missingWeatherActorResult": {
           "const": false
@@ -156,7 +172,12 @@
         "elapsedDays": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["currentDay", "rentalStartDay", "operator", "threshold"],
+          "required": [
+            "currentDay",
+            "rentalStartDay",
+            "operator",
+            "threshold"
+          ],
           "properties": {
             "currentDay": {
               "const": "weather-days-passed"
@@ -180,7 +201,13 @@
     "queueTransition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["when", "source", "destination", "removesFromSource", "evidence"],
+      "required": [
+        "when",
+        "source",
+        "destination",
+        "removesFromSource",
+        "evidence"
+      ],
       "properties": {
         "when": {
           "const": "eligible"
@@ -202,7 +229,11 @@
     "defaultEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "classPath", "propertyName"],
+      "required": [
+        "artifactType",
+        "classPath",
+        "propertyName"
+      ],
       "properties": {
         "artifactType": {
           "const": "rental-evidence"
@@ -218,7 +249,11 @@
     "functionEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "classPath", "functionName"],
+      "required": [
+        "artifactType",
+        "classPath",
+        "functionName"
+      ],
       "properties": {
         "artifactType": {
           "const": "rental-blueprint-bodies"

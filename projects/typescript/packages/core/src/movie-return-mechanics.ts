@@ -19,7 +19,6 @@ export interface MovieReturnArtifactIdentity<
   readonly sha256: string;
   readonly sizeBytes: number;
   readonly artifactType: ArtifactType;
-  readonly schemaVersion: ArtifactType extends "blueprint-function-trace" ? 2 : 1;
 }
 
 export interface BlueprintTraceEvidence {
@@ -94,7 +93,6 @@ export interface RentalSelectionTraceEvidence {
 
 export interface MovieReturnMechanics {
   readonly artifactType: "movie-return-mechanics";
-  readonly schemaVersion: 4;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;

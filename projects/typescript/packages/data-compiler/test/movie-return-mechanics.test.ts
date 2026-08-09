@@ -125,7 +125,7 @@ test("compiles movie readiness, weighted selection, and the confirmed customer f
   });
 
   const schemaPath = new URL(
-    "../../core/schemas/movie-return-mechanics.v4.schema.json",
+    "../../core/schemas/movie-return-mechanics.schema.json",
     import.meta.url,
   );
   const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;

@@ -129,7 +129,6 @@ export function compileFilmCatalog(
 
   return {
     artifactType: "film-catalog",
-    schemaVersion: 1,
     build: {
       steamAppId: input.build.steamAppId,
       steamBuildId: input.build.steamBuildId,
@@ -147,8 +146,8 @@ export function compileFilmCatalog(
 }
 
 function assertInputIdentity(input: StructuredValuesArtifact): void {
-  if (input.artifactType !== "structured-values" || input.schemaVersion !== 1) {
-    throw new Error("Expected structured-values schema version 1.");
+  if (input.artifactType !== "structured-values") {
+    throw new Error("Expected a structured-values artifact.");
   }
 }
 

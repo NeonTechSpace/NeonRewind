@@ -78,7 +78,6 @@ export function compileMovieReturnMechanics(
 
   return {
     artifactType: "movie-return-mechanics",
-    schemaVersion: 4,
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
       steamBuildId: rentalEvidence.build.steamBuildId,

@@ -26,7 +26,7 @@ The collector may:
 
 - Observe the naturally loaded rental manager and customer involved in the test.
 - Record the named queues, selector input and result, and the tested customer's inventory changes.
-- Write one versioned JSON observation and its SHA-256 hash to an ignored local directory.
+- Write one JSON observation and its SHA-256 hash to an ignored local directory.
 
 The collector must not:
 
@@ -50,19 +50,24 @@ It must not remove any file unless the game is closed and the file is proven to 
 
 ## Required observation record
 
-The observation uses [`movie-return-observation.v1.schema.json`](../projects/game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json).
-That versioned JSON shape is owned by `projects/game-data-exporter/schemas/runtime`.
+The observation uses [`movie-return-observation.schema.json`](../projects/game-data-exporter/schemas/runtime/movie-return-observation.schema.json).
+That JSON shape is owned by `projects/game-data-exporter/schemas/runtime`.
 The generated record belongs under `projects/game-data-exporter/.local/runtime/<Steam build ID>/<UTC run ID>/`.
 
 Each record must contain:
 
 - The Steam application ID and build ID.
-- The filename, size, SHA-256 hash, artifact type, and schema version of the private movie-return mechanics artifact being checked.
-- The runtime collector version and observation schema version.
+- The filename, size, SHA-256 hash, and artifact type of the private movie-return mechanics artifact being checked.
+- The runtime collector version.
 - A UTC run ID and ordered event sequence numbers.
 - The stable class, object, and function paths used by each event.
 - Only the relevant pre-state, input, result, and post-state for the tested mechanic.
 - A final status of `complete`, `aborted`, or `failed` with a reason when it is not complete.
+
+Every movie collection records its actual `totalCount`, a `truncated` flag, and at most 256 captured `movies`.
+The collector sets `truncated` when the actual collection exceeds that capture limit.
+The schema permits duplicate references, more than four selected movies, and disagreement between a selector's found flag and result count so the validator can retain those observations as mismatches.
+`NeonRetroRewind.MovieReturnRuntimeCollector` is the observation-record identity; the UE4SS mod name `NeonRetroRewindMovieReturnCollector` is a separate runtime-host identifier.
 
 Movie references must use stable runtime object paths when available.
 If stable paths are unavailable, the collector must assign run-local opaque identifiers that cannot be used outside that observation.
@@ -107,7 +112,7 @@ The first observation is complete only when all applicable checks can be evaluat
 
 The observation must remain marked incomplete when a required event was not reached or a required state could not be read.
 A runtime mismatch must be retained as evidence and must not be rewritten to match the static artifact.
-The `@neonretrorewind/validator` package checks event ordering, time bounds, queue transfer, selector membership, and customer inventory and queue transitions after schema validation.
+The `@neonretrorewind/validator` package checks event ordering, time bounds, capture completeness, queue transfer, selector count and uniqueness, found-result agreement, selector membership, and customer inventory and queue transitions after schema validation.
 It returns `passed`, `incomplete`, or `mismatch` with bounded issue codes and does not write or alter the observation.
 
 ## Validate a completed observation
@@ -118,36 +123,38 @@ Run it from `projects/typescript` after replacing the build and run IDs with the
 ```powershell
 $buildId = "replace-with-Steam-build-ID"
 $runId = "replace-with-UTC-run-ID"
-$observation = "../game-data-exporter/.local/runtime/$buildId/$runId/movie-return-observation.v1.json"
-$mechanics = ".local/domain/current/movie-return-mechanics.v4.json"
-$report = ".local/validation/$buildId/$runId/movie-return-validation.v1.json"
+$mechanicsRunId = "replace-with-mechanics-generation-ID"
+$observation = "../game-data-exporter/.local/runtime/$buildId/$runId/movie-return-observation.json"
+$mechanics = ".local/domain/runs/$mechanicsRunId/movie-return-mechanics.json"
+$report = ".local/validation/$buildId/$runId/movie-return-validation.json"
 
 pnpm movie-return-validation `
   --observation $observation `
-  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json" `
+  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.schema.json" `
   --mechanics $mechanics `
-  --mechanics-schema "packages/core/schemas/movie-return-mechanics.v4.schema.json" `
-  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.v1.schema.json" `
+  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" `
+  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" `
   --output $report
 ```
 
 ```bash
 buildId="replace-with-Steam-build-ID"
 runId="replace-with-UTC-run-ID"
-observation="../game-data-exporter/.local/runtime/$buildId/$runId/movie-return-observation.v1.json"
-mechanics=".local/domain/current/movie-return-mechanics.v4.json"
-report=".local/validation/$buildId/$runId/movie-return-validation.v1.json"
+mechanicsRunId="replace-with-mechanics-generation-ID"
+observation="../game-data-exporter/.local/runtime/$buildId/$runId/movie-return-observation.json"
+mechanics=".local/domain/runs/$mechanicsRunId/movie-return-mechanics.json"
+report=".local/validation/$buildId/$runId/movie-return-validation.json"
 
 pnpm movie-return-validation \
   --observation "$observation" \
-  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json" \
+  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.schema.json" \
   --mechanics "$mechanics" \
-  --mechanics-schema "packages/core/schemas/movie-return-mechanics.v4.schema.json" \
-  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.v1.schema.json" \
+  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" \
+  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" \
   --output "$report"
 ```
 
-The command validates both private inputs, verifies the mechanics filename, byte length, SHA-256 hash, schema version, and game build recorded by the observation, then rechecks every input before writing.
+The command validates both private inputs, verifies the mechanics filename, byte length, SHA-256 hash, artifact type, and game build recorded by the observation, then rechecks every input before writing.
 The report is deterministic and is created only when the output path is absent or already contains identical bytes.
 An `incomplete` or `mismatch` report is written and returns exit code `8` so automated checks do not treat it as passed.
 Different existing output is retained and returns exit code `7`.

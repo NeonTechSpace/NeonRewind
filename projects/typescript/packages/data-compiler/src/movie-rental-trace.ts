@@ -465,12 +465,11 @@ function assertInputIdentity(
   trace: RentalFunctionTraceArtifact,
   sources: MovieReturnSources,
 ): void {
-  if (trace.artifactType !== "rental-function-trace" || trace.schemaVersion !== 1) {
-    throw new Error("Expected rental-function-trace schema version 1.");
+  if (trace.artifactType !== "rental-function-trace") {
+    throw new Error("Expected a rental-function-trace artifact.");
   }
   if (
     trace.build.manifestSha256 !== rentalEvidence.build.manifestSha256 ||
-    trace.build.manifestSchemaVersion !== rentalEvidence.build.manifestSchemaVersion ||
     trace.build.steamAppId !== rentalEvidence.build.steamAppId ||
     trace.build.steamBuildId !== rentalEvidence.build.steamBuildId ||
     trace.mappings.fileName !== rentalEvidence.mappings.fileName ||
@@ -484,7 +483,6 @@ function assertInputIdentity(
     trace.rentalBlueprintBodies.fileName !== sources.rentalBlueprintBodies.fileName ||
     trace.rentalBlueprintBodies.sizeBytes !== sources.rentalBlueprintBodies.sizeBytes ||
     trace.rentalBlueprintBodies.sha256 !== sources.rentalBlueprintBodies.sha256 ||
-    trace.rentalBlueprintBodies.schemaVersion !== sources.rentalBlueprintBodies.schemaVersion ||
     sources.rentalFunctionTrace.artifactType !== "rental-function-trace"
   ) {
     throw new Error("Rental function trace does not reference the supplied rental Blueprint bodies.");

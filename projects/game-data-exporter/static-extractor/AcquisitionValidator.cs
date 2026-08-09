@@ -23,9 +23,9 @@ internal static class AcquisitionValidator
 
     public static void ValidateManifest(BuildManifest manifest)
     {
-        if (manifest.ArtifactType != "build-manifest" || manifest.SchemaVersion != 1)
+        if (manifest.ArtifactType != "build-manifest")
         {
-            throw new InvalidDataException("Expected build-manifest schema version 1.");
+            throw new InvalidDataException("Expected a build-manifest artifact.");
         }
 
         if (manifest.Steam is null ||

@@ -81,7 +81,6 @@ end
 
 local report = {
     artifactType = "movie-return-runtime-compatibility-probe",
-    schemaVersion = 1,
     build = json_object({
         steamAppId = Config.steam_app_id,
         steamBuildId = Config.steam_build_id,

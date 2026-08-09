@@ -16,9 +16,9 @@ import type {
 import { validateJsonSchema } from "./schema-validation.ts";
 
 const schemaIds = {
-  observation: "urn:neonretrorewind:schema:runtime:movie-return-observation:1",
-  mechanics: "urn:neonretrorewind:schema:domain:movie-return-mechanics:4",
-  report: "urn:neonretrorewind:schema:validation:movie-return-validation:1",
+  observation: "urn:neonretrorewind:schema:runtime:movie-return-observation",
+  mechanics: "urn:neonretrorewind:schema:domain:movie-return-mechanics",
+  report: "urn:neonretrorewind:schema:validation:movie-return-validation",
 } as const;
 
 export interface MovieReturnValidationOptions {
@@ -68,7 +68,6 @@ export async function validateMovieReturnFiles(
 
   const artifact: MovieReturnValidationArtifact = {
     artifactType: "movie-return-runtime-validation",
-    schemaVersion: 1,
     build: {
       steamAppId: observation.build.steamAppId,
       steamBuildId: observation.build.steamBuildId,
@@ -81,15 +80,13 @@ export async function validateMovieReturnFiles(
       observation: createSourceIdentity(
         files.observation,
         "movie-return-runtime-observation",
-        1,
       ),
       mechanics: createSourceIdentity(
         files.mechanics,
         "movie-return-mechanics",
-        4,
       ),
     },
-    validation: validateMovieReturnObservation(observation),
+    validation: validateMovieReturnObservation(observation, mechanics),
   };
   validateJsonSchema(artifact, reportSchema, "Movie-return validation report");
 
@@ -139,8 +136,7 @@ function assertLinkedInputs(
     target.fileName !== basename(mechanicsFile.path) ||
     target.sizeBytes !== mechanicsFile.bytes.length ||
     target.sha256 !== mechanicsFile.sha256 ||
-    target.artifactType !== mechanics.artifactType ||
-    target.schemaVersion !== mechanics.schemaVersion
+    target.artifactType !== mechanics.artifactType
   ) {
     throw new Error(
       "Movie-return observation does not reference the supplied mechanics artifact.",
@@ -158,18 +154,15 @@ function createSourceIdentity<
   ArtifactType extends
     | "movie-return-runtime-observation"
     | "movie-return-mechanics",
-  SchemaVersion extends 1 | 4,
 >(
   file: InputFile,
   artifactType: ArtifactType,
-  schemaVersion: SchemaVersion,
-): ValidationSourceIdentity<ArtifactType, SchemaVersion> {
+): ValidationSourceIdentity<ArtifactType> {
   return {
     fileName: basename(file.path),
     sizeBytes: file.bytes.length,
     sha256: file.sha256,
     artifactType,
-    schemaVersion,
   };
 }
 

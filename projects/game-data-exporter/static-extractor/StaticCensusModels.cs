@@ -2,7 +2,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record StaticCensus(
     string ArtifactType,
-    int SchemaVersion,
     CensusBuildReference Build,
     EngineIdentity Engine,
     ExtractorIdentity Extractor,
@@ -14,7 +13,6 @@ internal sealed record StaticCensus(
 
 internal sealed record CensusBuildReference(
     string ManifestSha256,
-    int ManifestSchemaVersion,
     string SteamAppId,
     string SteamBuildId);
 

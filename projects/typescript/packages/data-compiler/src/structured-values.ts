@@ -1,6 +1,5 @@
 export interface StructuredValuesArtifact {
   readonly artifactType: "structured-values";
-  readonly schemaVersion: 1;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;

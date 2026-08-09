@@ -147,17 +147,15 @@ function createSources(
   return {
     rentalEvidence: createRentalIdentity(inputs.rental, "rental-evidence"),
     rentalBlueprintBodies: createRentalIdentity(inputs.bodies, "rental-blueprint-bodies"),
-    blueprintCallSites: createMovieIdentity(inputs.callSites, "blueprint-call-sites", 1),
-    blueprintCallerBodies: createMovieIdentity(inputs.callerBodies, "blueprint-caller-bodies", 1),
+    blueprintCallSites: createMovieIdentity(inputs.callSites, "blueprint-call-sites"),
+    blueprintCallerBodies: createMovieIdentity(inputs.callerBodies, "blueprint-caller-bodies"),
     blueprintFunctionTrace: createMovieIdentity(
       inputs.functionTrace,
       "blueprint-function-trace",
-      2,
     ),
     rentalFunctionTrace: createMovieIdentity(
       inputs.rentalFunctionTrace,
       "rental-function-trace",
-      1,
     ),
   };
 }
@@ -171,7 +169,6 @@ function createRentalIdentity(
     sha256: input.sha256,
     sizeBytes: input.bytes.length,
     artifactType,
-    schemaVersion: 1,
   };
 }
 
@@ -180,14 +177,12 @@ function createMovieIdentity<
 >(
   input: InputFile,
   artifactType: ArtifactType,
-  schemaVersion: MovieReturnArtifactIdentity<ArtifactType>["schemaVersion"],
 ): MovieReturnArtifactIdentity<ArtifactType> {
   return {
     fileName: basename(input.path),
     sha256: input.sha256,
     sizeBytes: input.bytes.length,
     artifactType,
-    schemaVersion,
   };
 }
 

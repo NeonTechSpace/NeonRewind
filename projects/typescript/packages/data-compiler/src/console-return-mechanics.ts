@@ -73,7 +73,6 @@ export function compileConsoleReturnMechanics(
 
   return {
     artifactType: "console-return-mechanics",
-    schemaVersion: 1,
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
       steamBuildId: rentalEvidence.build.steamBuildId,

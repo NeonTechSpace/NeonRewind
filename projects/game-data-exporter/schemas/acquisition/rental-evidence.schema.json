@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:rental-evidence:1",
+  "$id": "urn:neonretrorewind:schema:acquisition:rental-evidence",
   "title": "NeonRetroRewind rental evidence",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "staticCensus",
     "mappings",
@@ -18,9 +17,6 @@
   "properties": {
     "artifactType": {
       "const": "rental-evidence"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/buildReference"
@@ -53,13 +49,14 @@
     "buildReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "manifestSha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "manifestSchemaVersion": {
-          "const": 1
         },
         "steamAppId": {
           "type": "string",
@@ -74,7 +71,11 @@
     "staticCensusIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -92,16 +93,18 @@
         },
         "sha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
     "mappingIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "formatVersion"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -128,7 +131,12 @@
     "engineIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "required": [
+        "version",
+        "cue4ParseProfile",
+        "source",
+        "confidence"
+      ],
       "properties": {
         "version": {
           "const": "5.4"
@@ -147,7 +155,11 @@
     "extractorIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "cue4ParseVersion"],
+      "required": [
+        "name",
+        "version",
+        "cue4ParseVersion"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.StaticExtractor"
@@ -199,7 +211,11 @@
     "package": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "blueprintClasses", "userDefinedStructs"],
+      "required": [
+        "path",
+        "blueprintClasses",
+        "userDefinedStructs"
+      ],
       "properties": {
         "path": {
           "enum": [
@@ -230,7 +246,14 @@
     "blueprintClass": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "path", "superclassPath", "functions", "fields", "classDefault"],
+      "required": [
+        "name",
+        "path",
+        "superclassPath",
+        "functions",
+        "fields",
+        "classDefault"
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/nonEmptyString"
@@ -255,7 +278,14 @@
     "userDefinedStruct": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "path", "superStructPath", "fields", "defaults", "references"],
+      "required": [
+        "name",
+        "path",
+        "superStructPath",
+        "fields",
+        "defaults",
+        "references"
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/nonEmptyString"
@@ -280,7 +310,12 @@
     "classDefault": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "path", "properties", "references"],
+      "required": [
+        "name",
+        "path",
+        "properties",
+        "references"
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/nonEmptyString"
@@ -301,7 +336,11 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "type", "arrayDimension"],
+        "required": [
+          "name",
+          "type",
+          "arrayDimension"
+        ],
         "properties": {
           "name": {
             "$ref": "#/$defs/nonEmptyString"
@@ -321,7 +360,12 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "type", "arrayIndex", "value"],
+        "required": [
+          "name",
+          "type",
+          "arrayIndex",
+          "value"
+        ],
         "properties": {
           "name": {
             "$ref": "#/$defs/nonEmptyString"
@@ -342,13 +386,22 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["propertyPath", "kind", "objectPath"],
+        "required": [
+          "propertyPath",
+          "kind",
+          "objectPath"
+        ],
         "properties": {
           "propertyPath": {
             "$ref": "#/$defs/nonEmptyString"
           },
           "kind": {
-            "enum": ["delegate", "hard", "interface", "soft"]
+            "enum": [
+              "delegate",
+              "hard",
+              "interface",
+              "soft"
+            ]
           },
           "objectPath": {
             "$ref": "#/$defs/nonEmptyString"
@@ -363,7 +416,10 @@
       }
     },
     "nullableString": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "minLength": 1
     },
     "fileName": {

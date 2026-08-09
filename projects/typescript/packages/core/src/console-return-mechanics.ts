@@ -3,7 +3,6 @@ export interface RentalArtifactIdentity {
   readonly sha256: string;
   readonly sizeBytes: number;
   readonly artifactType: "rental-evidence" | "rental-blueprint-bodies";
-  readonly schemaVersion: 1;
 }
 
 export interface DefaultPropertyEvidence {
@@ -20,7 +19,6 @@ export interface BlueprintFunctionEvidence {
 
 export interface ConsoleReturnMechanics {
   readonly artifactType: "console-return-mechanics";
-  readonly schemaVersion: 1;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;

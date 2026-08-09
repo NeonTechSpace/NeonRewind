@@ -116,7 +116,6 @@ async function main(arguments_: readonly string[]): Promise<void> {
       sha256: inputHash,
       sizeBytes: inputBytes.length,
       artifactType: "structured-values",
-      schemaVersion: 1,
     };
     const catalog = compileFilmCatalog(structuredValues, source);
     const output = `${JSON.stringify(catalog, undefined, 2)}\n`;
@@ -310,7 +309,6 @@ function createRentalIdentity(
     sha256: hash,
     sizeBytes: bytes.length,
     artifactType,
-    schemaVersion: 1,
   };
 }
 

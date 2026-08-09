@@ -7,7 +7,6 @@ internal static class RentalFunctionTraceCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
-    private const int SchemaVersion = 1;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -130,17 +129,14 @@ internal static class RentalFunctionTraceCommand
 
         return new RentalFunctionTrace(
             ArtifactType: "rental-function-trace",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             RentalBlueprintBodies: new RentalFunctionTraceInput(
                 bodiesIdentity.FileName,
                 bodiesIdentity.SizeBytes,
-                bodiesIdentity.Sha256,
-                SchemaVersion: 1),
+                bodiesIdentity.Sha256),
             RequestedFunctionPaths: requests
                 .Select(request => request.FunctionPath)
                 .OrderBy(path => path, StringComparer.Ordinal)
@@ -210,9 +206,9 @@ internal static class RentalFunctionTraceCommand
         string manifestSha256,
         MappingIdentity mappings)
     {
-        if (input.ArtifactType != "rental-blueprint-bodies" || input.SchemaVersion != 1)
+        if (input.ArtifactType != "rental-blueprint-bodies")
         {
-            throw new InvalidDataException("Expected rental-blueprint-bodies schema version 1.");
+            throw new InvalidDataException("Expected a rental-blueprint-bodies artifact.");
         }
 
         if (input.Build is null || input.RentalEvidence is null || input.Mappings is null ||
@@ -223,7 +219,6 @@ internal static class RentalFunctionTraceCommand
         }
 
         if (input.Build.ManifestSha256 != manifestSha256 ||
-            input.Build.ManifestSchemaVersion != manifest.SchemaVersion ||
             input.Build.SteamAppId != manifest.Steam.AppId ||
             input.Build.SteamBuildId != manifest.Steam.BuildId ||
             input.Engine != manifest.Engine ||
@@ -236,7 +231,6 @@ internal static class RentalFunctionTraceCommand
         if (string.IsNullOrWhiteSpace(input.RentalEvidence.FileName) ||
             input.RentalEvidence.SizeBytes <= 0 ||
             input.RentalEvidence.Sha256 is not { Length: 64 } ||
-            input.RentalEvidence.SchemaVersion != 1 ||
             input.Extractor.Name != "NeonRetroRewind.StaticExtractor" ||
             string.IsNullOrWhiteSpace(input.Extractor.Version) ||
             string.IsNullOrWhiteSpace(input.Extractor.Cue4ParseVersion) ||

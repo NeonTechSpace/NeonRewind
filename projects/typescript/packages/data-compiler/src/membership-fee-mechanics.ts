@@ -91,7 +91,6 @@ export function compileMembershipFeeMechanics(
 
   return {
     artifactType: "membership-fee-mechanics",
-    schemaVersion: 1,
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
       steamBuildId: rentalEvidence.build.steamBuildId,

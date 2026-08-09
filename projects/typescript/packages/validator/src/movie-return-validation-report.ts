@@ -4,18 +4,15 @@ export interface ValidationSourceIdentity<
   ArtifactType extends
     | "movie-return-runtime-observation"
     | "movie-return-mechanics",
-  SchemaVersion extends 1 | 4,
 > {
   readonly fileName: string;
   readonly sizeBytes: number;
   readonly sha256: string;
   readonly artifactType: ArtifactType;
-  readonly schemaVersion: SchemaVersion;
 }
 
 export interface MovieReturnValidationArtifact {
   readonly artifactType: "movie-return-runtime-validation";
-  readonly schemaVersion: 1;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;
@@ -25,11 +22,8 @@ export interface MovieReturnValidationArtifact {
     readonly version: "0.0.0";
   };
   readonly sources: {
-    readonly observation: ValidationSourceIdentity<
-      "movie-return-runtime-observation",
-      1
-    >;
-    readonly mechanics: ValidationSourceIdentity<"movie-return-mechanics", 4>;
+    readonly observation: ValidationSourceIdentity<"movie-return-runtime-observation">;
+    readonly mechanics: ValidationSourceIdentity<"movie-return-mechanics">;
   };
   readonly validation: MovieReturnValidationReport;
 }

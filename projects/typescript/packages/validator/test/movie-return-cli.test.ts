@@ -12,14 +12,19 @@ import {
   validateMovieReturnFiles,
   type MovieReturnValidationOptions,
 } from "../src/index.ts";
-import { createObservation, movie } from "./movie-return-fixture.ts";
+import {
+  captured,
+  createMechanics,
+  createObservation,
+  movie,
+} from "./movie-return-fixture.ts";
 
 const observationSchemaPath = new URL(
-  "../../../../game-data-exporter/schemas/runtime/movie-return-observation.v1.schema.json",
+  "../../../../game-data-exporter/schemas/runtime/movie-return-observation.schema.json",
   import.meta.url,
 );
 const reportSchemaPath = new URL(
-  "../../../../game-data-exporter/schemas/validation/movie-return-validation.v1.schema.json",
+  "../../../../game-data-exporter/schemas/validation/movie-return-validation.schema.json",
   import.meta.url,
 );
 const cliPath = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
@@ -85,7 +90,7 @@ test("writes a mismatch report without rewriting the observation", async (contex
       if (event?.eventType !== "selection-observed") {
         throw new Error("Fixture selection event is missing.");
       }
-      event.result.selectedMovies = [movie("movie-9999")];
+      event.result.selectedMovies = captured(movie("movie-9999"));
     },
   });
   const before = await readFile(fixture.options.observationPath);
@@ -105,6 +110,81 @@ test("reports a conflict when different output already exists", async (context) 
 
   assert.equal(result.writeStatus, "conflict");
   assert.equal(await readFile(fixture.options.outputPath, "utf8"), "{}\n");
+});
+
+test("accepts and reports a duplicate selector result", async (context) => {
+  const fixture = await createFiles(context, {
+    mutateObservation: (observation) => {
+      const event = observation.events.find(
+        (candidate) => candidate.eventType === "selection-observed",
+      );
+      if (event?.eventType !== "selection-observed") {
+        throw new Error("Fixture selection event is missing.");
+      }
+      event.result.selectedMovies = captured(
+        movie("movie-0001"),
+        movie("movie-0001"),
+      );
+    },
+  });
+
+  const result = await validateMovieReturnFiles(fixture.options);
+
+  assert.equal(result.artifact.validation.outcome, "mismatch");
+  assert.ok(
+    result.artifact.validation.issues.some(
+      (issue) => issue.code === "selection-result-duplicate",
+    ),
+  );
+});
+
+test("accepts and reports a truncated queue capture", async (context) => {
+  const fixture = await createFiles(context, {
+    mutateObservation: (observation) => {
+      const event = observation.events.find(
+        (candidate) => candidate.eventType === "selection-observed",
+      );
+      if (event?.eventType !== "selection-observed") {
+        throw new Error("Fixture selection event is missing.");
+      }
+      event.preState.readyMovies = {
+        totalCount: 257,
+        truncated: true,
+        movies: [movie("movie-0001")],
+      };
+    },
+  });
+
+  const result = await validateMovieReturnFiles(fixture.options);
+
+  assert.equal(result.artifact.validation.outcome, "incomplete");
+  assert.ok(
+    result.artifact.validation.issues.some(
+      (issue) => issue.code === "capture-truncated",
+    ),
+  );
+});
+
+test("rejects more than 256 captured movie references", async (context) => {
+  const fixture = await createFiles(context, {
+    mutateObservation: (observation) => {
+      const event = observation.events.find(
+        (candidate) => candidate.eventType === "selection-observed",
+      );
+      if (event?.eventType !== "selection-observed") {
+        throw new Error("Fixture selection event is missing.");
+      }
+      const movies = Array.from({ length: 257 }, (_, index) =>
+        movie(`movie-${index.toString().padStart(4, "0")}`),
+      );
+      event.preState.readyMovies = captured(...movies);
+    },
+  });
+
+  await assert.rejects(
+    validateMovieReturnFiles(fixture.options),
+    /does not match its schema/u,
+  );
 });
 
 test("rejects a schema with the wrong identity", async (context) => {
@@ -141,7 +221,7 @@ test("command writes a mismatch report and exits eight", async (context) => {
       if (event?.eventType !== "selection-observed") {
         throw new Error("Fixture selection event is missing.");
       }
-      event.result.selectedMovies = [movie("movie-9999")];
+      event.result.selectedMovies = captured(movie("movie-9999"));
     },
   });
 
@@ -178,17 +258,17 @@ async function createFiles(
   const directory = await mkdtemp(join(tmpdir(), "neonretrorewind-validator-"));
   context.after(() => rm(directory, { recursive: true, force: true }));
 
-  const mechanicsPath = join(directory, "movie-return-mechanics.v4.json");
-  const mechanicsSchemaPath = join(directory, "movie-return-mechanics.v4.schema.json");
-  const observationPath = join(directory, "movie-return-observation.v1.json");
-  const outputPath = join(directory, "movie-return-validation.v1.json");
+  const mechanicsPath = join(directory, "movie-return-mechanics.json");
+  const mechanicsSchemaPath = join(directory, "movie-return-mechanics.schema.json");
+  const observationPath = join(directory, "movie-return-observation.json");
+  const outputPath = join(directory, "movie-return-validation.json");
   const mechanics = {
     artifactType: "movie-return-mechanics",
-    schemaVersion: 4,
     build: {
       steamAppId: "3552140",
       steamBuildId: fixtureOptions.mechanicsBuildId ?? "23896268",
     },
+    ...createMechanics(),
   };
   const mechanicsContent = json(mechanics);
   await writeFile(mechanicsPath, mechanicsContent, "utf8");
@@ -215,13 +295,12 @@ async function createFiles(
 function createMechanicsSchema() {
   return {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    $id: "urn:neonretrorewind:schema:domain:movie-return-mechanics:4",
+    $id: "urn:neonretrorewind:schema:domain:movie-return-mechanics",
     type: "object",
     additionalProperties: false,
-    required: ["artifactType", "schemaVersion", "build"],
+    required: ["artifactType", "build", "readiness", "selection"],
     properties: {
       artifactType: { const: "movie-return-mechanics" },
-      schemaVersion: { const: 4 },
       build: {
         type: "object",
         additionalProperties: false,
@@ -229,6 +308,61 @@ function createMechanicsSchema() {
         properties: {
           steamAppId: { type: "string", pattern: "^[0-9]+$" },
           steamBuildId: { type: "string", pattern: "^[0-9]+$" },
+        },
+      },
+      readiness: {
+        type: "object",
+        additionalProperties: false,
+        required: ["transfer", "clearsSource"],
+        properties: {
+          transfer: { const: "append-all" },
+          clearsSource: { const: true },
+        },
+      },
+      selection: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "candidateQueue",
+          "maximumUniqueMovies",
+          "deduplication",
+          "outcomes",
+          "customerFlow",
+        ],
+        properties: {
+          candidateQueue: { const: "ready-to-return" },
+          maximumUniqueMovies: { const: 4 },
+          deduplication: { const: "add-unique" },
+          outcomes: {
+            type: "object",
+            additionalProperties: false,
+            required: [
+              "weightedFailureWithNoSelection",
+              "weightedFailureWithSelection",
+              "missingCandidate",
+            ],
+            properties: {
+              weightedFailureWithNoSelection: { const: "not-found-empty" },
+              weightedFailureWithSelection: { const: "found-selected" },
+              missingCandidate: { const: "not-found-empty" },
+            },
+          },
+          customerFlow: {
+            type: "object",
+            additionalProperties: false,
+            required: ["selectedMovies"],
+            properties: {
+              selectedMovies: {
+                type: "object",
+                additionalProperties: false,
+                required: ["destination", "removesFromCandidateQueue"],
+                properties: {
+                  destination: { const: "customer-inventory" },
+                  removesFromCandidateQueue: { const: true },
+                },
+              },
+            },
+          },
         },
       },
     },

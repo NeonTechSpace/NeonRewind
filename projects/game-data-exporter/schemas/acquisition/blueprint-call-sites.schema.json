@@ -1,32 +1,31 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:blueprint-caller-bodies:1",
-  "title": "NeonRetroRewind Blueprint caller bodies",
+  "$id": "urn:neonretrorewind:schema:acquisition:blueprint-call-sites",
+  "title": "NeonRetroRewind Blueprint call sites",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
-    "callSites",
+    "staticCensus",
     "mappings",
     "engine",
     "extractor",
     "target",
+    "candidateRule",
+    "coverage",
     "totals",
-    "functions"
+    "callSites",
+    "failures"
   ],
   "properties": {
     "artifactType": {
-      "const": "blueprint-caller-bodies"
-    },
-    "schemaVersion": {
-      "const": 1
+      "const": "blueprint-call-sites"
     },
     "build": {
       "$ref": "#/$defs/buildReference"
     },
-    "callSites": {
+    "staticCensus": {
       "$ref": "#/$defs/inputIdentity"
     },
     "mappings": {
@@ -41,29 +40,87 @@
     "target": {
       "$ref": "#/$defs/target"
     },
+    "candidateRule": {
+      "const": "parsed-packages-with-function-exports"
+    },
+    "coverage": {
+      "enum": [
+        "complete",
+        "partial"
+      ]
+    },
     "totals": {
       "$ref": "#/$defs/totals"
     },
-    "functions": {
+    "callSites": {
       "type": "array",
-      "minItems": 1,
       "uniqueItems": true,
       "items": {
-        "$ref": "#/$defs/function"
+        "$ref": "#/$defs/callSite"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/failure"
       }
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "coverage": {
+            "const": "complete"
+          }
+        },
+        "required": [
+          "coverage"
+        ]
+      },
+      "then": {
+        "properties": {
+          "totals": {
+            "properties": {
+              "failedPackageCount": {
+                "const": 0
+              }
+            }
+          },
+          "failures": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "totals": {
+            "properties": {
+              "failedPackageCount": {
+                "minimum": 1
+              }
+            }
+          },
+          "failures": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "buildReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "manifestSha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "manifestSchemaVersion": {
-          "const": 1
         },
         "steamAppId": {
           "type": "string",
@@ -78,7 +135,11 @@
     "inputIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -96,16 +157,18 @@
         },
         "sha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
     "mappingIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "formatVersion"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -132,7 +195,12 @@
     "engineIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "required": [
+        "version",
+        "cue4ParseProfile",
+        "source",
+        "confidence"
+      ],
       "properties": {
         "version": {
           "const": "5.4"
@@ -151,7 +219,11 @@
     "extractorIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "cue4ParseVersion"],
+      "required": [
+        "name",
+        "version",
+        "cue4ParseVersion"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.StaticExtractor"
@@ -167,7 +239,9 @@
     "target": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["functionName"],
+      "required": [
+        "functionName"
+      ],
       "properties": {
         "functionName": {
           "type": "string",
@@ -181,36 +255,41 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "packageCount",
+        "candidatePackageCount",
+        "scannedPackageCount",
+        "failedPackageCount",
         "classCount",
         "functionCount",
-        "callSiteCount",
-        "pseudoCodeCharacterCount"
+        "callSiteCount"
       ],
       "properties": {
-        "packageCount": {
+        "candidatePackageCount": {
           "type": "integer",
           "minimum": 1
+        },
+        "scannedPackageCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failedPackageCount": {
+          "type": "integer",
+          "minimum": 0
         },
         "classCount": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 0
         },
         "functionCount": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 0
         },
         "callSiteCount": {
           "type": "integer",
-          "minimum": 1
-        },
-        "pseudoCodeCharacterCount": {
-          "type": "integer",
-          "minimum": 1
+          "minimum": 0
         }
       }
     },
-    "function": {
+    "callSite": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -219,10 +298,8 @@
         "classPath",
         "functionName",
         "functionPath",
-        "flags",
-        "bytecodeExpressionCount",
-        "calls",
-        "pseudoCode"
+        "callKind",
+        "statementIndex"
       ],
       "properties": {
         "packagePath": {
@@ -242,33 +319,13 @@
         "functionPath": {
           "$ref": "#/$defs/nonEmptyString"
         },
-        "flags": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "bytecodeExpressionCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "calls": {
-          "type": "array",
-          "minItems": 1,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/$defs/call"
-          }
-        },
-        "pseudoCode": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "call": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["callKind", "statementIndex"],
-      "properties": {
         "callKind": {
-          "enum": ["virtual", "local-virtual", "final", "local-final"]
+          "enum": [
+            "virtual",
+            "local-virtual",
+            "final",
+            "local-final"
+          ]
         },
         "statementIndex": {
           "type": "integer",
@@ -276,14 +333,34 @@
         }
       }
     },
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^[^/\\\\]+$"
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "packagePath",
+        "errorType"
+      ],
+      "properties": {
+        "packagePath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\.uasset$"
+        },
+        "errorType": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z][A-Za-z0-9._+`]*$"
+        }
+      }
     },
     "sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
+    },
+    "fileName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\]+$"
     },
     "nonEmptyString": {
       "type": "string",

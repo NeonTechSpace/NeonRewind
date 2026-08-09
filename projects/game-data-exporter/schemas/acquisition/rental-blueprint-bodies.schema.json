@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:rental-blueprint-bodies:1",
+  "$id": "urn:neonretrorewind:schema:acquisition:rental-blueprint-bodies",
   "title": "NeonRetroRewind rental Blueprint bodies",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "rentalEvidence",
     "mappings",
@@ -18,9 +17,6 @@
   "properties": {
     "artifactType": {
       "const": "rental-blueprint-bodies"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/buildReference"
@@ -53,13 +49,14 @@
     "buildReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "manifestSha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "manifestSchemaVersion": {
-          "const": 1
         },
         "steamAppId": {
           "type": "string",
@@ -74,7 +71,11 @@
     "inputIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -92,16 +93,18 @@
         },
         "sha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
     "mappingIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "formatVersion"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -128,7 +131,12 @@
     "engineIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "required": [
+        "version",
+        "cue4ParseProfile",
+        "source",
+        "confidence"
+      ],
       "properties": {
         "version": {
           "const": "5.4"
@@ -147,7 +155,11 @@
     "extractorIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "cue4ParseVersion"],
+      "required": [
+        "name",
+        "version",
+        "cue4ParseVersion"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.StaticExtractor"
@@ -194,7 +206,13 @@
     "blueprintClass": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["packagePath", "name", "path", "functions", "pseudoCode"],
+      "required": [
+        "packagePath",
+        "name",
+        "path",
+        "functions",
+        "pseudoCode"
+      ],
       "properties": {
         "packagePath": {
           "enum": [
@@ -225,7 +243,12 @@
     "function": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "path", "flags", "bytecodeExpressionCount"],
+      "required": [
+        "name",
+        "path",
+        "flags",
+        "bytecodeExpressionCount"
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/nonEmptyString"

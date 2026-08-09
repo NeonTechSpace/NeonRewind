@@ -2,7 +2,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record BuildManifest(
     string ArtifactType,
-    int SchemaVersion,
     SteamBuildIdentity Steam,
     string? ReportedGameVersion,
     FileIdentity Executable,

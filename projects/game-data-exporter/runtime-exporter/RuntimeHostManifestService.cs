@@ -109,7 +109,6 @@ internal static class RuntimeHostManifestService
     {
         var manifest = new RuntimeHostInstallationManifest(
             "runtime-host-installation",
-            1,
             staging.Identity,
             staging.Manifest.Build,
             staging.Manifest.GameDirectory,
@@ -194,7 +193,6 @@ internal static class RuntimeHostManifestService
     private static void ValidateStagingContract(RuntimeHostStagingManifest manifest, bool requireCurrentRuntimeHost)
     {
         if (manifest.ArtifactType != "runtime-host-staging" ||
-            manifest.SchemaVersion != 1 ||
             manifest.Build is null ||
             manifest.RuntimeHost is null ||
             manifest.RuntimeHost.Archive is null ||
@@ -250,7 +248,6 @@ internal static class RuntimeHostManifestService
     private static void ValidateInstallationContract(RuntimeHostInstallationManifest manifest)
     {
         if (manifest.ArtifactType != "runtime-host-installation" ||
-            manifest.SchemaVersion != 1 ||
             manifest.StagingManifest is null ||
             manifest.Build is null ||
             manifest.GameDirectory is null ||

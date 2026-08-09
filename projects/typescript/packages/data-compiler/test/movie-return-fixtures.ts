@@ -26,32 +26,28 @@ const selectionFunction = "Select Example Items";
 const statementIndexes = [465, 519] as const;
 
 const callSiteIdentity = createCallerIdentity(
-  "blueprint-call-sites.movie-return.v1.json",
+  "blueprint-call-sites.movie-return.json",
   "blueprint-call-sites",
   "e",
   200,
-  1,
 );
 const callerBodyIdentity = createCallerIdentity(
-  "blueprint-caller-bodies.movie-return.v1.json",
+  "blueprint-caller-bodies.movie-return.json",
   "blueprint-caller-bodies",
   "f",
   300,
-  1,
 );
 const functionTraceIdentity = createCallerIdentity(
-  "blueprint-function-trace.movie-customer.v2.json",
+  "blueprint-function-trace.movie-customer.json",
   "blueprint-function-trace",
   "a",
   400,
-  2,
 );
 const rentalFunctionTraceIdentity = createCallerIdentity(
-  "rental-function-trace.movie-return.v1.json",
+  "rental-function-trace.movie-return.json",
   "rental-function-trace",
   "c",
   500,
-  1,
 );
 
 export const movieReturnSources: MovieReturnSources = {
@@ -75,13 +71,11 @@ export function createCallSites(): Mutable<BlueprintCallSitesArtifact> {
 
   return {
     artifactType: "blueprint-call-sites",
-    schemaVersion: 1,
     build: createBuild(),
     staticCensus: {
-      fileName: "static-census.v1.json",
+      fileName: "static-census.json",
       sizeBytes: 100,
       sha256: "1".repeat(64),
-      schemaVersion: 1,
     },
     mappings: createMappings(),
     target: { functionName: selectionFunction },
@@ -121,13 +115,11 @@ export function createCallerBodies(): Mutable<BlueprintCallerBodiesArtifact> {
 
   return {
     artifactType: "blueprint-caller-bodies",
-    schemaVersion: 1,
     build: createBuild(),
     callSites: {
       fileName: callSiteIdentity.fileName,
       sizeBytes: callSiteIdentity.sizeBytes,
       sha256: callSiteIdentity.sha256,
-      schemaVersion: 1,
     },
     mappings: createMappings(),
     target: { functionName: selectionFunction },
@@ -171,28 +163,24 @@ export function createFunctionTrace(): Mutable<BlueprintFunctionTraceArtifact> {
 
   return {
     artifactType: "blueprint-function-trace",
-    schemaVersion: 2,
     build: createBuild(),
     callerBodies: [
       {
-        fileName: "blueprint-caller-bodies.ai-client-ubergraph.v1.json",
+        fileName: "blueprint-caller-bodies.ai-client-ubergraph.json",
         sizeBytes: 100,
         sha256: "7".repeat(64),
-        schemaVersion: 1,
         targetFunctionName: "ExecuteExampleGraph_ExampleActor",
       },
       {
-        fileName: "blueprint-caller-bodies.movie-customer-entry.v1.json",
+        fileName: "blueprint-caller-bodies.movie-customer-entry.json",
         sizeBytes: 200,
         sha256: "8".repeat(64),
-        schemaVersion: 1,
         targetFunctionName: callerFunction,
       },
       {
         fileName: callerBodyIdentity.fileName,
         sizeBytes: callerBodyIdentity.sizeBytes,
         sha256: callerBodyIdentity.sha256,
-        schemaVersion: 1,
         targetFunctionName: selectionFunction,
       },
     ],
@@ -395,13 +383,11 @@ function createCallerIdentity<
   artifactType: ArtifactType,
   hashCharacter: string,
   sizeBytes: number,
-  schemaVersion: MovieReturnArtifactIdentity<ArtifactType>["schemaVersion"],
 ): MovieReturnArtifactIdentity<ArtifactType> {
   return {
     fileName,
     sha256: hashCharacter.repeat(64),
     sizeBytes,
     artifactType,
-    schemaVersion,
   };
 }

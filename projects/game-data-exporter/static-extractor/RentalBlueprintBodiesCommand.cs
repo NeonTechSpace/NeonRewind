@@ -12,7 +12,6 @@ internal static class RentalBlueprintBodiesCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
-    private const int SchemaVersion = 1;
 
     private static readonly IReadOnlyDictionary<string, string> ExpectedClasses =
         new Dictionary<string, string>(StringComparer.Ordinal)
@@ -143,17 +142,14 @@ internal static class RentalBlueprintBodiesCommand
 
         return new RentalBlueprintBodies(
             ArtifactType: "rental-blueprint-bodies",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             RentalEvidence: new RentalEvidenceInput(
                 FileName: rentalEvidenceIdentity.FileName,
                 SizeBytes: rentalEvidenceIdentity.SizeBytes,
-                Sha256: rentalEvidenceIdentity.Sha256,
-                SchemaVersion: rentalEvidence.SchemaVersion),
+                Sha256: rentalEvidenceIdentity.Sha256),
             Mappings: mappingIdentity,
             Engine: manifest.Engine,
             Extractor: new ExtractorIdentity(
@@ -250,9 +246,9 @@ internal static class RentalBlueprintBodiesCommand
         string manifestSha256,
         MappingIdentity mappingIdentity)
     {
-        if (evidence.ArtifactType != "rental-evidence" || evidence.SchemaVersion != 1)
+        if (evidence.ArtifactType != "rental-evidence")
         {
-            throw new InvalidDataException("Expected rental-evidence schema version 1.");
+            throw new InvalidDataException("Expected a rental-evidence artifact.");
         }
 
         if (evidence.Build is null ||

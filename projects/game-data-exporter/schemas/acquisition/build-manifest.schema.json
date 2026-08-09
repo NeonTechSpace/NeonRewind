@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:build-manifest:1",
+  "$id": "urn:neonretrorewind:schema:acquisition:build-manifest",
   "title": "NeonRetroRewind build manifest",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "steam",
     "reportedGameVersion",
     "executable",
@@ -18,14 +17,14 @@
     "artifactType": {
       "const": "build-manifest"
     },
-    "schemaVersion": {
-      "const": 1
-    },
     "steam": {
       "$ref": "#/$defs/steamBuild"
     },
     "reportedGameVersion": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "executable": {
       "$ref": "#/$defs/fileIdentity"
@@ -49,7 +48,11 @@
     "steamBuild": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["appId", "buildId", "name"],
+      "required": [
+        "appId",
+        "buildId",
+        "name"
+      ],
       "properties": {
         "appId": {
           "type": "string",
@@ -68,7 +71,11 @@
     "fileIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "type": "string",
@@ -88,7 +95,12 @@
     "engineIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "required": [
+        "version",
+        "cue4ParseProfile",
+        "source",
+        "confidence"
+      ],
       "properties": {
         "version": {
           "const": "5.4"
@@ -107,7 +119,11 @@
     "extractorIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "cue4ParseVersion"],
+      "required": [
+        "name",
+        "version",
+        "cue4ParseVersion"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.StaticExtractor"

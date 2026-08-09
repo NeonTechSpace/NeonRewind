@@ -34,7 +34,7 @@ test("compiles normalized console-return facts with source locators", async () =
   });
 
   const schemaPath = new URL(
-    "../../core/schemas/console-return-mechanics.v1.schema.json",
+    "../../core/schemas/console-return-mechanics.schema.json",
     import.meta.url,
   );
   const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;

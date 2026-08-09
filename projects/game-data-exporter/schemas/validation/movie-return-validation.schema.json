@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:validation:movie-return-validation:1",
+  "$id": "urn:neonretrorewind:schema:validation:movie-return-validation",
   "title": "NeonRetroRewind movie-return runtime validation",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "validator",
     "sources",
@@ -16,16 +15,16 @@
     "artifactType": {
       "const": "movie-return-runtime-validation"
     },
-    "schemaVersion": {
-      "const": 1
-    },
     "build": {
       "$ref": "#/$defs/build"
     },
     "validator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version"],
+      "required": [
+        "name",
+        "version"
+      ],
       "properties": {
         "name": {
           "const": "@neonretrorewind/validator"
@@ -38,7 +37,10 @@
     "sources": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["observation", "mechanics"],
+      "required": [
+        "observation",
+        "mechanics"
+      ],
       "properties": {
         "observation": {
           "$ref": "#/$defs/observationIdentity"
@@ -56,7 +58,10 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId"],
+      "required": [
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "steamAppId": {
           "type": "string",
@@ -71,7 +76,12 @@
     "observationIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "artifactType", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "artifactType"
+      ],
       "properties": {
         "fileName": {
           "$ref": "#/$defs/fileName"
@@ -84,19 +94,21 @@
         },
         "artifactType": {
           "const": "movie-return-runtime-observation"
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
     "mechanicsIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "artifactType", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "artifactType"
+      ],
       "properties": {
         "fileName": {
-          "const": "movie-return-mechanics.v4.json"
+          "const": "movie-return-mechanics.json"
         },
         "sizeBytes": {
           "$ref": "#/$defs/sizeBytes"
@@ -106,19 +118,24 @@
         },
         "artifactType": {
           "const": "movie-return-mechanics"
-        },
-        "schemaVersion": {
-          "const": 4
         }
       }
     },
     "validation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["outcome", "checkedEventCount", "issues"],
+      "required": [
+        "outcome",
+        "checkedEventCount",
+        "issues"
+      ],
       "properties": {
         "outcome": {
-          "enum": ["passed", "incomplete", "mismatch"]
+          "enum": [
+            "passed",
+            "incomplete",
+            "mismatch"
+          ]
         },
         "checkedEventCount": {
           "type": "integer",
@@ -127,7 +144,7 @@
         },
         "issues": {
           "type": "array",
-          "maxItems": 2048,
+          "maxItems": 8192,
           "items": {
             "$ref": "#/$defs/issue"
           }
@@ -137,10 +154,18 @@
     "issue": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "code", "sequence", "message"],
+      "required": [
+        "kind",
+        "code",
+        "sequence",
+        "message"
+      ],
       "properties": {
         "kind": {
-          "enum": ["incomplete", "mismatch"]
+          "enum": [
+            "incomplete",
+            "mismatch"
+          ]
         },
         "code": {
           "enum": [
@@ -151,9 +176,14 @@
             "event-time-before-run",
             "event-time-after-run",
             "event-time-moved-backward",
+            "capture-truncated",
+            "capture-count-mismatch",
             "readiness-source-empty",
             "readiness-source-not-cleared",
             "readiness-destination-mismatch",
+            "selection-result-count-exceeded",
+            "selection-result-duplicate",
+            "selection-found-result-mismatch",
             "selection-outside-ready-queue",
             "customer-selection-outside-ready-queue",
             "customer-ready-queue-mismatch",
@@ -161,7 +191,10 @@
           ]
         },
         "sequence": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 1,
           "maximum": 256
         },

@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:runtime:runtime-host-staging:1",
+  "$id": "urn:neonretrorewind:schema:runtime:runtime-host-staging",
   "title": "NeonRetroRewind runtime-host staging manifest",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "runtimeHost",
     "probe",
@@ -16,9 +15,6 @@
   "properties": {
     "artifactType": {
       "const": "runtime-host-staging"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/build"
@@ -85,7 +81,11 @@
     "fileIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "type": "string",
@@ -104,7 +104,12 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId", "buildManifest", "executable"],
+      "required": [
+        "steamAppId",
+        "steamBuildId",
+        "buildManifest",
+        "executable"
+      ],
       "properties": {
         "steamAppId": {
           "const": "3552140"
@@ -124,7 +129,11 @@
     "runtimeHost": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "archive"],
+      "required": [
+        "name",
+        "version",
+        "archive"
+      ],
       "properties": {
         "name": {
           "const": "UE4SS"
@@ -152,7 +161,12 @@
     "probe": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "source", "diagnosticRelativePath"],
+      "required": [
+        "name",
+        "version",
+        "source",
+        "diagnosticRelativePath"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewindMovieReturnProbe"
@@ -183,14 +197,16 @@
           ]
         },
         "diagnosticRelativePath": {
-          "const": "diagnostics/movie-return-compatibility-probe.v1.json"
+          "const": "diagnostics/movie-return-compatibility-probe.json"
         }
       }
     },
     "gameDirectory": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["absolutePath"],
+      "required": [
+        "absolutePath"
+      ],
       "properties": {
         "absolutePath": {
           "type": "string",
@@ -201,13 +217,24 @@
     "proposedFile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["relativePath", "sourceRelativePath", "sizeBytes", "sha256"],
+      "required": [
+        "relativePath",
+        "sourceRelativePath",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "relativePath": {
-          "enum": ["dwmapi.dll", "override.txt"]
+          "enum": [
+            "dwmapi.dll",
+            "override.txt"
+          ]
         },
         "sourceRelativePath": {
-          "enum": ["install/dwmapi.dll", "install/override.txt"]
+          "enum": [
+            "install/dwmapi.dll",
+            "install/override.txt"
+          ]
         },
         "sizeBytes": {
           "type": "integer",

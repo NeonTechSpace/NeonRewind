@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:runtime:runtime-host-installation:1",
+  "$id": "urn:neonretrorewind:schema:runtime:runtime-host-installation",
   "title": "NeonRetroRewind runtime-host installation manifest",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "stagingManifest",
     "build",
     "gameDirectory",
@@ -15,9 +14,6 @@
   "properties": {
     "artifactType": {
       "const": "runtime-host-installation"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "stagingManifest": {
       "allOf": [
@@ -28,7 +24,7 @@
           "type": "object",
           "properties": {
             "fileName": {
-              "const": "runtime-host-staging.v1.json"
+              "const": "runtime-host-staging.json"
             }
           }
         }
@@ -87,7 +83,11 @@
     "fileIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "type": "string",
@@ -106,7 +106,12 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId", "buildManifest", "executable"],
+      "required": [
+        "steamAppId",
+        "steamBuildId",
+        "buildManifest",
+        "executable"
+      ],
       "properties": {
         "steamAppId": {
           "const": "3552140"
@@ -126,7 +131,9 @@
     "gameDirectory": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["absolutePath"],
+      "required": [
+        "absolutePath"
+      ],
       "properties": {
         "absolutePath": {
           "type": "string",
@@ -137,10 +144,17 @@
     "installedFile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["relativePath", "sizeBytes", "sha256"],
+      "required": [
+        "relativePath",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "relativePath": {
-          "enum": ["dwmapi.dll", "override.txt"]
+          "enum": [
+            "dwmapi.dll",
+            "override.txt"
+          ]
         },
         "sizeBytes": {
           "type": "integer",

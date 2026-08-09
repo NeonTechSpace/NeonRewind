@@ -1,6 +1,5 @@
 export interface RentalBuildReference {
   readonly manifestSha256: string;
-  readonly manifestSchemaVersion: 1;
   readonly steamAppId: string;
   readonly steamBuildId: string;
 }
@@ -43,7 +42,6 @@ export interface RentalStructEvidence {
 
 export interface RentalEvidenceArtifact {
   readonly artifactType: "rental-evidence";
-  readonly schemaVersion: 1;
   readonly build: RentalBuildReference;
   readonly mappings: RentalMappingIdentity;
   readonly packages: readonly {
@@ -62,7 +60,6 @@ export interface RentalBlueprintFunctionInput {
 
 export interface RentalBlueprintBodiesArtifact {
   readonly artifactType: "rental-blueprint-bodies";
-  readonly schemaVersion: 1;
   readonly build: RentalBuildReference;
   readonly mappings: RentalMappingIdentity;
   readonly classes: readonly {

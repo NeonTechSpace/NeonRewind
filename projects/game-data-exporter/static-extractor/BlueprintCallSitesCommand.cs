@@ -12,7 +12,6 @@ internal static class BlueprintCallSitesCommand
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
     private const int ParseFailuresExitCode = 8;
-    private const int SchemaVersion = 1;
     private const string CandidateRule = "parsed-packages-with-function-exports";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -185,17 +184,14 @@ internal static class BlueprintCallSitesCommand
 
         return new BlueprintCallSites(
             ArtifactType: "blueprint-call-sites",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             StaticCensus: new StaticCensusInput(
                 FileName: censusIdentity.FileName,
                 SizeBytes: censusIdentity.SizeBytes,
-                Sha256: censusIdentity.Sha256,
-                SchemaVersion: census.SchemaVersion),
+                Sha256: censusIdentity.Sha256),
             Mappings: mappingIdentity,
             Engine: manifest.Engine,
             Extractor: new ExtractorIdentity(
@@ -221,9 +217,9 @@ internal static class BlueprintCallSitesCommand
         BuildManifest manifest,
         string manifestSha256)
     {
-        if (census.ArtifactType != "static-census" || census.SchemaVersion != 1)
+        if (census.ArtifactType != "static-census")
         {
-            throw new InvalidDataException("Expected static-census schema version 1.");
+            throw new InvalidDataException("Expected a static-census artifact.");
         }
 
         if (census.Build is null ||

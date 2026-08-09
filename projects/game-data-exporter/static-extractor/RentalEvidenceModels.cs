@@ -4,7 +4,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record RentalEvidence(
     string ArtifactType,
-    int SchemaVersion,
     CensusBuildReference Build,
     RentalEvidenceInput StaticCensus,
     MappingIdentity Mappings,
@@ -16,8 +15,7 @@ internal sealed record RentalEvidence(
 internal sealed record RentalEvidenceInput(
     string FileName,
     long SizeBytes,
-    string Sha256,
-    int SchemaVersion);
+    string Sha256);
 
 internal sealed record RentalEvidenceTotals(
     int PackageCount,

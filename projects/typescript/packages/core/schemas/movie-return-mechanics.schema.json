@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:domain:movie-return-mechanics:2",
+  "$id": "urn:neonretrorewind:schema:domain:movie-return-mechanics",
   "title": "NeonRetroRewind movie return mechanics",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "sources",
     "scope",
@@ -18,9 +17,6 @@
   "properties": {
     "artifactType": {
       "const": "movie-return-mechanics"
-    },
-    "schemaVersion": {
-      "const": 2
     },
     "build": {
       "$ref": "#/$defs/build"
@@ -48,7 +44,10 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId"],
+      "required": [
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "steamAppId": {
           "type": "string",
@@ -67,7 +66,9 @@
         "rentalEvidence",
         "rentalBlueprintBodies",
         "blueprintCallSites",
-        "blueprintCallerBodies"
+        "blueprintCallerBodies",
+        "blueprintFunctionTrace",
+        "rentalFunctionTrace"
       ],
       "properties": {
         "rentalEvidence": {
@@ -81,13 +82,24 @@
         },
         "blueprintCallerBodies": {
           "$ref": "#/$defs/blueprintCallerBodiesSource"
+        },
+        "blueprintFunctionTrace": {
+          "$ref": "#/$defs/blueprintFunctionTraceSource"
+        },
+        "rentalFunctionTrace": {
+          "$ref": "#/$defs/rentalFunctionTraceSource"
         }
       }
     },
     "sourceIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sha256", "sizeBytes", "artifactType", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sha256",
+        "sizeBytes",
+        "artifactType"
+      ],
       "properties": {
         "fileName": {
           "type": "string",
@@ -106,11 +118,10 @@
             "rental-evidence",
             "rental-blueprint-bodies",
             "blueprint-call-sites",
-            "blueprint-caller-bodies"
+            "blueprint-caller-bodies",
+            "blueprint-function-trace",
+            "rental-function-trace"
           ]
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
@@ -173,7 +184,14 @@
     "readiness": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["trigger", "source", "destination", "transfer", "clearsSource", "evidence"],
+      "required": [
+        "trigger",
+        "source",
+        "destination",
+        "transfer",
+        "clearsSource",
+        "evidence"
+      ],
       "properties": {
         "trigger": {
           "const": "new-day-event"
@@ -191,27 +209,17 @@
           "const": true
         },
         "evidence": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["newDayHandler", "readinessHandler", "dispatcher"],
-          "properties": {
-            "newDayHandler": {
-              "$ref": "#/$defs/entrypointEvidence"
-            },
-            "readinessHandler": {
-              "$ref": "#/$defs/entrypointEvidence"
-            },
-            "dispatcher": {
-              "$ref": "#/$defs/functionEvidence"
-            }
-          }
+          "$ref": "#/$defs/rentalReadinessTraceEvidence"
         }
       }
     },
     "rentedQueue": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["queue", "evidence"],
+      "required": [
+        "queue",
+        "evidence"
+      ],
       "properties": {
         "queue": {
           "const": "rented"
@@ -224,7 +232,10 @@
     "readyQueue": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["queue", "evidence"],
+      "required": [
+        "queue",
+        "evidence"
+      ],
       "properties": {
         "queue": {
           "const": "ready-to-return"
@@ -296,7 +307,7 @@
           }
         },
         "evidence": {
-          "$ref": "#/$defs/functionEvidence"
+          "$ref": "#/$defs/rentalSelectionTraceEvidence"
         },
         "customerFlow": {
           "$ref": "#/$defs/customerFlow"
@@ -372,7 +383,11 @@
         "selectedMovies": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["iteration", "destination", "removesFromCandidateQueue"],
+          "required": [
+            "iteration",
+            "destination",
+            "removesFromCandidateQueue"
+          ],
           "properties": {
             "iteration": {
               "const": "all-returned-movies"
@@ -386,14 +401,17 @@
           }
         },
         "evidence": {
-          "$ref": "#/$defs/callerFunctionEvidence"
+          "$ref": "#/$defs/traceEvidence"
         }
       }
     },
     "firstAttempt": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["defaultProbability", "override"],
+      "required": [
+        "defaultProbability",
+        "override"
+      ],
       "properties": {
         "defaultProbability": {
           "$ref": "#/$defs/probabilityWithEvidence"
@@ -401,7 +419,11 @@
         "override": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["whenQueue", "minimumLength", "probability"],
+          "required": [
+            "whenQueue",
+            "minimumLength",
+            "probability"
+          ],
           "properties": {
             "whenQueue": {
               "const": "rented"
@@ -419,7 +441,10 @@
     "probabilityWithEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["value", "evidence"],
+      "required": [
+        "value",
+        "evidence"
+      ],
       "properties": {
         "value": {
           "type": "number",
@@ -434,7 +459,11 @@
     "classFieldEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "classPath", "fieldName"],
+      "required": [
+        "artifactType",
+        "classPath",
+        "fieldName"
+      ],
       "properties": {
         "artifactType": {
           "const": "rental-evidence"
@@ -450,7 +479,11 @@
     "defaultEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["artifactType", "classPath", "propertyName"],
+      "required": [
+        "artifactType",
+        "classPath",
+        "propertyName"
+      ],
       "properties": {
         "artifactType": {
           "const": "rental-evidence"
@@ -463,68 +496,6 @@
         }
       }
     },
-    "entrypointEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["artifactType", "classPath", "functionName", "entryPoint"],
-      "properties": {
-        "artifactType": {
-          "const": "rental-blueprint-bodies"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "entryPoint": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "functionEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["artifactType", "classPath", "functionName"],
-      "properties": {
-        "artifactType": {
-          "const": "rental-blueprint-bodies"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "callerFunctionEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["artifactType", "classPath", "functionName", "statementIndexes"],
-      "properties": {
-        "artifactType": {
-          "const": "blueprint-caller-bodies"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "statementIndexes": {
-          "type": "array",
-          "minItems": 2,
-          "maxItems": 2,
-          "uniqueItems": true,
-          "items": {
-            "type": "integer",
-            "minimum": 0
-          }
-        }
-      }
-    },
     "sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
@@ -532,6 +503,325 @@
     "nonEmptyString": {
       "type": "string",
       "minLength": 1
+    },
+    "blueprintFunctionTraceSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "blueprint-function-trace"
+            }
+          }
+        }
+      ]
+    },
+    "rentalFunctionTraceSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "rental-function-trace"
+            }
+          }
+        }
+      ]
+    },
+    "rentalReadinessTraceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "newDayFunction",
+        "readinessFunction",
+        "eventGraphFunction",
+        "statementIndexes"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "rental-function-trace"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "newDayFunction": {
+          "const": "Example Period Event"
+        },
+        "readinessFunction": {
+          "const": "Prepare Example Items"
+        },
+        "eventGraphFunction": {
+          "const": "ExecuteExampleGraph_ExampleQueueSystem"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/rentalReadinessStatementIndexes"
+        }
+      }
+    },
+    "rentalReadinessStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "newDayCall",
+        "newDayEntry",
+        "movieReadinessCall",
+        "consoleReadinessCall",
+        "readinessCall",
+        "readinessEntry",
+        "transfer",
+        "clearSource"
+      ],
+      "properties": {
+        "newDayCall": {
+          "const": 18
+        },
+        "newDayEntry": {
+          "const": 1792
+        },
+        "movieReadinessCall": {
+          "const": 1803
+        },
+        "consoleReadinessCall": {
+          "const": 1817
+        },
+        "readinessCall": {
+          "const": 0
+        },
+        "readinessEntry": {
+          "const": 2592
+        },
+        "transfer": {
+          "const": 1854
+        },
+        "clearSource": {
+          "const": 1904
+        }
+      }
+    },
+    "rentalSelectionTraceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "functionName",
+        "statementIndexes"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "rental-function-trace"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "functionName": {
+          "const": "Select Example Items"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/rentalSelectionStatementIndexes"
+        }
+      }
+    },
+    "rentalSelectionStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "limitLength",
+        "limitComparison",
+        "limitBranch",
+        "rentedLength",
+        "rentedMinimum",
+        "firstProbability",
+        "selectedLength",
+        "firstAttemptCondition",
+        "additionalProbability",
+        "weightedDecision",
+        "weightedFailure",
+        "candidateChoice",
+        "candidateValidity",
+        "missingCandidate",
+        "selectedChoice",
+        "addUnique",
+        "retry",
+        "resultLength",
+        "resultCondition",
+        "emptyResult"
+      ],
+      "properties": {
+        "limitLength": {
+          "const": 40
+        },
+        "limitComparison": {
+          "const": 69
+        },
+        "limitBranch": {
+          "const": 93
+        },
+        "rentedLength": {
+          "const": 190
+        },
+        "rentedMinimum": {
+          "const": 219
+        },
+        "firstProbability": {
+          "const": 290
+        },
+        "selectedLength": {
+          "const": 367
+        },
+        "firstAttemptCondition": {
+          "const": 396
+        },
+        "additionalProbability": {
+          "const": 467
+        },
+        "weightedDecision": {
+          "const": 543
+        },
+        "weightedFailure": {
+          "const": 562
+        },
+        "candidateChoice": {
+          "const": 598
+        },
+        "candidateValidity": {
+          "const": 645
+        },
+        "missingCandidate": {
+          "const": 669
+        },
+        "selectedChoice": {
+          "const": 705
+        },
+        "addUnique": {
+          "const": 782
+        },
+        "retry": {
+          "const": 810
+        },
+        "resultLength": {
+          "const": 855
+        },
+        "resultCondition": {
+          "const": 884
+        },
+        "emptyResult": {
+          "const": 908
+        }
+      }
+    },
+    "traceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "entryFunction",
+        "entryPoint",
+        "eventGraphFunction",
+        "customerFunction",
+        "statementIndexes"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "blueprint-function-trace"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "entryFunction": {
+          "const": "ReceiveBeginPlay"
+        },
+        "entryPoint": {
+          "const": 68
+        },
+        "eventGraphFunction": {
+          "const": "ExecuteExampleGraph_ExampleActor"
+        },
+        "customerFunction": {
+          "const": "Initialize Example Return"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/traceStatementIndexes"
+        }
+      }
+    },
+    "traceStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventGraphEntry",
+        "customerCall",
+        "consoleSelectionCall",
+        "consoleFailureBranch",
+        "consoleFailureTarget",
+        "selectorCalls",
+        "selectorFailureBranch",
+        "loopHeader",
+        "loopCondition",
+        "inventoryAdd",
+        "readyQueueRemoval",
+        "loopExit",
+        "loopBack"
+      ],
+      "properties": {
+        "eventGraphEntry": {
+          "const": 68
+        },
+        "customerCall": {
+          "const": 49
+        },
+        "consoleSelectionCall": {
+          "const": 230
+        },
+        "consoleFailureBranch": {
+          "const": 262
+        },
+        "consoleFailureTarget": {
+          "const": 399
+        },
+        "selectorCalls": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            {
+              "const": 465
+            },
+            {
+              "const": 519
+            }
+          ],
+          "items": false
+        },
+        "selectorFailureBranch": {
+          "const": 551
+        },
+        "loopHeader": {
+          "const": 607
+        },
+        "loopCondition": {
+          "const": 704
+        },
+        "inventoryAdd": {
+          "const": 941
+        },
+        "readyQueueRemoval": {
+          "const": 987
+        },
+        "loopExit": {
+          "const": 1456
+        },
+        "loopBack": {
+          "const": 1541
+        }
+      }
     }
   }
 }

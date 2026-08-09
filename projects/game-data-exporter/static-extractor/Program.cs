@@ -89,7 +89,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-function-trace --build-manifest <path> --rental-blueprint-bodies <path> --function-path <path> [--function-path <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine();
         writer.WriteLine("The package probe scans one directory using the configured UE 5.4 profile.");
-        writer.WriteLine("The manifest command writes versioned build identity without local paths or Steam account data.");
+        writer.WriteLine("The manifest command writes build identity without local paths or Steam account data.");
         writer.WriteLine("The census command writes deterministic file, package, and export-class metadata.");
         writer.WriteLine("The structured-index command validates mapped property deserialization for structured assets.");
         writer.WriteLine("The structured-values command writes normalized DataTable rows and StringTable entries for local use.");

@@ -18,7 +18,6 @@ internal static class StructuredValuesCommand
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
     private const int ParseFailuresExitCode = 8;
-    private const int SchemaVersion = 1;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -187,17 +186,14 @@ internal static class StructuredValuesCommand
 
         return new StructuredValues(
             ArtifactType: "structured-values",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             StructuredIndex: new StructuredValuesInput(
                 FileName: indexIdentity.FileName,
                 SizeBytes: indexIdentity.SizeBytes,
-                Sha256: indexIdentity.Sha256,
-                SchemaVersion: index.SchemaVersion),
+                Sha256: indexIdentity.Sha256),
             Mappings: mappingIdentity,
             Engine: manifest.Engine,
             Extractor: new ExtractorIdentity(
@@ -325,9 +321,9 @@ internal static class StructuredValuesCommand
         string manifestSha256,
         MappingIdentity mappingIdentity)
     {
-        if (index.ArtifactType != "structured-asset-index" || index.SchemaVersion != 1)
+        if (index.ArtifactType != "structured-asset-index")
         {
-            throw new InvalidDataException("Expected structured-asset-index schema version 1.");
+            throw new InvalidDataException("Expected a structured-asset-index artifact.");
         }
 
         if (index.Build is null ||

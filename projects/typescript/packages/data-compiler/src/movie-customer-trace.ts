@@ -226,11 +226,8 @@ function assertInputIdentity(
 ): void {
   if (
     callSites.artifactType !== "blueprint-call-sites" ||
-    callSites.schemaVersion !== 1 ||
     callerBodies.artifactType !== "blueprint-caller-bodies" ||
-    callerBodies.schemaVersion !== 1 ||
-    trace.artifactType !== "blueprint-function-trace" ||
-    trace.schemaVersion !== 2
+    trace.artifactType !== "blueprint-function-trace"
   ) {
     throw new Error("Expected the supported Blueprint acquisition artifacts.");
   }
@@ -248,7 +245,6 @@ function assertInputIdentity(
     callerBodies.callSites.fileName !== sources.blueprintCallSites.fileName ||
     callerBodies.callSites.sizeBytes !== sources.blueprintCallSites.sizeBytes ||
     callerBodies.callSites.sha256 !== sources.blueprintCallSites.sha256 ||
-    callerBodies.callSites.schemaVersion !== sources.blueprintCallSites.schemaVersion ||
     sources.blueprintCallSites.artifactType !== "blueprint-call-sites" ||
     sources.blueprintCallerBodies.artifactType !== "blueprint-caller-bodies" ||
     sources.blueprintFunctionTrace.artifactType !== "blueprint-function-trace"
@@ -260,9 +256,9 @@ function assertInputIdentity(
     left.fileName < right.fileName ? -1 : left.fileName > right.fileName ? 1 : 0,
   );
   const expectedTargets = [
-    ["blueprint-caller-bodies.ai-client-ubergraph.v1.json", eventGraphFunctionName],
-    ["blueprint-caller-bodies.movie-customer-entry.v1.json", customerCallerFunctionName],
-    ["blueprint-caller-bodies.movie-return.v1.json", selectionFunctionName],
+    ["blueprint-caller-bodies.ai-client-ubergraph.json", eventGraphFunctionName],
+    ["blueprint-caller-bodies.movie-customer-entry.json", customerCallerFunctionName],
+    ["blueprint-caller-bodies.movie-return.json", selectionFunctionName],
   ] as const;
   if (
     traceSources.length !== expectedTargets.length ||
@@ -279,8 +275,7 @@ function assertInputIdentity(
   if (
     selectionSource?.fileName !== sources.blueprintCallerBodies.fileName ||
     selectionSource.sizeBytes !== sources.blueprintCallerBodies.sizeBytes ||
-    selectionSource.sha256 !== sources.blueprintCallerBodies.sha256 ||
-    selectionSource.schemaVersion !== sources.blueprintCallerBodies.schemaVersion
+    selectionSource.sha256 !== sources.blueprintCallerBodies.sha256
   ) {
     throw new Error("Blueprint function trace does not reference the supplied caller bodies.");
   }
@@ -405,7 +400,6 @@ function assertSameBuild(
 ): void {
   if (
     actual.build.manifestSha256 !== expected.build.manifestSha256 ||
-    actual.build.manifestSchemaVersion !== expected.build.manifestSchemaVersion ||
     actual.build.steamAppId !== expected.build.steamAppId ||
     actual.build.steamBuildId !== expected.build.steamBuildId
   ) {

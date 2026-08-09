@@ -2,7 +2,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record RentalFunctionTrace(
     string ArtifactType,
-    int SchemaVersion,
     CensusBuildReference Build,
     RentalFunctionTraceInput RentalBlueprintBodies,
     IReadOnlyList<string> RequestedFunctionPaths,
@@ -15,5 +14,4 @@ internal sealed record RentalFunctionTrace(
 internal sealed record RentalFunctionTraceInput(
     string FileName,
     long SizeBytes,
-    string Sha256,
-    int SchemaVersion);
+    string Sha256);

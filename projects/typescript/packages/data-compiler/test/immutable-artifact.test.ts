@@ -8,7 +8,7 @@ import { writeImmutableArtifact } from "../src/immutable-artifact.ts";
 
 test("creates an artifact, accepts identical content, and rejects different content", async () => {
   const directory = await mkdtemp(join(tmpdir(), "neonretrorewind-artifact-test-"));
-  const outputPath = join(directory, "film-catalog.v1.json");
+  const outputPath = join(directory, "film-catalog.json");
 
   try {
     assert.equal(await writeImmutableArtifact(outputPath, "first\n"), "created");

@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:blueprint-function-trace:1",
+  "$id": "urn:neonretrorewind:schema:acquisition:blueprint-function-trace",
   "title": "NeonRetroRewind Blueprint function trace",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "callerBodies",
     "mappings",
@@ -18,9 +17,6 @@
   "properties": {
     "artifactType": {
       "const": "blueprint-function-trace"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/buildReference"
@@ -58,13 +54,14 @@
     "buildReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "manifestSha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "manifestSchemaVersion": {
-          "const": 1
         },
         "steamAppId": {
           "type": "string",
@@ -79,7 +76,12 @@
     "callerBodyInput": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion", "targetFunctionName"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "targetFunctionName"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -98,9 +100,6 @@
         "sha256": {
           "$ref": "#/$defs/sha256"
         },
-        "schemaVersion": {
-          "const": 1
-        },
         "targetFunctionName": {
           "$ref": "#/$defs/nonEmptyString"
         }
@@ -109,7 +108,12 @@
     "mappingIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "formatVersion"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -136,7 +140,12 @@
     "engineIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "required": [
+        "version",
+        "cue4ParseProfile",
+        "source",
+        "confidence"
+      ],
       "properties": {
         "version": {
           "const": "5.4"
@@ -155,7 +164,11 @@
     "extractorIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "cue4ParseVersion"],
+      "required": [
+        "name",
+        "version",
+        "cue4ParseVersion"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.StaticExtractor"
@@ -269,6 +282,7 @@
         "statementIndex",
         "opcode",
         "kind",
+        "symbol",
         "call",
         "jump",
         "literal"
@@ -279,7 +293,10 @@
           "minimum": 0
         },
         "parentNodeIndex": {
-          "type": ["integer", "null"],
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 0
         },
         "edge": {
@@ -309,6 +326,14 @@
             "context",
             "operation"
           ]
+        },
+        "symbol": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 1024
         },
         "call": {
           "oneOf": [
@@ -345,10 +370,20 @@
     "call": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["callKind", "functionName", "argumentCount", "integerArguments"],
+      "required": [
+        "callKind",
+        "functionName",
+        "argumentCount",
+        "integerArguments"
+      ],
       "properties": {
         "callKind": {
-          "enum": ["virtual", "local-virtual", "final", "local-final"]
+          "enum": [
+            "virtual",
+            "local-virtual",
+            "final",
+            "local-final"
+          ]
         },
         "functionName": {
           "$ref": "#/$defs/nonEmptyString"
@@ -369,7 +404,10 @@
     "integerArgument": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["position", "value"],
+      "required": [
+        "position",
+        "value"
+      ],
       "properties": {
         "position": {
           "type": "integer",
@@ -384,7 +422,10 @@
     "jump": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["jumpKind", "targets"],
+      "required": [
+        "jumpKind",
+        "targets"
+      ],
       "properties": {
         "jumpKind": {
           "enum": [
@@ -408,7 +449,10 @@
     "jumpTarget": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["edge", "offset"],
+      "required": [
+        "edge",
+        "offset"
+      ],
       "properties": {
         "edge": {
           "type": "string",
@@ -423,10 +467,20 @@
     "literal": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["literalType", "value"],
+      "required": [
+        "literalType",
+        "value"
+      ],
       "properties": {
         "literalType": {
-          "enum": ["integer", "number", "string", "name", "boolean", "null"]
+          "enum": [
+            "integer",
+            "number",
+            "string",
+            "name",
+            "boolean",
+            "null"
+          ]
         },
         "value": {
           "type": "string"

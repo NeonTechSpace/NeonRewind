@@ -21,7 +21,6 @@ export interface AcquisitionArtifactIdentity {
   readonly sha256: string;
   readonly sizeBytes: number;
   readonly artifactType: "structured-values";
-  readonly schemaVersion: 1;
 }
 
 export interface FilmEvidence {
@@ -47,7 +46,6 @@ export interface FilmRecord {
 
 export interface FilmCatalog {
   readonly artifactType: "film-catalog";
-  readonly schemaVersion: 1;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;

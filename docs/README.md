@@ -27,24 +27,24 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Step | Result | Meaning |
 |---|---|---|
 | Build manifest | `build-manifest.json` | Identifies the exact Steam build and package hashes |
-| Static census | `static-census.v1.json` | Lists files, Unreal packages, and exported classes |
-| Structured index | `structured-asset-index.v1.json` | Locates DataTables and StringTables using a matching Unreal mapping |
-| Structured values | `structured-values.v1.json` | Extracts table rows and strings into deterministic JSON |
-| Rental evidence | `rental-evidence.v1.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
-| Rental Blueprint bodies | `rental-blueprint-bodies.v1.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
-| Blueprint call sites | `blueprint-call-sites.movie-return.v1.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
-| Blueprint caller bodies | `blueprint-caller-bodies.movie-return.v1.json` | Decompiles the exact functions found by the movie-return call-site scan |
-| Customer entry call sites | `blueprint-call-sites.movie-customer-entry.v1.json` | Searches parsed Blueprint bytecode for calls into the discovered movie-customer function |
-| Customer event-graph body | `blueprint-caller-bodies.movie-customer-entry.v1.json` | Decompiles the event-graph function that invokes the movie-customer function |
-| AI client ubergraph call sites | `blueprint-call-sites.ai-client-ubergraph.v1.json` | Finds Blueprint wrappers that enter the AI client event graph |
-| AI client wrapper bodies | `blueprint-caller-bodies.ai-client-ubergraph.v1.json` | Decompiles those wrappers to recover their numeric event-graph entry points |
-| Blueprint function trace | `blueprint-function-trace.movie-customer.v2.json` | Converts the linked caller functions into typed Kismet nodes with branch-variable identities |
-| Rental function trace | `rental-function-trace.movie-return.v1.json` | Converts selected rental functions into typed Kismet nodes tied to the rental-body artifact |
-| Console return mechanics | `console-return-mechanics.v1.json` | Normalizes console-return eligibility and queue movement with source locators |
-| Membership fee mechanics | `membership-fee-mechanics.v1.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
-| Movie return mechanics | `movie-return-mechanics.v4.json` | Normalizes movie readiness, weighted selection, and customer flow from typed traces |
-| Movie return validation | `movie-return-validation.v1.json` | Verifies a private runtime observation against its exact movie-return mechanics artifact |
-| Film catalog | `film-catalog.v1.json` | Converts the film rows into stable NeonRetroRewind records |
+| Static census | `static-census.json` | Lists files, Unreal packages, and exported classes |
+| Structured index | `structured-asset-index.json` | Locates DataTables and StringTables using a matching Unreal mapping |
+| Structured values | `structured-values.json` | Extracts table rows and strings into deterministic JSON |
+| Rental evidence | `rental-evidence.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
+| Rental Blueprint bodies | `rental-blueprint-bodies.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
+| Blueprint call sites | `blueprint-call-sites.movie-return.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
+| Blueprint caller bodies | `blueprint-caller-bodies.movie-return.json` | Decompiles the exact functions found by the movie-return call-site scan |
+| Customer entry call sites | `blueprint-call-sites.movie-customer-entry.json` | Searches parsed Blueprint bytecode for calls into the discovered movie-customer function |
+| Customer event-graph body | `blueprint-caller-bodies.movie-customer-entry.json` | Decompiles the event-graph function that invokes the movie-customer function |
+| AI client ubergraph call sites | `blueprint-call-sites.ai-client-ubergraph.json` | Finds Blueprint wrappers that enter the AI client event graph |
+| AI client wrapper bodies | `blueprint-caller-bodies.ai-client-ubergraph.json` | Decompiles those wrappers to recover their numeric event-graph entry points |
+| Blueprint function trace | `blueprint-function-trace.movie-customer.json` | Converts the linked caller functions into typed Kismet nodes with branch-variable identities |
+| Rental function trace | `rental-function-trace.movie-return.json` | Converts selected rental functions into typed Kismet nodes tied to the rental-body artifact |
+| Console return mechanics | `console-return-mechanics.json` | Normalizes console-return eligibility and queue movement with source locators |
+| Membership fee mechanics | `membership-fee-mechanics.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
+| Movie return mechanics | `movie-return-mechanics.json` | Normalizes movie readiness, weighted selection, and customer flow from typed traces |
+| Movie return validation | `movie-return-validation.json` | Verifies a private runtime observation against its exact movie-return mechanics artifact |
+| Film catalog | `film-catalog.json` | Converts the film rows into stable NeonRetroRewind records |
 
 An artifact is a JSON file produced by one of these commands.
 Package files such as `.pak` contain the installed game's Unreal assets.
@@ -99,9 +99,11 @@ $packageDirectory = Join-Path $gameRoot "RetroRewind\Content\Paks"
 $packageFile = Join-Path $packageDirectory "RetroRewind-Windows.pak"
 $executable = Join-Path $gameRoot "RetroRewind\Binaries\Win64\RetroRewind-Win64-Shipping.exe"
 $extractor = "projects/game-data-exporter/static-extractor/NeonRetroRewind.StaticExtractor.csproj"
-$buildDirectory = "projects/game-data-exporter/.local/acquisition/current"
+$generationId = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
+$buildDirectory = Join-Path (Get-Location) "projects/game-data-exporter/.local/acquisition/runs/$generationId"
+$domainDirectory = Join-Path (Get-Location) "projects/typescript/.local/domain/runs/$generationId"
 
-New-Item -ItemType Directory -Force -Path $buildDirectory | Out-Null
+New-Item -ItemType Directory -Force -Path $buildDirectory, $domainDirectory | Out-Null
 ```
 
 ```bash
@@ -112,10 +114,14 @@ packageDirectory="$gameRoot/RetroRewind\Content\Paks"
 packageFile="$packageDirectory/RetroRewind-Windows.pak"
 executable="$gameRoot/RetroRewind\Binaries\Win64\RetroRewind-Win64-Shipping.exe"
 extractor="projects/game-data-exporter/static-extractor/NeonRetroRewind.StaticExtractor.csproj"
-buildDirectory="projects/game-data-exporter/.local/acquisition/current"
+generationId="$(date -u +%Y%m%dT%H%M%SZ)"
+buildDirectory="$PWD/projects/game-data-exporter/.local/acquisition/runs/$generationId"
+domainDirectory="$PWD/projects/typescript/.local/domain/runs/$generationId"
 
-mkdir -p "$buildDirectory"
+mkdir -p "$buildDirectory" "$domainDirectory"
 ```
+
+Each run uses a new generation directory so immutable artifacts can keep stable, unversioned filenames.
 
 Close the game before reading its package files.
 The game does not need to be running for any command in this README.
@@ -178,14 +184,14 @@ It records files, package headers, imports, exports, exported classes, and parse
 dotnet run --project $extractor -- census `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "static-census.v1.json")
+  --output (Join-Path $buildDirectory "static-census.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- census \
   --build-manifest "$buildDirectory/build-manifest.json" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/static-census.v1.json"
+  --output "$buildDirectory/static-census.json"
 ```
 
 The command verifies the package hashes before and after scanning.
@@ -213,19 +219,19 @@ It records the table locations, structures, row counts, property counts, and fai
 ```powershell
 dotnet run --project $extractor -- structured-index `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --static-census (Join-Path $buildDirectory "static-census.v1.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "structured-asset-index.v1.json")
+  --output (Join-Path $buildDirectory "structured-asset-index.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- structured-index \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --static-census "$buildDirectory/static-census.v1.json" \
+  --static-census "$buildDirectory/static-census.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/structured-asset-index.v1.json"
+  --output "$buildDirectory/structured-asset-index.json"
 ```
 
 The command validates the manifest, census, mapping, and package identities before and after parsing.
@@ -238,19 +244,19 @@ The output contains game text and must remain in the ignored local acquisition d
 ```powershell
 dotnet run --project $extractor -- structured-values `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --structured-index (Join-Path $buildDirectory "structured-asset-index.v1.json") `
+  --structured-index (Join-Path $buildDirectory "structured-asset-index.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "structured-values.v1.json")
+  --output (Join-Path $buildDirectory "structured-values.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- structured-values \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --structured-index "$buildDirectory/structured-asset-index.v1.json" \
+  --structured-index "$buildDirectory/structured-asset-index.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/structured-values.v1.json"
+  --output "$buildDirectory/structured-values.json"
 ```
 
 The command verifies every input again after extraction and refuses to overwrite different output.
@@ -264,19 +270,19 @@ The command stops if the exact package cluster is absent from the census.
 ```powershell
 dotnet run --project $extractor -- rental-evidence `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --static-census (Join-Path $buildDirectory "static-census.v1.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "rental-evidence.v1.json")
+  --output (Join-Path $buildDirectory "rental-evidence.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- rental-evidence \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --static-census "$buildDirectory/static-census.v1.json" \
+  --static-census "$buildDirectory/static-census.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/rental-evidence.v1.json"
+  --output "$buildDirectory/rental-evidence.json"
 ```
 
 The output contains extracted game values and must remain in the ignored local acquisition directory.
@@ -290,19 +296,19 @@ The pseudocode is a decompiler interpretation and must be checked against the un
 ```powershell
 dotnet run --project $extractor -- rental-blueprint-bodies `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --rental-evidence (Join-Path $buildDirectory "rental-evidence.v1.json") `
+  --rental-evidence (Join-Path $buildDirectory "rental-evidence.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "rental-blueprint-bodies.v1.json")
+  --output (Join-Path $buildDirectory "rental-blueprint-bodies.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- rental-blueprint-bodies \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --rental-evidence "$buildDirectory/rental-evidence.v1.json" \
+  --rental-evidence "$buildDirectory/rental-evidence.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/rental-blueprint-bodies.v1.json"
+  --output "$buildDirectory/rental-blueprint-bodies.json"
 ```
 
 The output contains extracted game logic and must remain in the ignored local acquisition directory.
@@ -316,21 +322,21 @@ The artifact reports complete or partial coverage, scan totals, call-site metada
 ```powershell
 dotnet run --project $extractor -- blueprint-call-sites `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --static-census (Join-Path $buildDirectory "static-census.v1.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
   --target-function "Select Example Items" `
-  --output (Join-Path $buildDirectory "blueprint-call-sites.movie-return.v1.json")
+  --output (Join-Path $buildDirectory "blueprint-call-sites.movie-return.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- blueprint-call-sites \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --static-census "$buildDirectory/static-census.v1.json" \
+  --static-census "$buildDirectory/static-census.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
   --target-function "Select Example Items" \
-  --output "$buildDirectory/blueprint-call-sites.movie-return.v1.json"
+  --output "$buildDirectory/blueprint-call-sites.movie-return.json"
 ```
 
 The output contains game-specific caller locations and must remain in the ignored local acquisition directory.
@@ -343,19 +349,19 @@ It rechecks every recorded call and decompiles only the functions that contain t
 ```powershell
 dotnet run --project $extractor -- blueprint-caller-bodies `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-return.v1.json") `
+  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-return.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.v1.json")
+  --output (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- blueprint-caller-bodies \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --call-sites "$buildDirectory/blueprint-call-sites.movie-return.v1.json" \
+  --call-sites "$buildDirectory/blueprint-call-sites.movie-return.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/blueprint-caller-bodies.movie-return.v1.json"
+  --output "$buildDirectory/blueprint-caller-bodies.movie-return.json"
 ```
 
 The output contains game-specific function bodies and must remain in the ignored local acquisition directory.
@@ -368,21 +374,21 @@ It determines whether another Blueprint function invokes that customer function 
 ```powershell
 dotnet run --project $extractor -- blueprint-call-sites `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --static-census (Join-Path $buildDirectory "static-census.v1.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
   --target-function "Initialize Example Return" `
-  --output (Join-Path $buildDirectory "blueprint-call-sites.movie-customer-entry.v1.json")
+  --output (Join-Path $buildDirectory "blueprint-call-sites.movie-customer-entry.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- blueprint-call-sites \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --static-census "$buildDirectory/static-census.v1.json" \
+  --static-census "$buildDirectory/static-census.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
   --target-function "Initialize Example Return" \
-  --output "$buildDirectory/blueprint-call-sites.movie-customer-entry.v1.json"
+  --output "$buildDirectory/blueprint-call-sites.movie-customer-entry.json"
 ```
 
 The output contains game-specific caller locations and must remain in the ignored local acquisition directory.
@@ -395,19 +401,19 @@ The result exposes the entry label and control flow immediately surrounding the 
 ```powershell
 dotnet run --project $extractor -- blueprint-caller-bodies `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-customer-entry.v1.json") `
+  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-customer-entry.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "blueprint-caller-bodies.movie-customer-entry.v1.json")
+  --output (Join-Path $buildDirectory "blueprint-caller-bodies.movie-customer-entry.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- blueprint-caller-bodies \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --call-sites "$buildDirectory/blueprint-call-sites.movie-customer-entry.v1.json" \
+  --call-sites "$buildDirectory/blueprint-call-sites.movie-customer-entry.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/blueprint-caller-bodies.movie-customer-entry.v1.json"
+  --output "$buildDirectory/blueprint-caller-bodies.movie-customer-entry.json"
 ```
 
 The output contains game-specific event-graph pseudocode and must remain in the ignored local acquisition directory.
@@ -420,21 +426,21 @@ The resulting wrapper list can then be decompiled to identify which numeric entr
 ```powershell
 dotnet run --project $extractor -- blueprint-call-sites `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --static-census (Join-Path $buildDirectory "static-census.v1.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
   --target-function "ExecuteExampleGraph_ExampleActor" `
-  --output (Join-Path $buildDirectory "blueprint-call-sites.ai-client-ubergraph.v1.json")
+  --output (Join-Path $buildDirectory "blueprint-call-sites.ai-client-ubergraph.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- blueprint-call-sites \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --static-census "$buildDirectory/static-census.v1.json" \
+  --static-census "$buildDirectory/static-census.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
   --target-function "ExecuteExampleGraph_ExampleActor" \
-  --output "$buildDirectory/blueprint-call-sites.ai-client-ubergraph.v1.json"
+  --output "$buildDirectory/blueprint-call-sites.ai-client-ubergraph.json"
 ```
 
 The output contains game-specific wrapper locations and must remain in the ignored local acquisition directory.
@@ -447,19 +453,19 @@ The result maps each wrapper to the numeric entry point it passes into the AI cl
 ```powershell
 dotnet run --project $extractor -- blueprint-caller-bodies `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.ai-client-ubergraph.v1.json") `
+  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.ai-client-ubergraph.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "blueprint-caller-bodies.ai-client-ubergraph.v1.json")
+  --output (Join-Path $buildDirectory "blueprint-caller-bodies.ai-client-ubergraph.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- blueprint-caller-bodies \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --call-sites "$buildDirectory/blueprint-call-sites.ai-client-ubergraph.v1.json" \
+  --call-sites "$buildDirectory/blueprint-call-sites.ai-client-ubergraph.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/blueprint-caller-bodies.ai-client-ubergraph.v1.json"
+  --output "$buildDirectory/blueprint-caller-bodies.ai-client-ubergraph.json"
 ```
 
 The output contains game-specific wrapper pseudocode and must remain in the ignored local acquisition directory.
@@ -473,23 +479,23 @@ Each input file is recorded by hash, and the command confirms that its functions
 ```powershell
 dotnet run --project $extractor -- blueprint-function-trace `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.ai-client-ubergraph.v1.json") `
-  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-customer-entry.v1.json") `
-  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.v1.json") `
+  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.ai-client-ubergraph.json") `
+  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-customer-entry.json") `
+  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.json") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "blueprint-function-trace.movie-customer.v2.json")
+  --output (Join-Path $buildDirectory "blueprint-function-trace.movie-customer.json")
 ```
 
 ```bash
 dotnet run --project "$extractor" -- blueprint-function-trace \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --caller-bodies "$buildDirectory/blueprint-caller-bodies.ai-client-ubergraph.v1.json" \
-  --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-customer-entry.v1.json" \
-  --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-return.v1.json" \
+  --caller-bodies "$buildDirectory/blueprint-caller-bodies.ai-client-ubergraph.json" \
+  --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-customer-entry.json" \
+  --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-return.json" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/blueprint-function-trace.movie-customer.v2.json"
+  --output "$buildDirectory/blueprint-function-trace.movie-customer.json"
 ```
 
 The output contains game-specific bytecode structure and must remain in the ignored local acquisition directory.
@@ -505,14 +511,14 @@ $rentSystemClass = "ExampleGame/Content/ExampleProject/core/blueprint/ExampleQue
 
 dotnet run --project $extractor -- rental-function-trace `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
-  --rental-blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.v1.json") `
+  --rental-blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.json") `
   --function-path ($rentSystemClass + "Example Period Event") `
   --function-path ($rentSystemClass + "Prepare Example Items") `
   --function-path ($rentSystemClass + "ExecuteExampleGraph_ExampleQueueSystem") `
   --function-path ($rentSystemClass + "Select Example Items") `
   --mappings $mappings `
   --package-directory $packageDirectory `
-  --output (Join-Path $buildDirectory "rental-function-trace.movie-return.v1.json")
+  --output (Join-Path $buildDirectory "rental-function-trace.movie-return.json")
 ```
 
 ```bash
@@ -520,14 +526,14 @@ rentSystemClass="ExampleGame/Content/ExampleProject/core/blueprint/ExampleQueueS
 
 dotnet run --project "$extractor" -- rental-function-trace \
   --build-manifest "$buildDirectory/build-manifest.json" \
-  --rental-blueprint-bodies "$buildDirectory/rental-blueprint-bodies.v1.json" \
+  --rental-blueprint-bodies "$buildDirectory/rental-blueprint-bodies.json" \
   --function-path "${rentSystemClass}Example Period Event" \
   --function-path "${rentSystemClass}Prepare Example Items" \
   --function-path "${rentSystemClass}ExecuteExampleGraph_ExampleQueueSystem" \
   --function-path "${rentSystemClass}Select Example Items" \
   --mappings "$mappings" \
   --package-directory "$packageDirectory" \
-  --output "$buildDirectory/rental-function-trace.movie-return.v1.json"
+  --output "$buildDirectory/rental-function-trace.movie-return.json"
 ```
 
 The output contains game-specific bytecode structure and must remain in the ignored local acquisition directory.
@@ -555,20 +561,20 @@ Compile the private mechanic artifact.
 
 ```powershell
 pnpm console-return-mechanics `
-  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" `
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" `
-  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" `
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" `
-  --output ".local/domain/current/console-return-mechanics.v1.json"
+  --rental-evidence (Join-Path $buildDirectory "rental-evidence.json") `
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" `
+  --blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.json") `
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" `
+  --output (Join-Path $domainDirectory "console-return-mechanics.json")
 ```
 
 ```bash
 pnpm console-return-mechanics \
-  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" \
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" \
-  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" \
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" \
-  --output ".local/domain/current/console-return-mechanics.v1.json"
+  --rental-evidence "$buildDirectory/rental-evidence.json" \
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" \
+  --blueprint-bodies "$buildDirectory/rental-blueprint-bodies.json" \
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" \
+  --output "$domainDirectory/console-return-mechanics.json"
 ```
 
 Return to the repository root when the command finishes.
@@ -607,20 +613,20 @@ Compile the private mechanic artifact.
 
 ```powershell
 pnpm membership-fee-mechanics `
-  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" `
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" `
-  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" `
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" `
-  --output ".local/domain/current/membership-fee-mechanics.v1.json"
+  --rental-evidence (Join-Path $buildDirectory "rental-evidence.json") `
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" `
+  --blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.json") `
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" `
+  --output (Join-Path $domainDirectory "membership-fee-mechanics.json")
 ```
 
 ```bash
 pnpm membership-fee-mechanics \
-  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" \
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" \
-  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" \
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" \
-  --output ".local/domain/current/membership-fee-mechanics.v1.json"
+  --rental-evidence "$buildDirectory/rental-evidence.json" \
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" \
+  --blueprint-bodies "$buildDirectory/rental-blueprint-bodies.json" \
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" \
+  --output "$domainDirectory/membership-fee-mechanics.json"
 ```
 
 Return to the repository root when the command finishes.
@@ -641,7 +647,7 @@ This step uses the two private rental artifacts, the complete movie-selector cal
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
 It separately records the weighted selector's configured probabilities, override condition, four-item limit, candidate queue, and result behavior.
 It records complete caller-search coverage, the BeginPlay entry path, the console-first customer branch, both selector calls, and movement of selected cartridges from the ready queue into customer inventory.
-Version 4 validates calls, arguments, branch targets, branch symbols, queue operations, selection outcomes, loop structure, and input hashes from the typed traces.
+The compiler validates calls, arguments, branch targets, branch symbols, queue operations, selection outcomes, loop structure, and input hashes from the typed traces.
 It does not parse rental or customer-flow pseudocode.
 The evidence level remains `decompiled-blueprint`, and runtime validation remains `not-run`.
 
@@ -661,36 +667,36 @@ Compile the private mechanic artifact.
 
 ```powershell
 pnpm movie-return-mechanics `
-  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" `
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" `
-  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" `
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" `
-  --call-sites "../game-data-exporter/.local/acquisition/current/blueprint-call-sites.movie-return.v1.json" `
-  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.v1.schema.json" `
-  --caller-bodies "../game-data-exporter/.local/acquisition/current/blueprint-caller-bodies.movie-return.v1.json" `
-  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" `
-  --function-trace "../game-data-exporter/.local/acquisition/current/blueprint-function-trace.movie-customer.v2.json" `
-  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.v2.schema.json" `
-  --rental-function-trace "../game-data-exporter/.local/acquisition/current/rental-function-trace.movie-return.v1.json" `
-  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.v1.schema.json" `
-  --output ".local/domain/current/movie-return-mechanics.v4.json"
+  --rental-evidence (Join-Path $buildDirectory "rental-evidence.json") `
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" `
+  --blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.json") `
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" `
+  --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-return.json") `
+  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.schema.json" `
+  --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.json") `
+  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.schema.json" `
+  --function-trace (Join-Path $buildDirectory "blueprint-function-trace.movie-customer.json") `
+  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
+  --rental-function-trace (Join-Path $buildDirectory "rental-function-trace.movie-return.json") `
+  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.schema.json" `
+  --output (Join-Path $domainDirectory "movie-return-mechanics.json")
 ```
 
 ```bash
 pnpm movie-return-mechanics \
-  --rental-evidence "../game-data-exporter/.local/acquisition/current/rental-evidence.v1.json" \
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.v1.schema.json" \
-  --blueprint-bodies "../game-data-exporter/.local/acquisition/current/rental-blueprint-bodies.v1.json" \
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.v1.schema.json" \
-  --call-sites "../game-data-exporter/.local/acquisition/current/blueprint-call-sites.movie-return.v1.json" \
-  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.v1.schema.json" \
-  --caller-bodies "../game-data-exporter/.local/acquisition/current/blueprint-caller-bodies.movie-return.v1.json" \
-  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.v1.schema.json" \
-  --function-trace "../game-data-exporter/.local/acquisition/current/blueprint-function-trace.movie-customer.v2.json" \
-  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.v2.schema.json" \
-  --rental-function-trace "../game-data-exporter/.local/acquisition/current/rental-function-trace.movie-return.v1.json" \
-  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.v1.schema.json" \
-  --output ".local/domain/current/movie-return-mechanics.v4.json"
+  --rental-evidence "$buildDirectory/rental-evidence.json" \
+  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" \
+  --blueprint-bodies "$buildDirectory/rental-blueprint-bodies.json" \
+  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" \
+  --call-sites "$buildDirectory/blueprint-call-sites.movie-return.json" \
+  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.schema.json" \
+  --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-return.json" \
+  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.schema.json" \
+  --function-trace "$buildDirectory/blueprint-function-trace.movie-customer.json" \
+  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
+  --rental-function-trace "$buildDirectory/rental-function-trace.movie-return.json" \
+  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.schema.json" \
+  --output "$domainDirectory/movie-return-mechanics.json"
 ```
 
 Return to the repository root when the command finishes.
@@ -728,16 +734,16 @@ Compile the catalog into the ignored local domain directory.
 
 ```powershell
 pnpm film-catalog `
-  --input "../game-data-exporter/.local/acquisition/current/structured-values.v1.json" `
-  --input-schema "../game-data-exporter/schemas/acquisition/structured-values.v1.schema.json" `
-  --output ".local/domain/current/film-catalog.v1.json"
+  --input (Join-Path $buildDirectory "structured-values.json") `
+  --input-schema "../game-data-exporter/schemas/acquisition/structured-values.schema.json" `
+  --output (Join-Path $domainDirectory "film-catalog.json")
 ```
 
 ```bash
 pnpm film-catalog \
-  --input "../game-data-exporter/.local/acquisition/current/structured-values.v1.json" \
-  --input-schema "../game-data-exporter/schemas/acquisition/structured-values.v1.schema.json" \
-  --output ".local/domain/current/film-catalog.v1.json"
+  --input "$buildDirectory/structured-values.json" \
+  --input-schema "../game-data-exporter/schemas/acquisition/structured-values.schema.json" \
+  --output "$domainDirectory/film-catalog.json"
 ```
 
 Return to the repository root when the command finishes.
@@ -765,7 +771,8 @@ Set the paths to the private inputs and choose a new staging directory.
 $runtimeExporter = "projects/game-data-exporter/runtime-exporter/NeonRetroRewind.RuntimeExporter.csproj"
 $ue4ssArchive = "C:\path\to\zDEV-UE4SS_v3.0.1-1018-g662df915.zip"
 $probeScript = "projects/game-data-exporter/runtime-exporter/Probe/NeonRetroRewindMovieReturnProbe/Scripts/main.lua"
-$runtimeStage = "projects/game-data-exporter/.local/runtime-host/current/probe-v1"
+$runtimeStageId = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
+$runtimeStage = "projects/game-data-exporter/.local/runtime-host/runs/$runtimeStageId/probe"
 
 New-Item -ItemType Directory -Force -Path (Split-Path $runtimeStage) | Out-Null
 ```
@@ -774,7 +781,8 @@ New-Item -ItemType Directory -Force -Path (Split-Path $runtimeStage) | Out-Null
 runtimeExporter="projects/game-data-exporter/runtime-exporter/NeonRetroRewind.RuntimeExporter.csproj"
 ue4ssArchive="C:\path\to\zDEV-UE4SS_v3.0.1-1018-g662df915.zip"
 probeScript="projects/game-data-exporter/runtime-exporter/Probe/NeonRetroRewindMovieReturnProbe/Scripts/main.lua"
-runtimeStage="projects/game-data-exporter/.local/runtime-host/current/probe-v1"
+runtimeStageId="$(date -u +%Y%m%dT%H%M%SZ)"
+runtimeStage="projects/game-data-exporter/.local/runtime-host/runs/$runtimeStageId/probe"
 
 mkdir -p "$(dirname "$runtimeStage")"
 ```
@@ -799,20 +807,20 @@ dotnet run --project "$runtimeExporter" -- stage-probe \
   --output "$runtimeStage"
 ```
 
-Review `runtime-host-staging.v1.json` in the new staging directory.
+Review `runtime-host-staging.json` in the new staging directory.
 It identifies the private inputs and lists the exact size and SHA-256 hash of the proposed `dwmapi.dll` and `override.txt` files.
 
 Preview installation while the game is closed.
 
 ```powershell
-$stagingManifest = Join-Path $runtimeStage "runtime-host-staging.v1.json"
+$stagingManifest = Join-Path $runtimeStage "runtime-host-staging.json"
 
 dotnet run --project $runtimeExporter -- install-probe `
   --staging-manifest $stagingManifest
 ```
 
 ```bash
-stagingManifest="$runtimeStage/runtime-host-staging.v1.json"
+stagingManifest="$runtimeStage/runtime-host-staging.json"
 
 dotnet run --project "$runtimeExporter" -- install-probe \
   --staging-manifest "$stagingManifest"
@@ -839,21 +847,21 @@ dotnet run --project "$runtimeExporter" -- install-probe \
   --approve-staging-sha256 "$approvedStagingSha256"
 ```
 
-The approved command creates `runtime-host-installation.v1.json` in the staging directory before copying the two files.
+The approved command creates `runtime-host-installation.json` in the staging directory before copying the two files.
 It refuses existing targets unless it is resuming the same manifest after an interrupted installation.
 The tooling does not launch the game or Steam.
 
 After using the probe, close the game before previewing cleanup.
 
 ```powershell
-$installationManifest = Join-Path $runtimeStage "runtime-host-installation.v1.json"
+$installationManifest = Join-Path $runtimeStage "runtime-host-installation.json"
 
 dotnet run --project $runtimeExporter -- cleanup-probe `
   --installation-manifest $installationManifest
 ```
 
 ```bash
-installationManifest="$runtimeStage/runtime-host-installation.v1.json"
+installationManifest="$runtimeStage/runtime-host-installation.json"
 
 dotnet run --project "$runtimeExporter" -- cleanup-probe \
   --installation-manifest "$installationManifest"

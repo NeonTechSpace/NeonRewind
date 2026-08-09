@@ -2,7 +2,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record BlueprintCallSites(
     string ArtifactType,
-    int SchemaVersion,
     CensusBuildReference Build,
     StaticCensusInput StaticCensus,
     MappingIdentity Mappings,
@@ -18,8 +17,7 @@ internal sealed record BlueprintCallSites(
 internal sealed record StaticCensusInput(
     string FileName,
     long SizeBytes,
-    string Sha256,
-    int SchemaVersion);
+    string Sha256);
 
 internal sealed record BlueprintCallTarget(string FunctionName);
 

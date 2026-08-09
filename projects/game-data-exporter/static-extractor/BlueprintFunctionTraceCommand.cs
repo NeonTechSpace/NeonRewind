@@ -7,7 +7,6 @@ internal static class BlueprintFunctionTraceCommand
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
     private const int OutputConflictExitCode = 7;
-    private const int SchemaVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -141,10 +140,8 @@ internal static class BlueprintFunctionTraceCommand
 
         return new BlueprintFunctionTrace(
             ArtifactType: "blueprint-function-trace",
-            SchemaVersion,
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
-                ManifestSchemaVersion: manifest.SchemaVersion,
                 SteamAppId: manifest.Steam.AppId,
                 SteamBuildId: manifest.Steam.BuildId),
             CallerBodies: inputs
@@ -153,7 +150,6 @@ internal static class BlueprintFunctionTraceCommand
                     input.Identity.FileName,
                     input.Identity.SizeBytes,
                     input.Identity.Sha256,
-                    input.Artifact.SchemaVersion,
                     input.Artifact.Target.FunctionName))
                 .ToArray(),
             Mappings: mappingIdentity,
@@ -244,9 +240,9 @@ internal static class BlueprintFunctionTraceCommand
         string manifestSha256,
         MappingIdentity mappings)
     {
-        if (input.ArtifactType != "blueprint-caller-bodies" || input.SchemaVersion != 1)
+        if (input.ArtifactType != "blueprint-caller-bodies")
         {
-            throw new InvalidDataException("Expected blueprint-caller-bodies schema version 1.");
+            throw new InvalidDataException("Expected a blueprint-caller-bodies artifact.");
         }
 
         if (input.Build is null || input.CallSites is null || input.Mappings is null ||
@@ -257,7 +253,6 @@ internal static class BlueprintFunctionTraceCommand
         }
 
         if (input.Build.ManifestSha256 != manifestSha256 ||
-            input.Build.ManifestSchemaVersion != manifest.SchemaVersion ||
             input.Build.SteamAppId != manifest.Steam.AppId ||
             input.Build.SteamBuildId != manifest.Steam.BuildId ||
             input.Engine != manifest.Engine)
@@ -273,7 +268,6 @@ internal static class BlueprintFunctionTraceCommand
         if (string.IsNullOrWhiteSpace(input.CallSites.FileName) ||
             input.CallSites.SizeBytes <= 0 ||
             input.CallSites.Sha256 is not { Length: 64 } ||
-            input.CallSites.SchemaVersion != 1 ||
             string.IsNullOrWhiteSpace(input.Target.FunctionName) ||
             input.Target.FunctionName.Length > 256 ||
             input.Target.FunctionName.Any(char.IsControl) ||

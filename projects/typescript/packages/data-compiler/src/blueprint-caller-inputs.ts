@@ -15,13 +15,11 @@ export interface BlueprintCallSiteInput {
 
 export interface BlueprintCallSitesArtifact {
   readonly artifactType: "blueprint-call-sites";
-  readonly schemaVersion: 1;
   readonly build: RentalBuildReference;
   readonly staticCensus: {
     readonly fileName: string;
     readonly sizeBytes: number;
     readonly sha256: string;
-    readonly schemaVersion: 1;
   };
   readonly mappings: RentalMappingIdentity;
   readonly target: {
@@ -46,13 +44,11 @@ export interface BlueprintCallSitesArtifact {
 
 export interface BlueprintCallerBodiesArtifact {
   readonly artifactType: "blueprint-caller-bodies";
-  readonly schemaVersion: 1;
   readonly build: RentalBuildReference;
   readonly callSites: {
     readonly fileName: string;
     readonly sizeBytes: number;
     readonly sha256: string;
-    readonly schemaVersion: 1;
   };
   readonly mappings: RentalMappingIdentity;
   readonly target: {

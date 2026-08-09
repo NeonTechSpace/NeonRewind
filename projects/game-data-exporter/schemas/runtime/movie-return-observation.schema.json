@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:runtime:movie-return-observation:1",
+  "$id": "urn:neonretrorewind:schema:runtime:movie-return-observation",
   "title": "NeonRetroRewind movie-return runtime observation",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "targetMechanics",
     "collector",
@@ -16,9 +15,6 @@
   "properties": {
     "artifactType": {
       "const": "movie-return-runtime-observation"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/build"
@@ -60,10 +56,14 @@
                 "const": "complete"
               }
             },
-            "required": ["status"]
+            "required": [
+              "status"
+            ]
           }
         },
-        "required": ["run"]
+        "required": [
+          "run"
+        ]
       },
       "then": {
         "properties": {
@@ -76,7 +76,9 @@
                       "const": "readiness-observed"
                     }
                   },
-                  "required": ["eventType"]
+                  "required": [
+                    "eventType"
+                  ]
                 },
                 "minContains": 1
               },
@@ -87,7 +89,9 @@
                       "const": "selection-observed"
                     }
                   },
-                  "required": ["eventType"]
+                  "required": [
+                    "eventType"
+                  ]
                 },
                 "minContains": 1
               },
@@ -98,7 +102,9 @@
                       "const": "customer-return-observed"
                     }
                   },
-                  "required": ["eventType"]
+                  "required": [
+                    "eventType"
+                  ]
                 },
                 "minContains": 1
               }
@@ -112,7 +118,10 @@
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId"],
+      "required": [
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "steamAppId": {
           "type": "string",
@@ -127,10 +136,15 @@
     "targetMechanics": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "artifactType", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "artifactType"
+      ],
       "properties": {
         "fileName": {
-          "const": "movie-return-mechanics.v4.json"
+          "const": "movie-return-mechanics.json"
         },
         "sizeBytes": {
           "type": "integer",
@@ -141,16 +155,17 @@
         },
         "artifactType": {
           "const": "movie-return-mechanics"
-        },
-        "schemaVersion": {
-          "const": 4
         }
       }
     },
     "collector": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "runtimeHost"],
+      "required": [
+        "name",
+        "version",
+        "runtimeHost"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.MovieReturnRuntimeCollector"
@@ -161,7 +176,10 @@
         "runtimeHost": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["name", "version"],
+          "required": [
+            "name",
+            "version"
+          ],
           "properties": {
             "name": {
               "type": "string",
@@ -178,7 +196,13 @@
     "run": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["runId", "startedAtUtc", "finishedAtUtc", "status", "statusReason"],
+      "required": [
+        "runId",
+        "startedAtUtc",
+        "finishedAtUtc",
+        "status",
+        "statusReason"
+      ],
       "properties": {
         "runId": {
           "type": "string",
@@ -198,7 +222,11 @@
           ]
         },
         "status": {
-          "enum": ["complete", "aborted", "failed"]
+          "enum": [
+            "complete",
+            "aborted",
+            "failed"
+          ]
         },
         "statusReason": {
           "oneOf": [
@@ -219,7 +247,9 @@
                 "const": "complete"
               }
             },
-            "required": ["status"]
+            "required": [
+              "status"
+            ]
           },
           "then": {
             "properties": {
@@ -314,17 +344,7 @@
           "$ref": "#/$defs/runtimePath"
         },
         "preState": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["rentedMovies", "readyMovies"],
-          "properties": {
-            "rentedMovies": {
-              "$ref": "#/$defs/movieReferences"
-            },
-            "readyMovies": {
-              "$ref": "#/$defs/movieReferences"
-            }
-          }
+          "$ref": "#/$defs/rentalQueues"
         },
         "result": {
           "$ref": "#/$defs/selectionResult"
@@ -378,82 +398,75 @@
     "rentalQueues": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["rentedMovies", "readyMovies"],
+      "required": [
+        "rentedMovies",
+        "readyMovies"
+      ],
       "properties": {
         "rentedMovies": {
-          "$ref": "#/$defs/movieReferences"
+          "$ref": "#/$defs/movieCollection"
         },
         "readyMovies": {
-          "$ref": "#/$defs/movieReferences"
+          "$ref": "#/$defs/movieCollection"
         }
       }
     },
     "customerState": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["readyMovies", "customerInventoryMovies"],
+      "required": [
+        "readyMovies",
+        "customerInventoryMovies"
+      ],
       "properties": {
         "readyMovies": {
-          "$ref": "#/$defs/movieReferences"
+          "$ref": "#/$defs/movieCollection"
         },
         "customerInventoryMovies": {
-          "$ref": "#/$defs/movieReferences"
+          "$ref": "#/$defs/movieCollection"
         }
       }
     },
     "selectionResult": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["found", "selectedMovies"],
+      "required": [
+        "found",
+        "selectedMovies"
+      ],
       "properties": {
         "found": {
           "type": "boolean"
         },
         "selectedMovies": {
-          "$ref": "#/$defs/selectedMovieReferences"
+          "$ref": "#/$defs/movieCollection"
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "found": {
-                "const": true
-              }
-            },
-            "required": ["found"]
-          },
-          "then": {
-            "properties": {
-              "selectedMovies": {
-                "minItems": 1
-              }
-            }
-          },
-          "else": {
-            "properties": {
-              "selectedMovies": {
-                "maxItems": 0
-              }
-            }
-          }
-        }
-      ]
-    },
-    "movieReferences": {
-      "type": "array",
-      "maxItems": 256,
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/movieReference"
       }
     },
-    "selectedMovieReferences": {
-      "type": "array",
-      "maxItems": 4,
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/movieReference"
+    "movieCollection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalCount",
+        "truncated",
+        "movies"
+      ],
+      "properties": {
+        "totalCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "movies": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/movieReference"
+          }
+        }
       }
     },
     "movieReference": {
@@ -461,7 +474,10 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["referenceType", "value"],
+          "required": [
+            "referenceType",
+            "value"
+          ],
           "properties": {
             "referenceType": {
               "const": "object-path"
@@ -474,7 +490,10 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["referenceType", "value"],
+          "required": [
+            "referenceType",
+            "value"
+          ],
           "properties": {
             "referenceType": {
               "const": "run-local"

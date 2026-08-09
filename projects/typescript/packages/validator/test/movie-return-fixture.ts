@@ -1,6 +1,7 @@
 import type {
   MovieReference,
   MovieReturnObservation,
+  MovieReturnValidationMechanics,
 } from "../src/index.ts";
 
 export type Mutable<Value> = Value extends readonly (infer Item)[]
@@ -18,17 +19,15 @@ export type MutableObservation = {
 export function createObservation(): MutableObservation {
   return {
     artifactType: "movie-return-runtime-observation",
-    schemaVersion: 1,
     build: {
       steamAppId: "3552140",
       steamBuildId: "23896268",
     },
     targetMechanics: {
-      fileName: "movie-return-mechanics.v4.json",
+      fileName: "movie-return-mechanics.json",
       sizeBytes: 1234,
       sha256: "a".repeat(64),
       artifactType: "movie-return-mechanics",
-      schemaVersion: 4,
     },
     collector: {
       name: "NeonRetroRewind.MovieReturnRuntimeCollector",
@@ -54,12 +53,12 @@ export function createObservation(): MutableObservation {
         objectPath: "/Game/Map.PersistentLevel.ExampleQueueSystem_C_0",
         functionPath: "/Game/ExampleQueueSystem.ExampleQueueSystem_C:Prepare Example Items",
         preState: {
-          rentedMovies: [movie("movie-0001")],
-          readyMovies: [],
+          rentedMovies: captured(movie("movie-0001")),
+          readyMovies: captured(),
         },
         postState: {
-          rentedMovies: [],
-          readyMovies: [movie("movie-0001")],
+          rentedMovies: captured(),
+          readyMovies: captured(movie("movie-0001")),
         },
       },
       {
@@ -71,12 +70,12 @@ export function createObservation(): MutableObservation {
         functionPath:
           "/Game/ExampleQueueSystem.ExampleQueueSystem_C:Select Example Items",
         preState: {
-          rentedMovies: [],
-          readyMovies: [movie("movie-0001")],
+          rentedMovies: captured(),
+          readyMovies: captured(movie("movie-0001")),
         },
         result: {
           found: true,
-          selectedMovies: [movie("movie-0001")],
+          selectedMovies: captured(movie("movie-0001")),
         },
       },
       {
@@ -88,25 +87,60 @@ export function createObservation(): MutableObservation {
         functionPath:
           "/Game/ExampleActor.ExampleActor_C:Initialize Example Return",
         preState: {
-          readyMovies: [movie("movie-0001")],
-          customerInventoryMovies: [],
+          readyMovies: captured(movie("movie-0001")),
+          customerInventoryMovies: captured(),
         },
         result: {
           found: true,
-          selectedMovies: [movie("movie-0001")],
+          selectedMovies: captured(movie("movie-0001")),
         },
         postState: {
-          readyMovies: [],
-          customerInventoryMovies: [movie("movie-0001")],
+          readyMovies: captured(),
+          customerInventoryMovies: captured(movie("movie-0001")),
         },
       },
     ],
   };
 }
 
-export function movie(value: string): MovieReference {
+export function movie(value: string): Mutable<MovieReference> {
   return {
     referenceType: "run-local",
     value,
+  };
+}
+
+export function captured(
+  ...movies: Mutable<MovieReference>[]
+) {
+  return {
+    totalCount: movies.length,
+    truncated: false,
+    movies,
+  };
+}
+
+export function createMechanics(): MovieReturnValidationMechanics {
+  return {
+    readiness: {
+      transfer: "append-all",
+      clearsSource: true,
+    },
+    selection: {
+      candidateQueue: "ready-to-return",
+      maximumUniqueMovies: 4,
+      deduplication: "add-unique",
+      outcomes: {
+        weightedFailureWithNoSelection: "not-found-empty",
+        weightedFailureWithSelection: "found-selected",
+        missingCandidate: "not-found-empty",
+      },
+      customerFlow: {
+        selectedMovies: {
+          destination: "customer-inventory",
+          removesFromCandidateQueue: true,
+        },
+      },
+    },
   };
 }

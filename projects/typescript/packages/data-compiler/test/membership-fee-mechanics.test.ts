@@ -38,7 +38,7 @@ test("compiles normalized membership-fee mutations with source locators", async 
   });
 
   const schemaPath = new URL(
-    "../../core/schemas/membership-fee-mechanics.v1.schema.json",
+    "../../core/schemas/membership-fee-mechanics.schema.json",
     import.meta.url,
   );
   const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;

@@ -24,13 +24,11 @@ export function createRentalFunctionTrace(): Mutable<RentalFunctionTraceArtifact
   const nodes = functions.flatMap((function_) => function_.nodes);
   return {
     artifactType: "rental-function-trace",
-    schemaVersion: 1,
     build: createBuild(),
     rentalBlueprintBodies: {
       fileName: rentalSources.rentalBlueprintBodies.fileName,
       sizeBytes: rentalSources.rentalBlueprintBodies.sizeBytes,
       sha256: rentalSources.rentalBlueprintBodies.sha256,
-      schemaVersion: 1,
     },
     requestedFunctionPaths: functions.map((function_) => function_.functionPath),
     mappings: createMappings(),

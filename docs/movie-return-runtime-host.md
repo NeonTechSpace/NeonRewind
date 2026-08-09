@@ -20,7 +20,7 @@ The proven proxy binary contains that override support.
 
 The first implementation is a source-only Lua compatibility probe named `NeonRetroRewindMovieReturnProbe` under `projects/game-data-exporter/runtime-exporter/Probe`.
 It is not the runtime observation collector.
-Its output is a private diagnostic report and must not validate as `movie-return-observation.v1`.
+Its output is a private diagnostic report and must not validate as a movie-return runtime observation.
 
 The probe checks only these capabilities:
 
@@ -79,11 +79,11 @@ The game must be closed before staging or installation checks begin.
 The tooling must verify the exact supported executable and build identity.
 The tooling must refuse installation if `dwmapi.dll`, `override.txt`, or any proposed target already exists.
 The tooling must generate a manifest containing every proposed relative path, byte length, and SHA-256 hash.
-The offline `stage-probe` command writes that record using [`runtime-host-staging.v1.schema.json`](../projects/game-data-exporter/schemas/runtime/runtime-host-staging.v1.schema.json) without copying either proposed file.
+The offline `stage-probe` command writes that record using [`runtime-host-staging.schema.json`](../projects/game-data-exporter/schemas/runtime/runtime-host-staging.schema.json) without copying either proposed file.
 The person using the computer must see that manifest and explicitly approve the copy before any game-directory file is added.
 Installation is copy-only and must not replace an existing file.
 Running `install-probe` without an approval hash prints the exact copy list and changes nothing.
-An approved run requires the SHA-256 hash of the reviewed staging manifest and writes `runtime-host-installation.v1.json` before copying.
+An approved run requires the SHA-256 hash of the reviewed staging manifest and writes `runtime-host-installation.json` before copying.
 The command can resume only when that installation manifest and any existing targets still match the same approved staging manifest.
 
 The person using the computer launches the game normally after installation.
@@ -103,5 +103,6 @@ An approved run requires the SHA-256 hash of the reviewed installation manifest,
 ## Decision after the probe
 
 The probe is successful only if the diagnostic report proves the required objects, fields, arrays, Blueprint hook paths, and private output behavior.
-A successful probe leads to a purpose-specific C++ collector using the same observation schema and operating limits because Lua cannot provide the exact Blueprint pre-call state.
+A successful probe leads to a purpose-specific C++ collector using the observation contract because Lua cannot provide the exact Blueprint pre-call state.
+The probe's 16-element diagnostic limit does not define the collector limit. The contract permits at most 256 captured references per collection and requires the collector to record the actual count and whether references were omitted.
 If required fields or hooks are unavailable, the collector design must stop and be revised from the diagnostic evidence.

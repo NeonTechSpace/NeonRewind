@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:domain:film-catalog:1",
+  "$id": "urn:neonretrorewind:schema:domain:film-catalog",
   "title": "NeonRetroRewind film catalog",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "source",
     "totals",
@@ -16,13 +15,13 @@
     "artifactType": {
       "const": "film-catalog"
     },
-    "schemaVersion": {
-      "const": 1
-    },
     "build": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["steamAppId", "steamBuildId"],
+      "required": [
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "steamAppId": {
           "type": "string",
@@ -85,8 +84,7 @@
         "fileName",
         "sha256",
         "sizeBytes",
-        "artifactType",
-        "schemaVersion"
+        "artifactType"
       ],
       "properties": {
         "fileName": {
@@ -103,9 +101,6 @@
         },
         "artifactType": {
           "const": "structured-values"
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
@@ -194,7 +189,11 @@
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "tablePath", "rowKey"],
+      "required": [
+        "kind",
+        "tablePath",
+        "rowKey"
+      ],
       "properties": {
         "kind": {
           "const": "data-table"

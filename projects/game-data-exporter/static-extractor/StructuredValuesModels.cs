@@ -4,7 +4,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record StructuredValues(
     string ArtifactType,
-    int SchemaVersion,
     CensusBuildReference Build,
     StructuredValuesInput StructuredIndex,
     MappingIdentity Mappings,
@@ -19,8 +18,7 @@ internal sealed record StructuredValues(
 internal sealed record StructuredValuesInput(
     string FileName,
     long SizeBytes,
-    string Sha256,
-    int SchemaVersion);
+    string Sha256);
 
 internal sealed record StructuredValuesTotals(
     int CandidatePackageCount,

@@ -28,11 +28,10 @@ const tableDefinitions = [
 ] as const;
 
 const sourceIdentity: AcquisitionArtifactIdentity = {
-  fileName: "structured-values.v1.json",
+  fileName: "structured-values.json",
   sha256: "a".repeat(64),
   sizeBytes: 100,
   artifactType: "structured-values",
-  schemaVersion: 1,
 };
 
 test("compiles stable film records and preserves row evidence", async () => {
@@ -55,7 +54,7 @@ test("compiles stable film records and preserves row evidence", async () => {
   assert.equal("ExampleCatalogField03_test" in (catalog.films[0] ?? {}), false);
 
   const schemaPath = new URL(
-    "../../core/schemas/film-catalog.v1.schema.json",
+    "../../core/schemas/film-catalog.schema.json",
     import.meta.url,
   );
   const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
@@ -120,7 +119,6 @@ function createInput(options: FixtureOptions = {}): StructuredValuesArtifact {
 
   return {
     artifactType: "structured-values",
-    schemaVersion: 1,
     build: {
       steamAppId: "3552140",
       steamBuildId: "23896268",

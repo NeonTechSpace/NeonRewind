@@ -2,7 +2,6 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal sealed record RentalBlueprintBodies(
     string ArtifactType,
-    int SchemaVersion,
     CensusBuildReference Build,
     RentalEvidenceInput RentalEvidence,
     MappingIdentity Mappings,

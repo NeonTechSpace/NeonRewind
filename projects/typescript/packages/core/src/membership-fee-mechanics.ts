@@ -22,7 +22,6 @@ export interface MembershipFeeFieldDefinition {
 
 export interface MembershipFeeMechanics {
   readonly artifactType: "membership-fee-mechanics";
-  readonly schemaVersion: 1;
   readonly build: {
     readonly steamAppId: string;
     readonly steamBuildId: string;

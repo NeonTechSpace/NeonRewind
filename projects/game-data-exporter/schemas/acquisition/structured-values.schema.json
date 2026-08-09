@@ -1,12 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:structured-values:1",
+  "$id": "urn:neonretrorewind:schema:acquisition:structured-values",
   "title": "NeonRetroRewind structured values",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "artifactType",
-    "schemaVersion",
     "build",
     "structuredIndex",
     "mappings",
@@ -21,9 +20,6 @@
   "properties": {
     "artifactType": {
       "const": "structured-values"
-    },
-    "schemaVersion": {
-      "const": 1
     },
     "build": {
       "$ref": "#/$defs/buildReference"
@@ -69,13 +65,14 @@
     "buildReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifestSha256", "manifestSchemaVersion", "steamAppId", "steamBuildId"],
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
       "properties": {
         "manifestSha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "manifestSchemaVersion": {
-          "const": 1
         },
         "steamAppId": {
           "type": "string",
@@ -90,7 +87,11 @@
     "structuredIndexIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "schemaVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -108,16 +109,18 @@
         },
         "sha256": {
           "$ref": "#/$defs/sha256"
-        },
-        "schemaVersion": {
-          "const": 1
         }
       }
     },
     "mappingIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fileName", "sizeBytes", "sha256", "formatVersion"],
+      "required": [
+        "fileName",
+        "sizeBytes",
+        "sha256",
+        "formatVersion"
+      ],
       "properties": {
         "fileName": {
           "allOf": [
@@ -144,7 +147,12 @@
     "engineIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["version", "cue4ParseProfile", "source", "confidence"],
+      "required": [
+        "version",
+        "cue4ParseProfile",
+        "source",
+        "confidence"
+      ],
       "properties": {
         "version": {
           "const": "5.4"
@@ -163,7 +171,11 @@
     "extractorIdentity": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "cue4ParseVersion"],
+      "required": [
+        "name",
+        "version",
+        "cue4ParseVersion"
+      ],
       "properties": {
         "name": {
           "const": "NeonRetroRewind.StaticExtractor"
@@ -225,7 +237,13 @@
     "dataTable": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "name", "type", "rowStruct", "rows"],
+      "required": [
+        "path",
+        "name",
+        "type",
+        "rowStruct",
+        "rows"
+      ],
       "properties": {
         "path": {
           "$ref": "#/$defs/packagePath"
@@ -237,7 +255,10 @@
           "$ref": "#/$defs/nonEmptyString"
         },
         "rowStruct": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1
         },
         "rows": {
@@ -251,7 +272,10 @@
     "dataTableRow": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "values"],
+      "required": [
+        "key",
+        "values"
+      ],
       "properties": {
         "key": {
           "type": "string"
@@ -265,7 +289,13 @@
     "stringTable": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "name", "type", "namespace", "entries"],
+      "required": [
+        "path",
+        "name",
+        "type",
+        "namespace",
+        "entries"
+      ],
       "properties": {
         "path": {
           "$ref": "#/$defs/packagePath"
@@ -290,7 +320,11 @@
     "stringTableEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["key", "value", "metadata"],
+      "required": [
+        "key",
+        "value",
+        "metadata"
+      ],
       "properties": {
         "key": {
           "type": "string"
@@ -309,7 +343,10 @@
     "stringTableMetadata": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "value"],
+      "required": [
+        "name",
+        "value"
+      ],
       "properties": {
         "name": {
           "$ref": "#/$defs/nonEmptyString"
@@ -322,7 +359,10 @@
     "failure": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "errorType"],
+      "required": [
+        "path",
+        "errorType"
+      ],
       "properties": {
         "path": {
           "$ref": "#/$defs/packagePath"
@@ -338,7 +378,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "count"],
+        "required": [
+          "name",
+          "count"
+        ],
         "properties": {
           "name": {
             "$ref": "#/$defs/nonEmptyString"
