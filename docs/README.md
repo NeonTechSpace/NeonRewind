@@ -49,7 +49,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Console return mechanics | `console-return-mechanics.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Movie return mechanics | `movie-return-mechanics.json` | Normalizes movie readiness, weighted selection, and customer flow from typed traces |
-| New-release unlock mechanics | `new-release-unlock-mechanics.json` | Normalizes the confirmed two-day new-release unlock transition from typed traces |
+| New-release unlock mechanics | `new-release-unlock-mechanics.json` | Normalizes the confirmed two-day unlock transition and its gated movie-request effect from typed traces |
 | Movie return validation | `movie-return-validation.json` | Verifies a private runtime observation against its exact movie-return mechanics artifact |
 | Film catalog | `film-catalog.json` | Converts the film rows into stable NeonRetroRewind records |
 
@@ -889,10 +889,11 @@ That command writes a new immutable mechanics artifact which identifies the exac
 
 ## 20. Compile the new-release unlock mechanics
 
-This step joins the typed unlock-manager event graph with the typed wrapper entrypoints.
+This step joins the typed unlock-manager event graph, typed wrapper entrypoints, and the traced property reader.
 It confirms that `Reset to new Day Event_Event` enters the manager at statement `3364`, calls `ExampleReleaseEnabled`, compares the Weather Actor's current date with the first save-game day plus two days, and sets `ExampleReleaseKind` to `true` when the threshold is reached.
-The compiler checks the exact build and mapping identities, wrapper entrypoints, typed calls and arguments, intermediate value flow, comparison, branch route, mutation, and input hashes.
-It does not infer save/load behavior, costs, dependencies, or concrete content effects.
+It also confirms that `Return Example Request` combines the flag with `RandomBoolWithWeight(0.5)` and, on success, selects guaranteed request step 1, records primary request code `5` as required, and outputs `Only New Release` as `true`.
+The compiler checks the exact build and mapping identities, wrapper entrypoints, typed calls and arguments, intermediate value flow, comparisons, branch routes, mutations, outputs, and input hashes.
+It does not infer save/load behavior, costs, dependencies, exact film identities, or runtime probabilities.
 The artifact records typed-Blueprint evidence and `runtimeValidation: not-run`.
 
 Move into the TypeScript workspace if you are not already there.
@@ -915,6 +916,8 @@ pnpm new-release-unlock-mechanics `
   --manager-trace-schema "../game-data-exporter/schemas/acquisition/unlockable-manager-trace.schema.json" `
   --wrapper-trace (Join-Path $buildDirectory "blueprint-function-trace.unlock-manager-entry.json") `
   --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
+  --property-reader-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-unlock.json") `
+  --property-reader-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" `
   --output (Join-Path $domainDirectory "new-release-unlock-mechanics.json")
 ```
 
@@ -924,6 +927,8 @@ pnpm new-release-unlock-mechanics \
   --manager-trace-schema "../game-data-exporter/schemas/acquisition/unlockable-manager-trace.schema.json" \
   --wrapper-trace "$buildDirectory/blueprint-function-trace.unlock-manager-entry.json" \
   --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
+  --property-reader-trace "$buildDirectory/blueprint-property-reference-trace.new-release-unlock.json" \
+  --property-reader-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" \
   --output "$domainDirectory/new-release-unlock-mechanics.json"
 ```
 

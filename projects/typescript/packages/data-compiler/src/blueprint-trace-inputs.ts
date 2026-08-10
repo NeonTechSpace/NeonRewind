@@ -1,5 +1,6 @@
 import type {
   BlueprintFunctionTrace,
+  BlueprintPropertyReferenceTrace,
   RentalFunctionTrace,
   UnlockableManagerTrace,
 } from "@neonretrorewind/core";
@@ -14,6 +15,13 @@ export type BlueprintFunctionTraceArtifact = Omit<
   "callerBodies" | "functions"
 > & {
   readonly callerBodies: readonly BlueprintFunctionTrace["callerBodies"][number][];
+  readonly functions: readonly BlueprintTraceFunctionInput[];
+};
+export type BlueprintPropertyReferenceTraceArtifact = Omit<
+  BlueprintPropertyReferenceTrace,
+  "functions" | "requestedFunctionPaths"
+> & {
+  readonly requestedFunctionPaths: readonly string[];
   readonly functions: readonly BlueprintTraceFunctionInput[];
 };
 export type RentalFunctionTraceArtifact = Omit<

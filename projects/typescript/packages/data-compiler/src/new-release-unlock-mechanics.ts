@@ -17,6 +17,7 @@ import {
 } from "./blueprint-trace-assertions.ts";
 import type {
   BlueprintFunctionTraceArtifact,
+  BlueprintPropertyReferenceTraceArtifact,
   UnlockableManagerTraceArtifact,
 } from "./blueprint-trace-inputs.ts";
 
@@ -30,18 +31,29 @@ const firstSaveDaySymbol = "ExampleSymbol_497dff3a47e2";
 const timespanSymbol = "ExampleSymbol_7e5e1037058b";
 const thresholdSymbol = "ExampleSymbol_2366b926ff88";
 const comparisonSymbol = "ExampleSymbol_82f85d9f0f2f";
+const requestClassPath =
+  "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C";
+const requestFunctionName = "Return Example Request";
+const requestFunctionPath = `${requestClassPath}:${requestFunctionName}`;
+const randomResultSymbol = "ExampleSymbol_62b6867ee210";
+const requestConditionSymbol = "ExampleSymbol_470ab9997728";
+const guaranteedStepSymbol = "lGarantee Requested Step";
+const optionalPassSymbol = "lRun Optional Pass";
+const newReleaseRequestedSymbol = "lNew Released Requested";
 
 export interface NewReleaseUnlockSources {
   readonly managerTrace: NewReleaseUnlockArtifactIdentity<"unlockable-manager-trace">;
   readonly wrapperTrace: NewReleaseUnlockArtifactIdentity<"blueprint-function-trace">;
+  readonly propertyReaderTrace: NewReleaseUnlockArtifactIdentity<"blueprint-property-reference-trace">;
 }
 
 export function compileNewReleaseUnlockMechanics(
   managerTrace: UnlockableManagerTraceArtifact,
   wrapperTrace: BlueprintFunctionTraceArtifact,
+  propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
   sources: NewReleaseUnlockSources,
 ): NewReleaseUnlockMechanics {
-  assertInputContracts(managerTrace, wrapperTrace);
+  assertInputContracts(managerTrace, wrapperTrace, propertyReaderTrace);
   assertWrapperEntry(wrapperTrace, resetFunctionName, 3364);
   assertWrapperEntry(wrapperTrace, checkFunctionName, 3379);
 
@@ -120,6 +132,8 @@ export function compileNewReleaseUnlockMechanics(
   assertTraceSymbolChild(assignment, eventGraph, "Variable", "ExampleReleaseKind");
   assertTraceLiteralChild(assignment, eventGraph, "Assignment", "boolean", "true");
 
+  assertRequestSelection(propertyReaderTrace);
+
   return NewReleaseUnlockMechanicsSchema.assert({
     artifactType: "new-release-unlock-mechanics",
     build: {
@@ -165,12 +179,59 @@ export function compileNewReleaseUnlockMechanics(
         },
       },
     },
+    requestSelection: {
+      trigger: "return-movie-request",
+      condition: {
+        unlockField: "ExampleReleaseKind",
+        requiredValue: true,
+        operator: "and",
+        randomGate: {
+          function: "RandomBoolWithWeight",
+          trueWeight: 0.5,
+        },
+      },
+      effect: {
+        guaranteedRequestStep: 1,
+        runOptionalPass: false,
+        newReleaseRequested: true,
+        primaryRequestCode: 5,
+        primaryRequestValue: true,
+        outputs: {
+          onlyNewRelease: true,
+          mandatoryRequest: "primary-request-map",
+        },
+      },
+      evidence: {
+        kind: "kismet-analysis",
+        confidence: "direct",
+        classPath: requestClassPath,
+        functionName: requestFunctionName,
+        statementIndexes: {
+          randomCall: 2253,
+          combineConditions: 2278,
+          unlockRead: 2309,
+          conditionBranch: 2328,
+          setGuaranteedStep: 2342,
+          disableOptionalPass: 2365,
+          loopToDispatch: 2376,
+          stepOneComparison: 2108,
+          stepOneRoute: 2132,
+          setNewReleaseRequested: 4028,
+          setRequestValue: 4039,
+          setRequestCode: 4050,
+          addPrimaryRequest: 4092,
+          setOnlyNewReleaseOutput: 3358,
+          setMandatoryRequestOutput: 3396,
+        },
+      },
+    },
   });
 }
 
 function assertInputContracts(
   managerTrace: UnlockableManagerTraceArtifact,
   wrapperTrace: BlueprintFunctionTraceArtifact,
+  propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
 ): void {
   if (managerTrace.artifactType !== "unlockable-manager-trace") {
     throw new Error("Expected an unlockable-manager-trace input.");
@@ -178,13 +239,25 @@ function assertInputContracts(
   if (wrapperTrace.artifactType !== "blueprint-function-trace") {
     throw new Error("Expected a blueprint-function-trace input.");
   }
-  if (JSON.stringify(managerTrace.build) !== JSON.stringify(wrapperTrace.build)) {
+  if (propertyReaderTrace.artifactType !== "blueprint-property-reference-trace") {
+    throw new Error("Expected a blueprint-property-reference-trace input.");
+  }
+  if (
+    JSON.stringify(managerTrace.build) !== JSON.stringify(wrapperTrace.build) ||
+    JSON.stringify(managerTrace.build) !== JSON.stringify(propertyReaderTrace.build)
+  ) {
     throw new Error("Unlock traces refer to different game builds.");
   }
-  if (JSON.stringify(managerTrace.mappings) !== JSON.stringify(wrapperTrace.mappings)) {
+  if (
+    JSON.stringify(managerTrace.mappings) !== JSON.stringify(wrapperTrace.mappings) ||
+    JSON.stringify(managerTrace.mappings) !== JSON.stringify(propertyReaderTrace.mappings)
+  ) {
     throw new Error("Unlock traces refer to different mappings.");
   }
-  if (JSON.stringify(managerTrace.engine) !== JSON.stringify(wrapperTrace.engine)) {
+  if (
+    JSON.stringify(managerTrace.engine) !== JSON.stringify(wrapperTrace.engine) ||
+    JSON.stringify(managerTrace.engine) !== JSON.stringify(propertyReaderTrace.engine)
+  ) {
     throw new Error("Unlock traces refer to different engine configurations.");
   }
   if (
@@ -194,6 +267,154 @@ function assertInputContracts(
   ) {
     throw new Error("Unlock manager trace scope changed.");
   }
+  if (
+    propertyReaderTrace.blueprintPropertyReferences.targetPropertyName !==
+      "ExampleReleaseKind" ||
+    propertyReaderTrace.selectionRule !== "explicit-functions-with-read-references" ||
+    propertyReaderTrace.requestedFunctionPaths.length !== 1 ||
+    propertyReaderTrace.requestedFunctionPaths[0] !== requestFunctionPath ||
+    propertyReaderTrace.functions.length !== 1
+  ) {
+    throw new Error("Property-reader trace scope changed.");
+  }
+}
+
+function assertRequestSelection(trace: BlueprintPropertyReferenceTraceArtifact): void {
+  const function_ = findTraceFunction(trace.functions, requestFunctionName);
+  if (
+    function_.classPath !== requestClassPath ||
+    function_.functionPath !== requestFunctionPath
+  ) {
+    throw new Error("Property-reader function identity changed.");
+  }
+  assertTraceNodeTree(function_);
+
+  const randomAssignment = findTraceNode(function_, 2243);
+  assertTraceRootNode(function_, 2243, "EX_LetBool");
+  assertTraceSymbolChild(randomAssignment, function_, "Variable", randomResultSymbol);
+  const randomCall = findTraceCall(function_, 2253, "RandomBoolWithWeight", "final", 1);
+  assertChildCall(randomAssignment, randomCall, "Assignment");
+  assertTraceLiteralChild(randomCall, function_, "Parameters[0]", "number", "0.5");
+
+  const conditionAssignment = findTraceNode(function_, 2268);
+  assertTraceRootNode(function_, 2268, "EX_LetBool");
+  assertTraceSymbolChild(conditionAssignment, function_, "Variable", requestConditionSymbol);
+  const combine = findTraceCall(function_, 2278, "BooleanAND", "final", 2);
+  assertChildCall(conditionAssignment, combine, "Assignment");
+  const unlockContext = findTraceNode(function_, 2287);
+  assertChildCall(combine, unlockContext, "Parameters[0]");
+  if (unlockContext.kind !== "context" || unlockContext.symbol !== "ExampleReleaseKind") {
+    throw new Error("New-release request unlock context changed.");
+  }
+  assertTraceSymbolChild(
+    unlockContext,
+    function_,
+    "ContextExpression",
+    "ExampleReleaseKind",
+  );
+  assertTraceSymbolChild(combine, function_, "Parameters[1]", randomResultSymbol);
+
+  const condition = assertTraceJump(
+    function_,
+    2328,
+    "conditional-false",
+    "codeOffset",
+    2381,
+  );
+  assertTraceSymbolChild(condition, function_, "BooleanExpression", requestConditionSymbol);
+  assertLiteralAssignment(function_, 2342, "EX_Let", guaranteedStepSymbol, "integer", "1");
+  assertLiteralAssignment(
+    function_,
+    2365,
+    "EX_LetBool",
+    optionalPassSymbol,
+    "boolean",
+    "false",
+  );
+  assertTraceJump(function_, 2376, "unconditional", "codeOffset", 2040);
+
+  const stepComparisonAssignment = findTraceNode(function_, 2098);
+  assertTraceRootNode(function_, 2098, "EX_LetBool");
+  assertTraceSymbolChild(
+    stepComparisonAssignment,
+    function_,
+    "Variable",
+    "ExampleSymbol_4c35bb67638e",
+  );
+  const stepOne = findTraceCall(function_, 2108, "NotEqual_IntInt", "final", 2);
+  assertChildCall(stepComparisonAssignment, stepOne, "Assignment");
+  assertTraceSymbolChild(stepOne, function_, "Parameters[0]", guaranteedStepSymbol);
+  assertTraceLiteralChild(stepOne, function_, "Parameters[1]", "integer", "1");
+  assertIntegerArgumentEntries(stepOne, [{ position: 1, value: "1" }]);
+  const stepRoute = assertTraceJump(
+    function_,
+    2132,
+    "conditional-false",
+    "codeOffset",
+    4028,
+  );
+  assertTraceSymbolChild(
+    stepRoute,
+    function_,
+    "BooleanExpression",
+    "ExampleSymbol_4c35bb67638e",
+  );
+
+  assertLiteralAssignment(
+    function_,
+    4028,
+    "EX_LetBool",
+    newReleaseRequestedSymbol,
+    "boolean",
+    "true",
+  );
+  assertLiteralAssignment(
+    function_,
+    4039,
+    "EX_LetBool",
+    "Temp_bool_Variable_5",
+    "boolean",
+    "true",
+  );
+  assertLiteralAssignment(
+    function_,
+    4050,
+    "EX_Let",
+    "Temp_byte_Variable_6",
+    "integer",
+    "5",
+  );
+  const mapContext = findTraceNode(function_, 4070);
+  assertTraceRootNode(function_, 4070, "EX_Context");
+  const addPrimaryRequest = findTraceCall(function_, 4092, "Map_Add", "final", 3);
+  assertChildCall(mapContext, addPrimaryRequest, "ContextExpression");
+  assertTraceSymbolChild(addPrimaryRequest, function_, "Parameters[0]", "Primary Request");
+  assertTraceSymbolChild(
+    addPrimaryRequest,
+    function_,
+    "Parameters[1]",
+    "Temp_byte_Variable_6",
+  );
+  assertTraceSymbolChild(
+    addPrimaryRequest,
+    function_,
+    "Parameters[2]",
+    "Temp_bool_Variable_5",
+  );
+
+  const onlyNewReleaseOutput = findTraceNode(function_, 3358);
+  assertTraceRootNode(function_, 3358, "EX_LetBool");
+  assertTraceSymbolChild(onlyNewReleaseOutput, function_, "Variable", "Only New Release");
+  assertTraceSymbolChild(
+    onlyNewReleaseOutput,
+    function_,
+    "Assignment",
+    newReleaseRequestedSymbol,
+  );
+  const mandatoryRequestOutput = findTraceNode(function_, 3396);
+  assertTraceRootNode(function_, 3396, "EX_Let");
+  assertTraceSymbolChild(mandatoryRequestOutput, function_, "Variable", "Mandatory Request");
+  assertTraceSymbolChild(mandatoryRequestOutput, function_, "Assignment", "Primary Request");
 }
 
 function assertWrapperEntry(
@@ -229,6 +450,32 @@ function assertIntegerArguments(
   if (JSON.stringify(node.call?.integerArguments) !== JSON.stringify(expected)) {
     throw new Error(`Blueprint trace integer arguments changed at statement ${node.statementIndex}.`);
   }
+}
+
+function assertIntegerArgumentEntries(
+  node: ReturnType<typeof findTraceCall>,
+  expected: readonly { readonly position: number; readonly value: string }[],
+): void {
+  if (JSON.stringify(node.call?.integerArguments) !== JSON.stringify(expected)) {
+    throw new Error(`Blueprint trace integer arguments changed at statement ${node.statementIndex}.`);
+  }
+}
+
+function assertLiteralAssignment(
+  function_: ReturnType<typeof findTraceFunction>,
+  statementIndex: number,
+  opcode: string,
+  symbol: string,
+  literalType: "boolean" | "integer" | "number",
+  value: string,
+): void {
+  const assignment = findTraceNode(function_, statementIndex);
+  assertTraceRootNode(function_, statementIndex, opcode);
+  if (assignment.kind !== "assignment") {
+    throw new Error(`Blueprint trace assignment changed at statement ${statementIndex}.`);
+  }
+  assertTraceSymbolChild(assignment, function_, "Variable", symbol);
+  assertTraceLiteralChild(assignment, function_, "Assignment", literalType, value);
 }
 
 function assertChildCall(

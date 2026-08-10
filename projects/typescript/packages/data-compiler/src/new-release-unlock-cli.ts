@@ -4,14 +4,11 @@ import { basename } from "node:path";
 
 import {
   BlueprintFunctionTraceSchema,
+  BlueprintPropertyReferenceTraceSchema,
   UnlockableManagerTraceSchema,
   type NewReleaseUnlockArtifactIdentity,
 } from "@neonretrorewind/core";
 
-import type {
-  BlueprintFunctionTraceArtifact,
-  UnlockableManagerTraceArtifact,
-} from "./blueprint-trace-inputs.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import {
   compileNewReleaseUnlockMechanics,
@@ -28,6 +25,8 @@ interface Options {
   readonly managerTraceSchemaPath: string;
   readonly wrapperTracePath: string;
   readonly wrapperTraceSchemaPath: string;
+  readonly propertyReaderTracePath: string;
+  readonly propertyReaderTraceSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -43,27 +42,40 @@ export async function runNewReleaseUnlockMechanics(
   }
 
   try {
-    const [manager, wrapper] = await Promise.all([
+    const [manager, wrapper, propertyReader] = await Promise.all([
       readInput(options.managerTracePath, "Unlock manager trace"),
       readInput(options.wrapperTracePath, "Unlock wrapper trace"),
+      readInput(options.propertyReaderTracePath, "Property-reader trace"),
     ]);
     await Promise.all([
       validateInput(manager, options.managerTraceSchemaPath, "Unlock manager trace"),
       validateInput(wrapper, options.wrapperTraceSchemaPath, "Unlock wrapper trace"),
+      validateInput(
+        propertyReader,
+        options.propertyReaderTraceSchemaPath,
+        "Property-reader trace",
+      ),
     ]);
 
     const sources: NewReleaseUnlockSources = {
       managerTrace: createIdentity(manager, "unlockable-manager-trace"),
       wrapperTrace: createIdentity(wrapper, "blueprint-function-trace"),
+      propertyReaderTrace: createIdentity(
+        propertyReader,
+        "blueprint-property-reference-trace",
+      ),
     };
     const mechanics = compileNewReleaseUnlockMechanics(
       UnlockableManagerTraceSchema.assert(manager.value),
       BlueprintFunctionTraceSchema.assert(wrapper.value),
+      BlueprintPropertyReferenceTraceSchema.assert(propertyReader.value),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
 
-    await Promise.all([manager, wrapper].map((input) => assertFileUnchanged(input)));
+    await Promise.all(
+      [manager, wrapper, propertyReader].map((input) => assertFileUnchanged(input)),
+    );
     const status = await writeImmutableArtifact(options.outputPath, output);
     if (status === "conflict") {
       console.error(
@@ -84,7 +96,7 @@ export async function runNewReleaseUnlockMechanics(
 
 export function writeNewReleaseUnlockUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-data-compiler new-release-unlock-mechanics --manager-trace <path> --manager-trace-schema <schema> --wrapper-trace <path> --wrapper-trace-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler new-release-unlock-mechanics --manager-trace <path> --manager-trace-schema <schema> --wrapper-trace <path> --wrapper-trace-schema <schema> --property-reader-trace <path> --property-reader-trace-schema <schema> --output <path>\n",
   );
 }
 
@@ -120,6 +132,8 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     "--manager-trace-schema",
     "--wrapper-trace",
     "--wrapper-trace-schema",
+    "--property-reader-trace",
+    "--property-reader-trace-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -140,13 +154,15 @@ function parseOptions(arguments_: readonly string[]): Options | string {
   }
   const missing = names.filter((name) => !values.has(name));
   if (missing.length > 0) {
-    return `Expected both unlock traces, both schemas, and --output; missing ${missing.join(", ")}.`;
+    return `Expected manager, wrapper, and property-reader traces, their schemas, and --output; missing ${missing.join(", ")}.`;
   }
   return {
     managerTracePath: values.get("--manager-trace")!,
     managerTraceSchemaPath: values.get("--manager-trace-schema")!,
     wrapperTracePath: values.get("--wrapper-trace")!,
     wrapperTraceSchemaPath: values.get("--wrapper-trace-schema")!,
+    propertyReaderTracePath: values.get("--property-reader-trace")!,
+    propertyReaderTraceSchemaPath: values.get("--property-reader-trace-schema")!,
     outputPath: values.get("--output")!,
   };
 }

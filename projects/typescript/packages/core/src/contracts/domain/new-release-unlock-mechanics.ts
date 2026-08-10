@@ -14,7 +14,8 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
     "scope",
     "evidenceLevel",
     "runtimeValidation",
-    "unlock"
+    "unlock",
+    "requestSelection"
   ],
   "properties": {
     "artifactType": {
@@ -37,6 +38,9 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
     },
     "unlock": {
       "$ref": "#/$defs/unlock"
+    },
+    "requestSelection": {
+      "$ref": "#/$defs/requestSelection"
     }
   },
   "$defs": {
@@ -63,7 +67,8 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
       "additionalProperties": false,
       "required": [
         "managerTrace",
-        "wrapperTrace"
+        "wrapperTrace",
+        "propertyReaderTrace"
       ],
       "properties": {
         "managerTrace": {
@@ -89,6 +94,20 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
               "properties": {
                 "artifactType": {
                   "const": "blueprint-function-trace"
+                }
+              }
+            }
+          ]
+        },
+        "propertyReaderTrace": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/sourceIdentity"
+            },
+            {
+              "properties": {
+                "artifactType": {
+                  "const": "blueprint-property-reference-trace"
                 }
               }
             }
@@ -121,7 +140,8 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
         "artifactType": {
           "enum": [
             "unlockable-manager-trace",
-            "blueprint-function-trace"
+            "blueprint-function-trace",
+            "blueprint-property-reference-trace"
           ]
         }
       }
@@ -171,6 +191,214 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
         },
         "currentDate": {
           "const": "weather-current-date"
+        }
+      }
+    },
+    "requestSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trigger",
+        "condition",
+        "effect",
+        "evidence"
+      ],
+      "properties": {
+        "trigger": {
+          "const": "return-movie-request"
+        },
+        "condition": {
+          "$ref": "#/$defs/requestCondition"
+        },
+        "effect": {
+          "$ref": "#/$defs/requestEffect"
+        },
+        "evidence": {
+          "$ref": "#/$defs/requestEvidence"
+        }
+      }
+    },
+    "requestCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unlockField",
+        "requiredValue",
+        "operator",
+        "randomGate"
+      ],
+      "properties": {
+        "unlockField": {
+          "const": "ExampleReleaseKind"
+        },
+        "requiredValue": {
+          "const": true
+        },
+        "operator": {
+          "const": "and"
+        },
+        "randomGate": {
+          "$ref": "#/$defs/randomGate"
+        }
+      }
+    },
+    "randomGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function",
+        "trueWeight"
+      ],
+      "properties": {
+        "function": {
+          "const": "RandomBoolWithWeight"
+        },
+        "trueWeight": {
+          "const": 0.5
+        }
+      }
+    },
+    "requestEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guaranteedRequestStep",
+        "runOptionalPass",
+        "newReleaseRequested",
+        "primaryRequestCode",
+        "primaryRequestValue",
+        "outputs"
+      ],
+      "properties": {
+        "guaranteedRequestStep": {
+          "const": 1
+        },
+        "runOptionalPass": {
+          "const": false
+        },
+        "newReleaseRequested": {
+          "const": true
+        },
+        "primaryRequestCode": {
+          "const": 5
+        },
+        "primaryRequestValue": {
+          "const": true
+        },
+        "outputs": {
+          "$ref": "#/$defs/requestOutputs"
+        }
+      }
+    },
+    "requestOutputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "onlyNewRelease",
+        "mandatoryRequest"
+      ],
+      "properties": {
+        "onlyNewRelease": {
+          "const": true
+        },
+        "mandatoryRequest": {
+          "const": "primary-request-map"
+        }
+      }
+    },
+    "requestEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "confidence",
+        "classPath",
+        "functionName",
+        "statementIndexes"
+      ],
+      "properties": {
+        "kind": {
+          "const": "kismet-analysis"
+        },
+        "confidence": {
+          "const": "direct"
+        },
+        "classPath": {
+          "const": "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C"
+        },
+        "functionName": {
+          "const": "Return Example Request"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/requestStatementIndexes"
+        }
+      }
+    },
+    "requestStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "randomCall",
+        "combineConditions",
+        "unlockRead",
+        "conditionBranch",
+        "setGuaranteedStep",
+        "disableOptionalPass",
+        "loopToDispatch",
+        "stepOneComparison",
+        "stepOneRoute",
+        "setNewReleaseRequested",
+        "setRequestValue",
+        "setRequestCode",
+        "addPrimaryRequest",
+        "setOnlyNewReleaseOutput",
+        "setMandatoryRequestOutput"
+      ],
+      "properties": {
+        "randomCall": {
+          "const": 2253
+        },
+        "combineConditions": {
+          "const": 2278
+        },
+        "unlockRead": {
+          "const": 2309
+        },
+        "conditionBranch": {
+          "const": 2328
+        },
+        "setGuaranteedStep": {
+          "const": 2342
+        },
+        "disableOptionalPass": {
+          "const": 2365
+        },
+        "loopToDispatch": {
+          "const": 2376
+        },
+        "stepOneComparison": {
+          "const": 2108
+        },
+        "stepOneRoute": {
+          "const": 2132
+        },
+        "setNewReleaseRequested": {
+          "const": 4028
+        },
+        "setRequestValue": {
+          "const": 4039
+        },
+        "setRequestCode": {
+          "const": 4050
+        },
+        "addPrimaryRequest": {
+          "const": 4092
+        },
+        "setOnlyNewReleaseOutput": {
+          "const": 3358
+        },
+        "setMandatoryRequestOutput": {
+          "const": 3396
         }
       }
     },
