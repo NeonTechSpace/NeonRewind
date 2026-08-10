@@ -65,7 +65,11 @@ internal static class UnlockableFunctionTraceCommand
                 options.UnlockableEvidencePath,
                 "unlockable evidence");
             var evidenceIdentity = FileIdentityFactory.Create(options.UnlockableEvidencePath);
-            ValidateEvidence(evidence, manifest, manifestIdentity.Sha256, mappingIdentity);
+            UnlockableArtifactValidator.ValidateEvidence(
+                evidence,
+                manifest,
+                manifestIdentity.Sha256,
+                mappingIdentity);
             var selections = CreateSelections(evidence);
             var packagePaths = AcquisitionValidator.VerifyPackageFiles(
                 manifest,
@@ -219,56 +223,6 @@ internal static class UnlockableFunctionTraceCommand
         }
 
         return selections;
-    }
-
-    private static void ValidateEvidence(
-        UnlockableEvidence evidence,
-        BuildManifest manifest,
-        string manifestSha256,
-        MappingIdentity mappings)
-    {
-        if (evidence.ArtifactType != "unlockable-evidence")
-        {
-            throw new InvalidDataException("Expected an unlockable-evidence artifact.");
-        }
-
-        if (evidence.Build is null || evidence.StaticCensus is null || evidence.Mappings is null ||
-            evidence.Engine is null || evidence.Extractor is null || evidence.Totals is null ||
-            evidence.Packages is null || evidence.Packages.Count == 0)
-        {
-            throw new InvalidDataException("Unlockable evidence is incomplete.");
-        }
-
-        if (evidence.Build.ManifestSha256 != manifestSha256 ||
-            evidence.Build.SteamAppId != manifest.Steam.AppId ||
-            evidence.Build.SteamBuildId != manifest.Steam.BuildId ||
-            evidence.Engine != manifest.Engine ||
-            evidence.Mappings != mappings)
-        {
-            throw new InvalidDataException(
-                "Unlockable evidence does not belong to the supplied build and mappings.");
-        }
-
-        if (string.IsNullOrWhiteSpace(evidence.StaticCensus.FileName) ||
-            evidence.StaticCensus.SizeBytes <= 0 ||
-            evidence.StaticCensus.Sha256 is not { Length: 64 } ||
-            evidence.Extractor.Name != "NeonRetroRewind.StaticExtractor" ||
-            string.IsNullOrWhiteSpace(evidence.Extractor.Version) ||
-            string.IsNullOrWhiteSpace(evidence.Extractor.Cue4ParseVersion) ||
-            evidence.Packages.Any(package =>
-                package is null ||
-                string.IsNullOrWhiteSpace(package.Path) ||
-                package.BlueprintClasses is null ||
-                package.UserDefinedStructs is null ||
-                package.BlueprintClasses.Any(class_ =>
-                    class_ is null ||
-                    string.IsNullOrWhiteSpace(class_.Name) ||
-                    string.IsNullOrWhiteSpace(class_.Path) ||
-                    class_.Functions is null ||
-                    class_.Functions.Any(string.IsNullOrWhiteSpace))))
-        {
-            throw new InvalidDataException("Unlockable evidence packages or classes are incomplete.");
-        }
     }
 
     private static bool TryParseArguments(

@@ -38,4 +38,14 @@ internal sealed record BlueprintCallSite(
     string CallKind,
     int StatementIndex);
 
+internal sealed record BlueprintNamedCallSite(
+    string TargetFunctionName,
+    string PackagePath,
+    string ClassName,
+    string ClassPath,
+    string FunctionName,
+    string FunctionPath,
+    string CallKind,
+    int StatementIndex);
+
 internal sealed record BlueprintCallSiteFailure(string PackagePath, string ErrorType);

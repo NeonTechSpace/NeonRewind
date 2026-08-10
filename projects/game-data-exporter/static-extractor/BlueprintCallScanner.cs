@@ -15,8 +15,33 @@ internal static class BlueprintCallScanner
         UBlueprintGeneratedClass blueprintClass,
         string targetFunctionName,
         out int functionCount)
+        => ScanClassForTargets(
+                packagePath,
+                blueprintClass,
+                new HashSet<string>([targetFunctionName], StringComparer.Ordinal),
+                out functionCount)
+            .Select(callSite => new BlueprintCallSite(
+                callSite.PackagePath,
+                callSite.ClassName,
+                callSite.ClassPath,
+                callSite.FunctionName,
+                callSite.FunctionPath,
+                callSite.CallKind,
+                callSite.StatementIndex))
+            .ToArray();
+
+    public static IReadOnlyList<BlueprintNamedCallSite> ScanClassForTargets(
+        string packagePath,
+        UBlueprintGeneratedClass blueprintClass,
+        IReadOnlySet<string> targetFunctionNames,
+        out int functionCount)
     {
-        var callSites = new List<BlueprintCallSite>();
+        if (targetFunctionNames.Count == 0)
+        {
+            throw new InvalidDataException("Blueprint call targets must be nonempty.");
+        }
+
+        var callSites = new List<BlueprintNamedCallSite>();
         var functions = blueprintClass.FuncMap
             .Select(pair => LoadFunction(pair.Key.Text, pair.Value))
             .OrderBy(function => function.Name, StringComparer.Ordinal)
@@ -39,7 +64,7 @@ internal static class BlueprintCallScanner
                     callExpression =>
                     {
                         if (!TryReadCall(callExpression, out var calledName, out var callKind) ||
-                            !string.Equals(calledName, targetFunctionName, StringComparison.Ordinal))
+                            !targetFunctionNames.Contains(calledName))
                         {
                             return;
                         }
@@ -49,7 +74,8 @@ internal static class BlueprintCallScanner
                             throw new InvalidDataException("Blueprint call has no statement index.");
                         }
 
-                        callSites.Add(new BlueprintCallSite(
+                        callSites.Add(new BlueprintNamedCallSite(
+                            TargetFunctionName: calledName,
                             PackagePath: packagePath,
                             ClassName: blueprintClass.Name,
                             ClassPath: blueprintClass.GetPathName(),

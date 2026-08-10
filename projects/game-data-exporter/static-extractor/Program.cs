@@ -47,6 +47,11 @@ internal static class Program
             return UnlockableFunctionTraceCommand.Run(unlockableFunctionTraceArguments);
         }
 
+        if (args is ["unlockable-implementation-sites", .. var unlockableImplementationSitesArguments])
+        {
+            return UnlockableImplementationSitesCommand.Run(unlockableImplementationSitesArguments);
+        }
+
         if (args is ["rental-blueprint-bodies", .. var rentalBlueprintBodiesArguments])
         {
             return RentalBlueprintBodiesCommand.Run(rentalBlueprintBodiesArguments);
@@ -94,6 +99,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-function-trace --build-manifest <path> --unlockable-evidence <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-implementation-sites --build-manifest <path> --static-census <path> --unlockable-evidence <path> --unlockable-function-trace <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-blueprint-bodies --build-manifest <path> --rental-evidence <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-call-sites --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --target-function <name> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-caller-bodies --build-manifest <path> --call-sites <path> --mappings <path> --package-directory <path> --output <path>");
@@ -108,6 +114,7 @@ internal static class Program
         writer.WriteLine("The rental-evidence command writes mapped class defaults and references for the rental-system package cluster.");
         writer.WriteLine("The unlockable-evidence command writes mapped class defaults and references for the unlockable-system package cluster.");
         writer.WriteLine("The unlockable-function-trace command rereads the four unlock eligibility and mutation functions into typed Kismet nodes without parsing pseudocode.");
+        writer.WriteLine("The unlockable-implementation-sites command locates unlock-item descendants, overrides, manager event graphs, and calls to the four selected hooks.");
         writer.WriteLine("The rental-blueprint-bodies command writes pseudocode and function metadata for the rental Blueprint classes.");
         writer.WriteLine("The blueprint-call-sites command scans parsed Blueprint bytecode for calls to one exact function name.");
         writer.WriteLine("The blueprint-caller-bodies command decompiles the exact caller functions recorded by a complete call-site artifact.");
