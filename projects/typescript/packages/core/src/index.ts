@@ -14,6 +14,11 @@ export {
   type BlueprintFunctionTrace,
 } from "./contracts/acquisition/blueprint-function-trace.ts";
 export {
+  BlueprintPropertyReferencesJsonSchema,
+  BlueprintPropertyReferencesSchema,
+  type BlueprintPropertyReferences,
+} from "./contracts/acquisition/blueprint-property-references.ts";
+export {
   BuildManifestJsonSchema,
   BuildManifestSchema,
   type BuildManifest,
