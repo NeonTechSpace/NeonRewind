@@ -47,6 +47,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Console return mechanics | `console-return-mechanics.json` | Normalizes console-return eligibility and queue movement with source locators |
 | Membership fee mechanics | `membership-fee-mechanics.json` | Normalizes membership fee storage, accumulation, and removal with source locators |
 | Movie return mechanics | `movie-return-mechanics.json` | Normalizes movie readiness, weighted selection, and customer flow from typed traces |
+| New-release unlock mechanics | `new-release-unlock-mechanics.json` | Normalizes the confirmed two-day new-release unlock transition from typed traces |
 | Movie return validation | `movie-return-validation.json` | Verifies a private runtime observation against its exact movie-return mechanics artifact |
 | Film catalog | `film-catalog.json` | Converts the film rows into stable NeonRetroRewind records |
 
@@ -828,7 +829,60 @@ The output contains normalized game rules and remains private and uncommitted.
 After a runtime observation passes, use `pnpm movie-return-validated-mechanics` as documented in [Movie-return runtime observation](movie-return-runtime-observation.md).
 That command writes a new immutable mechanics artifact which identifies the exact base mechanics, observation, and passing validation report without rewriting the base file named by the report.
 
-## 20. Compile the normalized film catalog
+## 20. Compile the new-release unlock mechanics
+
+This step joins the typed unlock-manager event graph with the typed wrapper entrypoints.
+It confirms that `Reset to new Day Event_Event` enters the manager at statement `3364`, calls `ExampleReleaseEnabled`, compares the Weather Actor's current date with the first save-game day plus two days, and sets `ExampleReleaseKind` to `true` when the threshold is reached.
+The compiler checks the exact build and mapping identities, wrapper entrypoints, typed calls and arguments, intermediate value flow, comparison, branch route, mutation, and input hashes.
+It does not infer save/load behavior, costs, dependencies, or concrete content effects.
+The artifact records typed-Blueprint evidence and `runtimeValidation: not-run`.
+
+Move into the TypeScript workspace if you are not already there.
+
+```powershell
+Push-Location projects/typescript
+pnpm install --frozen-lockfile
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm install --frozen-lockfile
+```
+
+Compile the private mechanic artifact.
+
+```powershell
+pnpm new-release-unlock-mechanics `
+  --manager-trace (Join-Path $buildDirectory "unlockable-manager-trace.json") `
+  --manager-trace-schema "../game-data-exporter/schemas/acquisition/unlockable-manager-trace.schema.json" `
+  --wrapper-trace (Join-Path $buildDirectory "blueprint-function-trace.unlock-manager-entry.json") `
+  --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
+  --output (Join-Path $domainDirectory "new-release-unlock-mechanics.json")
+```
+
+```bash
+pnpm new-release-unlock-mechanics \
+  --manager-trace "$buildDirectory/unlockable-manager-trace.json" \
+  --manager-trace-schema "../game-data-exporter/schemas/acquisition/unlockable-manager-trace.schema.json" \
+  --wrapper-trace "$buildDirectory/blueprint-function-trace.unlock-manager-entry.json" \
+  --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
+  --output "$domainDirectory/new-release-unlock-mechanics.json"
+```
+
+Return to the repository root when the command finishes.
+
+```powershell
+Pop-Location
+```
+
+```bash
+popd >/dev/null
+```
+
+The output contract is `projects/typescript/packages/core/schemas/new-release-unlock-mechanics.schema.json`.
+The generated artifact remains private and is not committed.
+
+## 21. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact against its JSON Schema.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.

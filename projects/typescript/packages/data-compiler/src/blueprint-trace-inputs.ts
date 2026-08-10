@@ -108,3 +108,19 @@ export interface RentalFunctionTraceArtifact {
   readonly totals: BlueprintFunctionTraceArtifact["totals"];
   readonly functions: readonly BlueprintTraceFunctionInput[];
 }
+
+export interface UnlockableManagerTraceArtifact {
+  readonly artifactType: "unlockable-manager-trace";
+  readonly build: RentalBuildReference;
+  readonly unlockableImplementationSites: {
+    readonly fileName: string;
+    readonly sizeBytes: number;
+    readonly sha256: string;
+  };
+  readonly requestedFunctionPaths: readonly string[];
+  readonly mappings: RentalMappingIdentity;
+  readonly engine: BlueprintFunctionTraceArtifact["engine"];
+  readonly extractor: BlueprintFunctionTraceArtifact["extractor"];
+  readonly totals: BlueprintFunctionTraceArtifact["totals"];
+  readonly functions: readonly BlueprintTraceFunctionInput[];
+}

@@ -29,3 +29,8 @@ export type {
   RentalReadinessTraceEvidence,
   RentalSelectionTraceEvidence,
 } from "./movie-return-mechanics.ts";
+
+export type {
+  NewReleaseUnlockArtifactIdentity,
+  NewReleaseUnlockMechanics,
+} from "./new-release-unlock-mechanics.ts";

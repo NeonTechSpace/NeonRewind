@@ -11,6 +11,10 @@ import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import { compileMembershipFeeMechanics } from "./membership-fee-mechanics.ts";
+import {
+  runNewReleaseUnlockMechanics,
+  writeNewReleaseUnlockUsage,
+} from "./new-release-unlock-cli.ts";
 import { runMovieReturnMechanic, writeMovieReturnUsage } from "./movie-return-cli.ts";
 import {
   runMovieReturnValidatedMechanics,
@@ -91,9 +95,14 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "new-release-unlock-mechanics") {
+    await runNewReleaseUnlockMechanics(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, or movie-return-validated-mechanics command.",
+      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, or new-release-unlock-mechanics command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -363,4 +372,5 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   );
   writeMovieReturnUsage(stream);
   writeMovieReturnValidatedMechanicsUsage(stream);
+  writeNewReleaseUnlockUsage(stream);
 }

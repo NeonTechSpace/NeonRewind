@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonretrorewind:schema:domain:new-release-unlock-mechanics",
+  "title": "NeonRetroRewind new-release unlock mechanics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "build",
+    "sources",
+    "scope",
+    "evidenceLevel",
+    "runtimeValidation",
+    "unlock"
+  ],
+  "properties": {
+    "artifactType": { "const": "new-release-unlock-mechanics" },
+    "build": { "$ref": "#/$defs/build" },
+    "sources": { "$ref": "#/$defs/sources" },
+    "scope": { "const": "new-release-unlock" },
+    "evidenceLevel": { "const": "typed-blueprint" },
+    "runtimeValidation": { "const": "not-run" },
+    "unlock": { "$ref": "#/$defs/unlock" }
+  },
+  "$defs": {
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["steamAppId", "steamBuildId"],
+      "properties": {
+        "steamAppId": { "type": "string", "pattern": "^[0-9]+$" },
+        "steamBuildId": { "type": "string", "pattern": "^[0-9]+$" }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["managerTrace", "wrapperTrace"],
+      "properties": {
+        "managerTrace": {
+          "allOf": [
+            { "$ref": "#/$defs/sourceIdentity" },
+            { "properties": { "artifactType": { "const": "unlockable-manager-trace" } } }
+          ]
+        },
+        "wrapperTrace": {
+          "allOf": [
+            { "$ref": "#/$defs/sourceIdentity" },
+            { "properties": { "artifactType": { "const": "blueprint-function-trace" } } }
+          ]
+        }
+      }
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "sha256", "sizeBytes", "artifactType"],
+      "properties": {
+        "fileName": { "type": "string", "pattern": "^[^/\\\\]+\\.json$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "sizeBytes": { "type": "integer", "minimum": 1 },
+        "artifactType": {
+          "enum": ["unlockable-manager-trace", "blueprint-function-trace"]
+        }
+      }
+    },
+    "unlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "threshold", "mutation", "evidence"],
+      "properties": {
+        "trigger": { "const": "reset-to-new-day-event" },
+        "threshold": { "$ref": "#/$defs/threshold" },
+        "mutation": { "$ref": "#/$defs/mutation" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "threshold": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "elapsedDays", "operator", "currentDate"],
+      "properties": {
+        "origin": { "const": "first-save-game-day" },
+        "elapsedDays": { "const": 2 },
+        "operator": { "const": "greater-than-or-equal" },
+        "currentDate": { "const": "weather-current-date" }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "value", "when"],
+      "properties": {
+        "field": { "const": "ExampleReleaseKind" },
+        "value": { "const": true },
+        "when": { "const": "threshold-reached" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "confidence",
+        "classPath",
+        "wrapperFunctions",
+        "entryPoints",
+        "eventGraphFunction",
+        "statementIndexes"
+      ],
+      "properties": {
+        "kind": { "const": "kismet-analysis" },
+        "confidence": { "const": "direct" },
+        "classPath": {
+          "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C"
+        },
+        "wrapperFunctions": { "$ref": "#/$defs/wrapperFunctions" },
+        "entryPoints": { "$ref": "#/$defs/entryPoints" },
+        "eventGraphFunction": { "const": "ExecuteExampleGraph_ExampleUnlockSystem" },
+        "statementIndexes": { "$ref": "#/$defs/statementIndexes" }
+      }
+    },
+    "wrapperFunctions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resetToNewDay", "newReleaseCheck"],
+      "properties": {
+        "resetToNewDay": { "const": "Reset to new Day Event_Event" },
+        "newReleaseCheck": { "const": "ExampleReleaseEnabled" }
+      }
+    },
+    "entryPoints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resetToNewDay", "newReleaseCheck"],
+      "properties": {
+        "resetToNewDay": { "const": 3364 },
+        "newReleaseCheck": { "const": 3379 }
+      }
+    },
+    "statementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resetCallsCheck",
+        "firstSaveDay",
+        "makeTwoDayTimespan",
+        "addThreshold",
+        "compareCurrentDate",
+        "condition",
+        "successJump",
+        "setUnlocked"
+      ],
+      "properties": {
+        "resetCallsCheck": { "const": 3364 },
+        "firstSaveDay": { "const": 3401 },
+        "makeTwoDayTimespan": { "const": 3442 },
+        "addThreshold": { "const": 3495 },
+        "compareCurrentDate": { "const": 3533 },
+        "condition": { "const": 3583 },
+        "successJump": { "const": 3593 },
+        "setUnlocked": { "const": 3352 }
+      }
+    }
+  }
+}
