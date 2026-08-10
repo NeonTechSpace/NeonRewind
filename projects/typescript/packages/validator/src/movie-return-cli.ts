@@ -2,7 +2,12 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import type { MovieReturnMechanics } from "@neonretrorewind/core";
+import {
+  MovieReturnMechanicsSchema,
+  MovieReturnObservationSchema,
+  MovieReturnValidationSchema,
+  type MovieReturnMechanics,
+} from "@neonretrorewind/core";
 
 import { writeImmutableArtifact, type ArtifactWriteStatus } from "./immutable-artifact.ts";
 import {
@@ -18,7 +23,6 @@ import { validateJsonSchema } from "./schema-validation.ts";
 const schemaIds = {
   observation: "urn:neonretrorewind:schema:runtime:movie-return-observation",
   mechanics: "urn:neonretrorewind:schema:domain:movie-return-mechanics",
-  report: "urn:neonretrorewind:schema:validation:movie-return-validation",
 } as const;
 
 export interface MovieReturnValidationOptions {
@@ -26,7 +30,6 @@ export interface MovieReturnValidationOptions {
   readonly observationSchemaPath: string;
   readonly mechanicsPath: string;
   readonly mechanicsSchemaPath: string;
-  readonly reportSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -49,12 +52,6 @@ export async function validateMovieReturnFiles(
     schemaIds.mechanics,
     "Movie-return mechanics schema",
   );
-  const reportSchema = requireSchema(
-    files.reportSchema.value,
-    schemaIds.report,
-    "Movie-return validation schema",
-  );
-
   validateJsonSchema(
     files.observation.value,
     observationSchema,
@@ -62,11 +59,11 @@ export async function validateMovieReturnFiles(
   );
   validateJsonSchema(files.mechanics.value, mechanicsSchema, "Movie-return mechanics");
 
-  const observation = files.observation.value as MovieReturnObservation;
-  const mechanics = files.mechanics.value as MovieReturnMechanics;
+  const observation = MovieReturnObservationSchema.assert(files.observation.value);
+  const mechanics = MovieReturnMechanicsSchema.assert(files.mechanics.value);
   assertLinkedInputs(observation, mechanics, files.mechanics);
 
-  const artifact: MovieReturnValidationArtifact = {
+  const artifact: MovieReturnValidationArtifact = MovieReturnValidationSchema.assert({
     artifactType: "movie-return-runtime-validation",
     build: {
       steamAppId: observation.build.steamAppId,
@@ -87,8 +84,7 @@ export async function validateMovieReturnFiles(
       ),
     },
     validation: validateMovieReturnObservation(observation, mechanics),
-  };
-  validateJsonSchema(artifact, reportSchema, "Movie-return validation report");
+  });
 
   await Promise.all(Object.values(files).map(assertFileUnchanged));
   const content = `${JSON.stringify(artifact, undefined, 2)}\n`;
@@ -97,15 +93,14 @@ export async function validateMovieReturnFiles(
 }
 
 async function readFiles(options: MovieReturnValidationOptions) {
-  const [observation, observationSchema, mechanics, mechanicsSchema, reportSchema] =
+  const [observation, observationSchema, mechanics, mechanicsSchema] =
     await Promise.all([
       readInput(options.observationPath, "Movie-return observation"),
       readInput(options.observationSchemaPath, "Movie-return observation schema"),
       readInput(options.mechanicsPath, "Movie-return mechanics"),
       readInput(options.mechanicsSchemaPath, "Movie-return mechanics schema"),
-      readInput(options.reportSchemaPath, "Movie-return validation schema"),
     ]);
-  return { observation, observationSchema, mechanics, mechanicsSchema, reportSchema };
+  return { observation, observationSchema, mechanics, mechanicsSchema };
 }
 
 async function readInput(path: string, label: string): Promise<InputFile> {
@@ -163,7 +158,7 @@ function createSourceIdentity<
     sizeBytes: file.bytes.length,
     sha256: file.sha256,
     artifactType,
-  };
+  } as ValidationSourceIdentity<ArtifactType>;
 }
 
 async function assertFileUnchanged(file: InputFile): Promise<void> {

@@ -1,4 +1,7 @@
-{
+import type { MembershipFeeMechanicsContract } from "../generated/domain/membership-fee-mechanics.ts";
+import { defineArtifactSchema } from "../define-artifact-schema.ts";
+
+export const MembershipFeeMechanicsJsonSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:neonretrorewind:schema:domain:membership-fee-mechanics",
   "title": "NeonRetroRewind membership fee mechanics",
@@ -341,4 +344,13 @@
       "minLength": 1
     }
   }
-}
+} as const;
+
+export const MembershipFeeMechanicsSchema = defineArtifactSchema<MembershipFeeMechanicsContract>(MembershipFeeMechanicsJsonSchema);
+export type MembershipFeeMechanics = typeof MembershipFeeMechanicsSchema.infer;
+
+export type ClassFieldEvidence = MembershipFeeMechanics["storage"]["evidence"];
+export type StructFieldEvidence =
+  MembershipFeeMechanics["feeRecord"]["late"]["evidence"];
+export type MembershipFeeFieldDefinition =
+  MembershipFeeMechanics["feeRecord"]["late"];

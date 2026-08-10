@@ -1,4 +1,7 @@
-{
+import type { ConsoleReturnMechanicsContract } from "../generated/domain/console-return-mechanics.ts";
+import { defineArtifactSchema } from "../define-artifact-schema.ts";
+
+export const ConsoleReturnMechanicsJsonSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:neonretrorewind:schema:domain:console-return-mechanics",
   "title": "NeonRetroRewind console return mechanics",
@@ -275,4 +278,18 @@
       "minLength": 1
     }
   }
-}
+} as const;
+
+export const ConsoleReturnMechanicsSchema = defineArtifactSchema<ConsoleReturnMechanicsContract>(ConsoleReturnMechanicsJsonSchema);
+export type ConsoleReturnMechanics = typeof ConsoleReturnMechanicsSchema.infer;
+
+type RentalSourceIdentity =
+  ConsoleReturnMechanics["sources"][keyof ConsoleReturnMechanics["sources"]];
+export type RentalArtifactIdentity<
+  ArtifactType extends RentalSourceIdentity["artifactType"] =
+    RentalSourceIdentity["artifactType"],
+> = Extract<RentalSourceIdentity, { artifactType: ArtifactType }>;
+export type DefaultPropertyEvidence =
+  ConsoleReturnMechanics["configuration"]["rentalDurationDays"]["evidence"];
+export type BlueprintFunctionEvidence =
+  ConsoleReturnMechanics["eligibility"]["evidence"];

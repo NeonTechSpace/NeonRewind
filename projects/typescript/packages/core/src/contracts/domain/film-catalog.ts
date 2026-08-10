@@ -1,4 +1,7 @@
-{
+import type { FilmCatalogContract } from "../generated/domain/film-catalog.ts";
+import { defineArtifactSchema } from "../define-artifact-schema.ts";
+
+export const FilmCatalogJsonSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:neonretrorewind:schema:domain:film-catalog",
   "title": "NeonRetroRewind film catalog",
@@ -209,4 +212,13 @@
       }
     }
   }
-}
+} as const;
+
+export const FilmCatalogSchema = defineArtifactSchema<FilmCatalogContract>(FilmCatalogJsonSchema);
+export type FilmCatalog = typeof FilmCatalogSchema.infer;
+
+export const filmGenres = FilmCatalogJsonSchema.$defs.film.properties.genre.enum;
+export type FilmGenre = FilmCatalog["films"][number]["genre"];
+export type AcquisitionArtifactIdentity = FilmCatalog["source"];
+export type FilmRecord = FilmCatalog["films"][number];
+export type FilmEvidence = FilmRecord["evidence"];

@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import type { AcquisitionArtifactIdentity } from "@neonretrorewind/core";
+import {
+  FilmCatalogSchema,
+  type AcquisitionArtifactIdentity,
+} from "@neonretrorewind/core";
 
 import { compileFilmCatalog } from "../src/film-catalog.ts";
-import { validateJsonSchema } from "../src/schema-validation.ts";
 import type {
   StructuredDataTable,
   StructuredValuesArtifact,
@@ -53,12 +54,7 @@ test("compiles stable film records and preserves row evidence", async () => {
   });
   assert.equal("ExampleCatalogField03_test" in (catalog.films[0] ?? {}), false);
 
-  const schemaPath = new URL(
-    "../../core/schemas/film-catalog.schema.json",
-    import.meta.url,
-  );
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
-  validateJsonSchema(catalog, schema, "Film catalog");
+  assert.equal(FilmCatalogSchema.allows(catalog), true);
 });
 
 test("rejects a duplicate catalog SKU", () => {

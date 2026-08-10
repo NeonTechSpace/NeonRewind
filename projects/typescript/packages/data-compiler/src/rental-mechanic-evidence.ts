@@ -12,8 +12,8 @@ export const rentalPackagePath =
 export const rentalClassName = "ExampleQueueSystem_C";
 
 export interface RentalMechanicSources {
-  readonly rentalEvidence: RentalArtifactIdentity;
-  readonly rentalBlueprintBodies: RentalArtifactIdentity;
+  readonly rentalEvidence: RentalArtifactIdentity<"rental-evidence">;
+  readonly rentalBlueprintBodies: RentalArtifactIdentity<"rental-blueprint-bodies">;
 }
 
 export function assertRentalInputIdentity(

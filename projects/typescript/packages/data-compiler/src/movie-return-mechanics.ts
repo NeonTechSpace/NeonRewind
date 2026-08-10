@@ -2,6 +2,7 @@ import type {
   MovieReturnArtifactIdentity,
   MovieReturnMechanics,
 } from "@neonretrorewind/core";
+import { MovieReturnMechanicsSchema } from "@neonretrorewind/core";
 
 import type {
   BlueprintCallerBodiesArtifact,
@@ -76,7 +77,7 @@ export function compileMovieReturnMechanics(
     sources,
   );
 
-  return {
+  return MovieReturnMechanicsSchema.assert({
     artifactType: "movie-return-mechanics",
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
@@ -150,7 +151,7 @@ export function compileMovieReturnMechanics(
         evidence: customerTraceEvidence,
       },
     },
-  };
+  });
 }
 
 function findQueueField(

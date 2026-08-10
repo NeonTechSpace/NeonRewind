@@ -4,6 +4,7 @@ import type {
   FilmGenre,
   FilmRecord,
 } from "@neonretrorewind/core";
+import { FilmCatalogSchema } from "@neonretrorewind/core";
 
 import type {
   StructuredDataTable,
@@ -127,7 +128,7 @@ export function compileFilmCatalog(
   assertUniqueSkus(films);
   films.sort((left, right) => left.sku - right.sku);
 
-  return {
+  return FilmCatalogSchema.assert({
     artifactType: "film-catalog",
     build: {
       steamAppId: input.build.steamAppId,
@@ -142,7 +143,7 @@ export function compileFilmCatalog(
       filmCount: films.length,
     },
     films,
-  };
+  });
 }
 
 function assertInputIdentity(input: StructuredValuesArtifact): void {

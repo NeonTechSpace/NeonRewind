@@ -1,78 +1,32 @@
-import type {
-  RentalBuildReference,
-  RentalMappingIdentity,
-} from "./rental-inputs.ts";
+import type { BlueprintCallerBodies, BlueprintCallSites } from "@neonretrorewind/core";
 
-export interface BlueprintCallSiteInput {
-  readonly packagePath: string;
-  readonly className: string;
-  readonly classPath: string;
-  readonly functionName: string;
-  readonly functionPath: string;
-  readonly callKind: "virtual" | "local-virtual" | "final" | "local-final";
-  readonly statementIndex: number;
-}
-
-export interface BlueprintCallSitesArtifact {
-  readonly artifactType: "blueprint-call-sites";
-  readonly build: RentalBuildReference;
-  readonly staticCensus: {
-    readonly fileName: string;
-    readonly sizeBytes: number;
-    readonly sha256: string;
-  };
-  readonly mappings: RentalMappingIdentity;
-  readonly target: {
-    readonly functionName: string;
-  };
-  readonly candidateRule: "parsed-packages-with-function-exports";
-  readonly coverage: "complete" | "partial";
-  readonly totals: {
-    readonly candidatePackageCount: number;
-    readonly scannedPackageCount: number;
-    readonly failedPackageCount: number;
-    readonly classCount: number;
-    readonly functionCount: number;
-    readonly callSiteCount: number;
-  };
+export type BlueprintCallSiteInput = BlueprintCallSites["callSites"][number];
+type BlueprintCallerFunction = BlueprintCallerBodies["functions"][number];
+type BlueprintCallerFunctionInput = Omit<BlueprintCallerFunction, "calls"> & {
+  readonly calls: readonly BlueprintCallerFunction["calls"][number][];
+};
+export type BlueprintCallSitesArtifact = Pick<
+  BlueprintCallSites,
+  | "artifactType"
+  | "build"
+  | "staticCensus"
+  | "mappings"
+  | "target"
+  | "candidateRule"
+  | "coverage"
+  | "totals"
+> & {
   readonly callSites: readonly BlueprintCallSiteInput[];
-  readonly failures: readonly {
-    readonly packagePath: string;
-    readonly errorType: string;
-  }[];
-}
-
-export interface BlueprintCallerBodiesArtifact {
-  readonly artifactType: "blueprint-caller-bodies";
-  readonly build: RentalBuildReference;
-  readonly callSites: {
-    readonly fileName: string;
-    readonly sizeBytes: number;
-    readonly sha256: string;
-  };
-  readonly mappings: RentalMappingIdentity;
-  readonly target: {
-    readonly functionName: string;
-  };
-  readonly totals: {
-    readonly packageCount: number;
-    readonly classCount: number;
-    readonly functionCount: number;
-    readonly callSiteCount: number;
-    readonly pseudoCodeCharacterCount: number;
-  };
-  readonly functions: readonly {
-    readonly packagePath: string;
-    readonly className: string;
-    readonly classPath: string;
-    readonly functionName: string;
-    readonly functionPath: string;
-    readonly flags: string;
-    readonly bytecodeExpressionCount: number;
-    readonly calls: readonly {
-      readonly callKind: "virtual" | "local-virtual" | "final" | "local-final";
-      readonly statementIndex: number;
-    }[];
-    readonly pseudoCode: string;
-  }[];
-}
+  readonly failures: readonly BlueprintCallSites["failures"][number][];
+};
+export type BlueprintCallerBodiesArtifact = Pick<
+  BlueprintCallerBodies,
+  | "artifactType"
+  | "build"
+  | "callSites"
+  | "mappings"
+  | "target"
+  | "totals"
+> & {
+  readonly functions: readonly BlueprintCallerFunctionInput[];
+};

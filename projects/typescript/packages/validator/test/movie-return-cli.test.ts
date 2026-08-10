@@ -12,9 +12,20 @@ import {
   validateMovieReturnFiles,
   type MovieReturnValidationOptions,
 } from "../src/index.ts";
+import { compileMovieReturnMechanics } from "../../data-compiler/src/movie-return-mechanics.ts";
+import {
+  createCallerBodies,
+  createCallSites,
+  createFunctionTrace,
+  movieReturnSources,
+} from "../../data-compiler/test/movie-return-fixtures.ts";
+import { createRentalFunctionTrace } from "../../data-compiler/test/movie-rental-trace-fixture.ts";
+import {
+  createBlueprintBodies,
+  createRentalEvidence,
+} from "../../data-compiler/test/rental-fixtures.ts";
 import {
   captured,
-  createMechanics,
   createObservation,
   movie,
 } from "./movie-return-fixture.ts";
@@ -23,8 +34,8 @@ const observationSchemaPath = new URL(
   "../../../../game-data-exporter/schemas/runtime/movie-return-observation.schema.json",
   import.meta.url,
 );
-const reportSchemaPath = new URL(
-  "../../../../game-data-exporter/schemas/validation/movie-return-validation.schema.json",
+const mechanicsSchemaSourcePath = new URL(
+  "../../core/schemas/movie-return-mechanics.schema.json",
   import.meta.url,
 );
 const cliPath = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
@@ -189,7 +200,9 @@ test("rejects more than 256 captured movie references", async (context) => {
 
 test("rejects a schema with the wrong identity", async (context) => {
   const fixture = await createFiles(context);
-  const schema = createMechanicsSchema();
+  const schema = JSON.parse(
+    await readFile(fixture.options.mechanicsSchemaPath, "utf8"),
+  );
   schema.$id = "urn:wrong";
   await writeJson(fixture.options.mechanicsSchemaPath, schema);
 
@@ -262,17 +275,27 @@ async function createFiles(
   const mechanicsSchemaPath = join(directory, "movie-return-mechanics.schema.json");
   const observationPath = join(directory, "movie-return-observation.json");
   const outputPath = join(directory, "movie-return-validation.json");
-  const mechanics = {
-    artifactType: "movie-return-mechanics",
-    build: {
-      steamAppId: "3552140",
-      steamBuildId: fixtureOptions.mechanicsBuildId ?? "23896268",
-    },
-    ...createMechanics(),
-  };
+  const compiledMechanics = compileMovieReturnMechanics(
+    createRentalEvidence(),
+    createBlueprintBodies(),
+    createCallSites(),
+    createCallerBodies(),
+    createFunctionTrace(),
+    createRentalFunctionTrace(),
+    movieReturnSources,
+  );
+  const mechanics = fixtureOptions.mechanicsBuildId === undefined
+    ? compiledMechanics
+    : {
+        ...compiledMechanics,
+        build: {
+          ...compiledMechanics.build,
+          steamBuildId: fixtureOptions.mechanicsBuildId,
+        },
+      };
   const mechanicsContent = json(mechanics);
   await writeFile(mechanicsPath, mechanicsContent, "utf8");
-  await writeJson(mechanicsSchemaPath, createMechanicsSchema());
+  await writeFile(mechanicsSchemaPath, await readFile(mechanicsSchemaSourcePath));
 
   const observation = createObservation();
   observation.targetMechanics.sizeBytes = Buffer.byteLength(mechanicsContent);
@@ -286,85 +309,7 @@ async function createFiles(
       observationSchemaPath: fileURLToPath(observationSchemaPath),
       mechanicsPath,
       mechanicsSchemaPath,
-      reportSchemaPath: fileURLToPath(reportSchemaPath),
       outputPath,
-    },
-  };
-}
-
-function createMechanicsSchema() {
-  return {
-    $schema: "https://json-schema.org/draft/2020-12/schema",
-    $id: "urn:neonretrorewind:schema:domain:movie-return-mechanics",
-    type: "object",
-    additionalProperties: false,
-    required: ["artifactType", "build", "readiness", "selection"],
-    properties: {
-      artifactType: { const: "movie-return-mechanics" },
-      build: {
-        type: "object",
-        additionalProperties: false,
-        required: ["steamAppId", "steamBuildId"],
-        properties: {
-          steamAppId: { type: "string", pattern: "^[0-9]+$" },
-          steamBuildId: { type: "string", pattern: "^[0-9]+$" },
-        },
-      },
-      readiness: {
-        type: "object",
-        additionalProperties: false,
-        required: ["transfer", "clearsSource"],
-        properties: {
-          transfer: { const: "append-all" },
-          clearsSource: { const: true },
-        },
-      },
-      selection: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "candidateQueue",
-          "maximumUniqueMovies",
-          "deduplication",
-          "outcomes",
-          "customerFlow",
-        ],
-        properties: {
-          candidateQueue: { const: "ready-to-return" },
-          maximumUniqueMovies: { const: 4 },
-          deduplication: { const: "add-unique" },
-          outcomes: {
-            type: "object",
-            additionalProperties: false,
-            required: [
-              "weightedFailureWithNoSelection",
-              "weightedFailureWithSelection",
-              "missingCandidate",
-            ],
-            properties: {
-              weightedFailureWithNoSelection: { const: "not-found-empty" },
-              weightedFailureWithSelection: { const: "found-selected" },
-              missingCandidate: { const: "not-found-empty" },
-            },
-          },
-          customerFlow: {
-            type: "object",
-            additionalProperties: false,
-            required: ["selectedMovies"],
-            properties: {
-              selectedMovies: {
-                type: "object",
-                additionalProperties: false,
-                required: ["destination", "removesFromCandidateQueue"],
-                properties: {
-                  destination: { const: "customer-inventory" },
-                  removesFromCandidateQueue: { const: true },
-                },
-              },
-            },
-          },
-        },
-      },
     },
   };
 }
@@ -379,8 +324,6 @@ function commandArguments(options: MovieReturnValidationOptions): readonly strin
     options.mechanicsPath,
     "--mechanics-schema",
     options.mechanicsSchemaPath,
-    "--report-schema",
-    options.reportSchemaPath,
     "--output",
     options.outputPath,
   ];

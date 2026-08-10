@@ -237,16 +237,18 @@ export function createBlueprintBodies(): Mutable<RentalBlueprintBodiesArtifact> 
   };
 }
 
-function createIdentity(
+function createIdentity<
+  ArtifactType extends RentalArtifactIdentity["artifactType"],
+>(
   fileName: string,
-  artifactType: RentalArtifactIdentity["artifactType"],
-): RentalArtifactIdentity {
+  artifactType: ArtifactType,
+): RentalArtifactIdentity<ArtifactType> {
   return {
     fileName,
     sha256: artifactType === "rental-evidence" ? "a".repeat(64) : "b".repeat(64),
     sizeBytes: 100,
     artifactType,
-  };
+  } as RentalArtifactIdentity<ArtifactType>;
 }
 
 function createFunction(name: string, bytecodeExpressionCount: number) {

@@ -389,5 +389,5 @@ function createCallerIdentity<
     sha256: hashCharacter.repeat(64),
     sizeBytes,
     artifactType,
-  };
+  } as unknown as MovieReturnArtifactIdentity<ArtifactType>;
 }

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { UnlockableFunctionTraceSchema } from "@neonretrorewind/core";
+
 import { validateJsonSchema } from "../src/schema-validation.ts";
 
 const schemaPath = new URL(
@@ -26,6 +28,7 @@ test("accepts the bounded unlockable function trace contract", async () => {
   assert.doesNotThrow(() =>
     validateJsonSchema(createArtifact(), schema, "Unlockable function trace"),
   );
+  assert.doesNotThrow(() => UnlockableFunctionTraceSchema.assert(createArtifact()));
 });
 
 test("rejects a changed unlockable trace target", async () => {
@@ -37,6 +40,7 @@ test("rejects a changed unlockable trace target", async () => {
     () => validateJsonSchema(artifact, schema, "Unlockable function trace"),
     /does not match its schema/u,
   );
+  assert.throws(() => UnlockableFunctionTraceSchema.assert(artifact));
 });
 
 test("rejects reordered unlockable trace requests", async () => {
@@ -51,6 +55,7 @@ test("rejects reordered unlockable trace requests", async () => {
     () => validateJsonSchema(artifact, schema, "Unlockable function trace"),
     /does not match its schema/u,
   );
+  assert.throws(() => UnlockableFunctionTraceSchema.assert(artifact));
 });
 
 function createArtifact() {

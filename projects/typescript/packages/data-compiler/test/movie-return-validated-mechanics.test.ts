@@ -23,12 +23,6 @@ import { createBlueprintBodies, createRentalEvidence } from "./rental-fixtures.t
 const mechanicsSchemaPath = fileURLToPath(
   new URL("../../core/schemas/movie-return-mechanics.schema.json", import.meta.url),
 );
-const validationSchemaPath = fileURLToPath(
-  new URL(
-    "../../../../game-data-exporter/schemas/validation/movie-return-validation.schema.json",
-    import.meta.url,
-  ),
-);
 
 test("links one clean passing report without changing the base evidence level", async (context) => {
   const fixture = await createFixture(context);
@@ -221,7 +215,6 @@ async function createFixture(
       mechanicsPath,
       mechanicsSchemaPath,
       validationPath,
-      validationSchemaPath,
       outputPath,
     },
   };

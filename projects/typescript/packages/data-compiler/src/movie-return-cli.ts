@@ -2,9 +2,15 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import type {
-  MovieReturnArtifactIdentity,
-  RentalArtifactIdentity,
+import {
+  BlueprintCallerBodiesSchema,
+  BlueprintCallSitesSchema,
+  BlueprintFunctionTraceSchema,
+  RentalBlueprintBodiesSchema,
+  RentalEvidenceSchema,
+  RentalFunctionTraceSchema,
+  type MovieReturnArtifactIdentity,
+  type RentalArtifactIdentity,
 } from "@neonretrorewind/core";
 
 import type {
@@ -62,12 +68,12 @@ export async function runMovieReturnMechanic(
     await validateInputs(inputs, options);
     const sources = createSources(inputs);
     const mechanics = compileMovieReturnMechanics(
-      inputs.rental.value as RentalEvidenceArtifact,
-      inputs.bodies.value as RentalBlueprintBodiesArtifact,
-      inputs.callSites.value as BlueprintCallSitesArtifact,
-      inputs.callerBodies.value as BlueprintCallerBodiesArtifact,
-      inputs.functionTrace.value as BlueprintFunctionTraceArtifact,
-      inputs.rentalFunctionTrace.value as RentalFunctionTraceArtifact,
+      RentalEvidenceSchema.assert(inputs.rental.value),
+      RentalBlueprintBodiesSchema.assert(inputs.bodies.value),
+      BlueprintCallSitesSchema.assert(inputs.callSites.value),
+      BlueprintCallerBodiesSchema.assert(inputs.callerBodies.value),
+      BlueprintFunctionTraceSchema.assert(inputs.functionTrace.value),
+      RentalFunctionTraceSchema.assert(inputs.rentalFunctionTrace.value),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
@@ -160,16 +166,18 @@ function createSources(
   };
 }
 
-function createRentalIdentity(
+function createRentalIdentity<
+  ArtifactType extends RentalArtifactIdentity["artifactType"],
+>(
   input: InputFile,
-  artifactType: RentalArtifactIdentity["artifactType"],
-): RentalArtifactIdentity {
+  artifactType: ArtifactType,
+): RentalArtifactIdentity<ArtifactType> {
   return {
     fileName: basename(input.path),
     sha256: input.sha256,
     sizeBytes: input.bytes.length,
     artifactType,
-  };
+  } as RentalArtifactIdentity<ArtifactType>;
 }
 
 function createMovieIdentity<
@@ -183,7 +191,7 @@ function createMovieIdentity<
     sha256: input.sha256,
     sizeBytes: input.bytes.length,
     artifactType,
-  };
+  } as MovieReturnArtifactIdentity<ArtifactType>;
 }
 
 function parseOptions(arguments_: readonly string[]): MovieReturnOptions | string {

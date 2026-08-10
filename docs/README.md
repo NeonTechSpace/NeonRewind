@@ -879,12 +879,12 @@ Pop-Location
 popd >/dev/null
 ```
 
-The output contract is `projects/typescript/packages/core/schemas/new-release-unlock-mechanics.schema.json`.
+The output contract is the executable `NewReleaseUnlockMechanicsSchema` in `projects/typescript/packages/core/src/contracts/domain/new-release-unlock-mechanics.ts`.
 The generated artifact remains private and is not committed.
 
 ## 21. Compile the normalized film catalog
 
-The TypeScript compiler validates the structured-values artifact against its JSON Schema.
+The TypeScript compiler validates the structured-values artifact with the canonical ArkType contract and independently checks the generated JSON Schema supplied on the command line.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
 The game's numeric SKU is the unique film key, and records are written in ascending SKU order.
 Two auxiliary tables reuse the same Unreal row structure and are explicitly excluded from the film catalog.
@@ -1133,16 +1133,33 @@ The repository cannot repair or convert a mapping from another build.
 
 Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --version` again.
 
+## Artifact contracts
+
+`@neonretrorewind/core` owns one executable ArkType contract for every acquisition, domain, runtime, and validation artifact.
+Public TypeScript types use each contract's `infer` type instead of separate handwritten interfaces.
+The compiler and validator call the ArkType contracts at JSON and output boundaries.
+Acquisition, runtime-host, runtime-observation, and movie-return-mechanics contracts also produce standalone JSON Schema because .NET, C++, or another language-neutral tool consumes those artifacts.
+TypeScript-only domain artifacts and the movie-return validation report do not have standalone schema files.
+The retained JSON Schemas and generated TypeScript contract types must be regenerated after changing a canonical contract.
+
+Run these commands from `projects/typescript`:
+
+```text
+pnpm contracts:generate
+pnpm contracts:check
+```
+
+The workspace `pnpm check` command includes `contracts:check` and fails when generated output is stale.
+
 ## Repository layout
 
 - `projects/game-data-exporter/static-extractor` contains the .NET 10 acquisition commands.
-- `projects/game-data-exporter/schemas/acquisition` contains the acquisition JSON Schemas.
-- `projects/game-data-exporter/schemas/runtime` contains the runtime observation JSON Schemas.
-- `projects/game-data-exporter/schemas/validation` contains the validation-report JSON Schemas.
+- `projects/game-data-exporter/schemas/acquisition` contains generated JSON Schemas for .NET acquisition boundaries.
+- `projects/game-data-exporter/schemas/runtime` contains generated JSON Schemas for runtime-host, collector, and observation boundaries.
 - `projects/game-data-exporter/runtime-exporter` contains the offline probe and collector runtime-host lifecycle commands and the Lua compatibility probe source.
 - `projects/game-data-exporter/runtime-collector` contains the bounded UE4SS C++ collector and its local Windows build entry points.
 - [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the collector's limits.
-- `projects/typescript/packages/core` owns the normalized domain types and schemas.
+- `projects/typescript/packages/core` owns the canonical executable artifact contracts, inferred public types, and generated boundary-schema workflow.
 - `projects/typescript/packages/data-compiler` validates acquisition data and compiles private domain artifacts.
 - `projects/typescript/packages/validator` checks ordered runtime observations against deterministic mechanic relationships.
 

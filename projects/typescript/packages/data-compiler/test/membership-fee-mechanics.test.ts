@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { MembershipFeeMechanicsSchema } from "@neonretrorewind/core";
+
 import { compileMembershipFeeMechanics } from "../src/membership-fee-mechanics.ts";
-import { validateJsonSchema } from "../src/schema-validation.ts";
 import {
   createBlueprintBodies,
   createRentalEvidence,
@@ -37,12 +37,7 @@ test("compiles normalized membership-fee mutations with source locators", async 
     },
   });
 
-  const schemaPath = new URL(
-    "../../core/schemas/membership-fee-mechanics.schema.json",
-    import.meta.url,
-  );
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
-  validateJsonSchema(mechanics, schema, "Membership fee mechanics");
+  assert.equal(MembershipFeeMechanicsSchema.allows(mechanics), true);
 });
 
 test("rejects a changed fee accumulation expression", () => {

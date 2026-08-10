@@ -1,4 +1,7 @@
-{
+import type { MovieReturnValidationContract } from "../generated/validation/movie-return-validation.ts";
+import { defineArtifactSchema } from "../define-artifact-schema.ts";
+
+export const MovieReturnValidationJsonSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:neonretrorewind:schema:validation:movie-return-validation",
   "title": "NeonRetroRewind movie-return runtime validation",
@@ -220,4 +223,17 @@
       "pattern": "^[0-9a-f]{64}$"
     }
   }
-}
+} as const;
+
+export const MovieReturnValidationSchema = defineArtifactSchema<MovieReturnValidationContract>(MovieReturnValidationJsonSchema);
+export type MovieReturnValidation = typeof MovieReturnValidationSchema.infer;
+
+export type MovieReturnValidationArtifact = MovieReturnValidation;
+export type MovieReturnValidationReport = MovieReturnValidation["validation"];
+export type MovieReturnValidationIssue = MovieReturnValidationReport["issues"][number];
+export type MovieReturnValidationIssueCode = MovieReturnValidationIssue["code"];
+type ValidationSource =
+  MovieReturnValidation["sources"][keyof MovieReturnValidation["sources"]];
+export type ValidationSourceIdentity<
+  ArtifactType extends ValidationSource["artifactType"],
+> = Extract<ValidationSource, { artifactType: ArtifactType }>;

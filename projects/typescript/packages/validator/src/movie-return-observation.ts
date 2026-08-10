@@ -1,135 +1,33 @@
-import type { MovieReturnMechanics } from "@neonretrorewind/core";
+import type {
+  CapturedMovieReferences,
+  CustomerReturnObservationEvent,
+  MovieReference,
+  MovieReturnMechanics,
+  MovieReturnObservation,
+  MovieReturnObservationEvent,
+  MovieReturnValidationIssue,
+  MovieReturnValidationIssueCode,
+  MovieReturnValidationReport,
+  ReadinessObservationEvent,
+  SelectionObservationEvent,
+} from "@neonretrorewind/core";
 
-export interface MovieReference {
-  readonly referenceType: "object-path" | "run-local";
-  readonly value: string;
-}
+export type {
+  CapturedMovieReferences,
+  CustomerReturnObservationEvent,
+  MovieReference,
+  MovieReturnObservation,
+  MovieReturnObservationEvent,
+  MovieReturnValidationIssue,
+  MovieReturnValidationIssueCode,
+  MovieReturnValidationReport,
+  ReadinessObservationEvent,
+  SelectionObservationEvent,
+} from "@neonretrorewind/core";
 
-export interface CapturedMovieReferences {
-  readonly totalCount: number;
-  readonly truncated: boolean;
-  readonly movies: readonly MovieReference[];
-}
-
-export interface RentalQueueState {
-  readonly rentedMovies: CapturedMovieReferences;
-  readonly readyMovies: CapturedMovieReferences;
-}
-
-export interface CustomerReturnState {
-  readonly readyMovies: CapturedMovieReferences;
-  readonly customerInventoryMovies: CapturedMovieReferences;
-}
-
-export interface SelectionResult {
-  readonly found: boolean;
-  readonly selectedMovies: CapturedMovieReferences;
-}
-
-interface ObservationEventBase {
-  readonly sequence: number;
-  readonly observedAtUtc: string;
-  readonly classPath: string;
-  readonly objectPath: string;
-  readonly functionPath: string;
-}
-
-export interface ReadinessObservationEvent extends ObservationEventBase {
-  readonly eventType: "readiness-observed";
-  readonly preState: RentalQueueState;
-  readonly postState: RentalQueueState;
-}
-
-export interface SelectionObservationEvent extends ObservationEventBase {
-  readonly eventType: "selection-observed";
-  readonly preState: RentalQueueState;
-  readonly result: SelectionResult;
-}
-
-export interface CustomerReturnObservationEvent extends ObservationEventBase {
-  readonly eventType: "customer-return-observed";
-  readonly preState: CustomerReturnState;
-  readonly result: SelectionResult;
-  readonly postState: CustomerReturnState;
-}
-
-export type MovieReturnObservationEvent =
-  | ReadinessObservationEvent
-  | SelectionObservationEvent
-  | CustomerReturnObservationEvent;
-
-export interface MovieReturnObservation {
-  readonly artifactType: "movie-return-runtime-observation";
-  readonly build: {
-    readonly steamAppId: string;
-    readonly steamBuildId: string;
-  };
-  readonly targetMechanics: {
-    readonly fileName: "movie-return-mechanics.json";
-    readonly sizeBytes: number;
-    readonly sha256: string;
-    readonly artifactType: "movie-return-mechanics";
-  };
-  readonly collector: {
-    readonly name: "NeonRetroRewind.MovieReturnRuntimeCollector";
-    readonly version: string;
-    readonly runtimeHost: {
-      readonly name: string;
-      readonly version: string;
-    };
-  };
-  readonly run: {
-    readonly runId: string;
-    readonly startedAtUtc: string;
-    readonly finishedAtUtc: string | null;
-    readonly status: "complete" | "aborted" | "failed";
-    readonly statusReason:
-      | "user-stopped"
-      | "game-closed"
-      | "object-unavailable"
-      | "hook-failed"
-      | "write-failed"
-      | "validation-failed"
-      | "collector-error"
-      | "unknown"
-      | null;
-  };
-  readonly events: readonly MovieReturnObservationEvent[];
-}
-
-export type MovieReturnValidationIssueCode =
-  | "run-not-complete"
-  | "complete-run-missing-event"
-  | "invalid-run-time-range"
-  | "event-sequence-changed"
-  | "event-time-before-run"
-  | "event-time-after-run"
-  | "event-time-moved-backward"
-  | "capture-truncated"
-  | "capture-count-mismatch"
-  | "readiness-source-empty"
-  | "readiness-source-not-cleared"
-  | "readiness-destination-mismatch"
-  | "selection-result-count-exceeded"
-  | "selection-result-duplicate"
-  | "selection-found-result-mismatch"
-  | "selection-outside-ready-queue"
-  | "customer-selection-outside-ready-queue"
-  | "customer-ready-queue-mismatch"
-  | "customer-inventory-mismatch";
-
-export interface MovieReturnValidationIssue {
-  readonly kind: "incomplete" | "mismatch";
-  readonly code: MovieReturnValidationIssueCode;
-  readonly sequence: number | null;
-  readonly message: string;
-}
-
-export interface MovieReturnValidationReport {
-  readonly outcome: "passed" | "incomplete" | "mismatch";
-  readonly checkedEventCount: number;
-  readonly issues: readonly MovieReturnValidationIssue[];
-}
+export type RentalQueueState = ReadinessObservationEvent["preState"];
+export type CustomerReturnState = CustomerReturnObservationEvent["preState"];
+export type SelectionResult = SelectionObservationEvent["result"];
 
 export interface MovieReturnValidationMechanics {
   readonly readiness: Pick<

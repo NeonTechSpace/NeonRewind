@@ -2,9 +2,12 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import type {
-  MovieReturnArtifactIdentity,
-  MovieReturnMechanics,
+import {
+  MovieReturnMechanicsSchema,
+  MovieReturnValidationSchema,
+  type MovieReturnValidationArtifact,
+  type MovieReturnArtifactIdentity,
+  type MovieReturnMechanics,
 } from "@neonretrorewind/core";
 
 import {
@@ -14,28 +17,12 @@ import {
 import { validateJsonSchema } from "./schema-validation.ts";
 
 const mechanicsSchemaId = "urn:neonretrorewind:schema:domain:movie-return-mechanics";
-const validationSchemaId = "urn:neonretrorewind:schema:validation:movie-return-validation";
 
 export interface MovieReturnValidatedMechanicsOptions {
   readonly mechanicsPath: string;
   readonly mechanicsSchemaPath: string;
   readonly validationPath: string;
-  readonly validationSchemaPath: string;
   readonly outputPath: string;
-}
-
-interface ValidationArtifact {
-  readonly artifactType: "movie-return-runtime-validation";
-  readonly build: MovieReturnMechanics["build"];
-  readonly sources: {
-    readonly observation: MovieReturnArtifactIdentity<"movie-return-runtime-observation">;
-    readonly mechanics: MovieReturnArtifactIdentity<"movie-return-mechanics">;
-  };
-  readonly validation: {
-    readonly outcome: "passed" | "incomplete" | "mismatch";
-    readonly checkedEventCount: number;
-    readonly issues: readonly unknown[];
-  };
 }
 
 interface InputFile {
@@ -55,29 +42,25 @@ export async function linkMovieReturnValidatedMechanics(
   );
   assertFileName(options.outputPath, "movie-return-mechanics.json", "Output");
 
-  const [mechanicsFile, mechanicsSchemaFile, validationFile, validationSchemaFile] =
+  const [mechanicsFile, mechanicsSchemaFile, validationFile] =
     await Promise.all([
       readInput(options.mechanicsPath),
       readInput(options.mechanicsSchemaPath),
       readInput(options.validationPath),
-      readInput(options.validationSchemaPath),
     ]);
 
   const mechanics = parseObject(mechanicsFile.bytes, "Mechanics input");
   const mechanicsSchema = parseObject(mechanicsSchemaFile.bytes, "Mechanics schema");
   const validation = parseObject(validationFile.bytes, "Validation report");
-  const validationSchema = parseObject(validationSchemaFile.bytes, "Validation schema");
 
   assertSchemaId(mechanicsSchema, mechanicsSchemaId, "Mechanics schema");
-  assertSchemaId(validationSchema, validationSchemaId, "Validation schema");
   validateJsonSchema(mechanics, mechanicsSchema, "Mechanics input");
-  validateJsonSchema(validation, validationSchema, "Validation report");
 
-  const baseMechanics = mechanics as unknown as MovieReturnMechanics;
-  const report = validation as unknown as ValidationArtifact;
+  const baseMechanics = MovieReturnMechanicsSchema.assert(mechanics);
+  const report = MovieReturnValidationSchema.assert(validation);
   assertPassingReport(baseMechanics, report, mechanicsFile);
 
-  const linkedMechanics: MovieReturnMechanics = {
+  const linkedMechanics: MovieReturnMechanics = MovieReturnMechanicsSchema.assert({
     ...baseMechanics,
     runtimeValidation: {
       outcome: "passed",
@@ -94,7 +77,7 @@ export async function linkMovieReturnValidatedMechanics(
         ),
       },
     },
-  };
+  });
   validateJsonSchema(linkedMechanics, mechanicsSchema, "Linked mechanics output");
   const output = `${JSON.stringify(linkedMechanics, undefined, 2)}\n`;
 
@@ -102,7 +85,6 @@ export async function linkMovieReturnValidatedMechanics(
     assertInputUnchanged(mechanicsFile),
     assertInputUnchanged(mechanicsSchemaFile),
     assertInputUnchanged(validationFile),
-    assertInputUnchanged(validationSchemaFile),
   ]);
 
   return writeImmutableArtifact(options.outputPath, output);
@@ -110,7 +92,7 @@ export async function linkMovieReturnValidatedMechanics(
 
 function assertPassingReport(
   mechanics: MovieReturnMechanics,
-  report: ValidationArtifact,
+  report: MovieReturnValidationArtifact,
   mechanicsFile: InputFile,
 ): void {
   if (mechanics.runtimeValidation !== "not-run") {
@@ -149,7 +131,7 @@ function createIdentity<
     sizeBytes: file.bytes.length,
     sha256: file.sha256,
     artifactType,
-  };
+  } as MovieReturnArtifactIdentity<ArtifactType>;
 }
 
 function identitiesEqual(

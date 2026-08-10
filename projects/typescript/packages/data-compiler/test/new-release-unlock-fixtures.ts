@@ -227,5 +227,10 @@ function identity<ArtifactType extends NewReleaseUnlockArtifactIdentity["artifac
   artifactType: ArtifactType,
   hashCharacter: string,
 ): NewReleaseUnlockArtifactIdentity<ArtifactType> {
-  return { fileName, artifactType, sizeBytes: 100, sha256: hashCharacter.repeat(64) };
+  return {
+    fileName,
+    artifactType,
+    sizeBytes: 100,
+    sha256: hashCharacter.repeat(64),
+  } as NewReleaseUnlockArtifactIdentity<ArtifactType>;
 }

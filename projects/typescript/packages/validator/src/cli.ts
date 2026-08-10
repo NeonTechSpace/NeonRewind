@@ -63,7 +63,6 @@ function parseOptions(arguments_: readonly string[]): MovieReturnValidationOptio
     "--observation-schema",
     "--mechanics",
     "--mechanics-schema",
-    "--report-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -92,13 +91,12 @@ function parseOptions(arguments_: readonly string[]): MovieReturnValidationOptio
     observationSchemaPath: values.get("--observation-schema")!,
     mechanicsPath: values.get("--mechanics")!,
     mechanicsSchemaPath: values.get("--mechanics-schema")!,
-    reportSchemaPath: values.get("--report-schema")!,
     outputPath: values.get("--output")!,
   };
 }
 
 function writeUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-validator movie-return --observation <path> --observation-schema <schema> --mechanics <path> --mechanics-schema <schema> --report-schema <schema> --output <path>\n",
+    "  neonretrorewind-validator movie-return --observation <path> --observation-schema <schema> --mechanics <path> --mechanics-schema <schema> --output <path>\n",
   );
 }

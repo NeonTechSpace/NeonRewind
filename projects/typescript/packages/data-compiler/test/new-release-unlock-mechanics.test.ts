@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { NewReleaseUnlockMechanicsSchema } from "@neonretrorewind/core";
+
 import { compileNewReleaseUnlockMechanics } from "../src/new-release-unlock-mechanics.ts";
-import { validateJsonSchema } from "../src/schema-validation.ts";
 import {
   createManagerTrace,
   createWrapperTrace,
@@ -49,12 +49,7 @@ test("compiles the confirmed two-day new-release unlock transition", async () =>
     },
   });
 
-  const schemaPath = new URL(
-    "../../core/schemas/new-release-unlock-mechanics.schema.json",
-    import.meta.url,
-  );
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
-  validateJsonSchema(mechanics, schema, "New-release unlock mechanics");
+  assert.equal(NewReleaseUnlockMechanicsSchema.allows(mechanics), true);
 });
 
 test("rejects a changed reset wrapper entrypoint", () => {

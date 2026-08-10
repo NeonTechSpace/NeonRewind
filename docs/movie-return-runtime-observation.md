@@ -131,7 +131,6 @@ pnpm movie-return-validation `
   --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.schema.json" `
   --mechanics $mechanics `
   --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" `
-  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" `
   --output $report
 ```
 
@@ -148,11 +147,11 @@ pnpm movie-return-validation \
   --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.schema.json" \
   --mechanics "$mechanics" \
   --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" \
-  --report-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" \
   --output "$report"
 ```
 
-The command validates both private inputs, verifies the mechanics filename, byte length, SHA-256 hash, artifact type, and game build recorded by the observation, then rechecks every input before writing.
+The command validates both private inputs with their canonical ArkType contracts and independently checks their generated JSON Schemas, verifies the mechanics filename, byte length, SHA-256 hash, artifact type, and game build recorded by the observation, then rechecks every input before writing.
+The TypeScript-only validation report is checked with its canonical ArkType contract and has no standalone JSON Schema.
 The report is deterministic and is created only when the output path is absent or already contains identical bytes.
 An `incomplete` or `mismatch` report is written and returns exit code `8` so automated checks do not treat it as passed.
 Different existing output is retained and returns exit code `7`.
@@ -170,7 +169,6 @@ pnpm movie-return-validated-mechanics `
   --mechanics $mechanics `
   --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" `
   --validation $report `
-  --validation-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" `
   --output $validatedMechanics
 ```
 
@@ -182,11 +180,10 @@ pnpm movie-return-validated-mechanics \
   --mechanics "$mechanics" \
   --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" \
   --validation "$report" \
-  --validation-schema "../game-data-exporter/schemas/validation/movie-return-validation.schema.json" \
   --output "$validatedMechanics"
 ```
 
-The linker validates both artifacts and schemas, requires matching builds and the exact mechanics identity recorded by the report, and rechecks all four inputs before writing.
+The linker validates both artifacts with their canonical ArkType contracts, independently checks the generated mechanics JSON Schema, requires matching builds and the exact mechanics identity recorded by the report, and rechecks all three inputs before writing.
 The output records the base mechanics, observation, and report identities under `runtimeValidation` while retaining `evidenceLevel: "decompiled-blueprint"`.
 The original mechanics remain the source of truth for static rules and the collector target; the linked artifact is derived evidence for downstream use.
 An incomplete or mismatched report cannot produce a linked artifact.

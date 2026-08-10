@@ -2,9 +2,12 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import type {
-  AcquisitionArtifactIdentity,
-  RentalArtifactIdentity,
+import {
+  RentalBlueprintBodiesSchema,
+  RentalEvidenceSchema,
+  StructuredValuesSchema,
+  type AcquisitionArtifactIdentity,
+  type RentalArtifactIdentity,
 } from "@neonretrorewind/core";
 
 import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
@@ -128,7 +131,8 @@ async function main(arguments_: readonly string[]): Promise<void> {
     assertObject(inputSchema, "Structured-values schema");
     validateJsonSchema(input, inputSchema, "Structured-values input");
 
-    const structuredValues = input as StructuredValuesArtifact;
+    const structuredValues: StructuredValuesArtifact =
+      StructuredValuesSchema.assert(input);
     const source: AcquisitionArtifactIdentity = {
       fileName: basename(options.inputPath),
       sha256: inputHash,
@@ -190,6 +194,9 @@ async function runRentalMechanic(
     assertObject(bodySchema, "Rental Blueprint-body schema");
     validateJsonSchema(rentalInput, rentalSchema, "Rental-evidence input");
     validateJsonSchema(bodyInput, bodySchema, "Rental Blueprint-body input");
+    const rentalArtifact: RentalEvidenceArtifact = RentalEvidenceSchema.assert(rentalInput);
+    const bodyArtifact: RentalBlueprintBodiesArtifact =
+      RentalBlueprintBodiesSchema.assert(bodyInput);
 
     const sources = {
       rentalEvidence: createRentalIdentity(
@@ -206,8 +213,8 @@ async function runRentalMechanic(
       ),
     } as const;
     const mechanics = command.compile(
-      rentalInput as RentalEvidenceArtifact,
-      bodyInput as RentalBlueprintBodiesArtifact,
+      rentalArtifact,
+      bodyArtifact,
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
@@ -316,18 +323,20 @@ function parseRentalMechanicOptions(
   return rentalOptions;
 }
 
-function createRentalIdentity(
+function createRentalIdentity<
+  ArtifactType extends RentalArtifactIdentity["artifactType"],
+>(
   path: string,
   bytes: Uint8Array,
   hash: string,
-  artifactType: RentalArtifactIdentity["artifactType"],
-): RentalArtifactIdentity {
+  artifactType: ArtifactType,
+): RentalArtifactIdentity<ArtifactType> {
   return {
     fileName: basename(path),
     sha256: hash,
     sizeBytes: bytes.length,
     artifactType,
-  };
+  } as RentalArtifactIdentity<ArtifactType>;
 }
 
 async function assertFileUnchanged(

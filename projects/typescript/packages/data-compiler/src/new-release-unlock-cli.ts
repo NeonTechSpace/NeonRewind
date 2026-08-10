@@ -2,7 +2,11 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
-import type { NewReleaseUnlockArtifactIdentity } from "@neonretrorewind/core";
+import {
+  BlueprintFunctionTraceSchema,
+  UnlockableManagerTraceSchema,
+  type NewReleaseUnlockArtifactIdentity,
+} from "@neonretrorewind/core";
 
 import type {
   BlueprintFunctionTraceArtifact,
@@ -53,8 +57,8 @@ export async function runNewReleaseUnlockMechanics(
       wrapperTrace: createIdentity(wrapper, "blueprint-function-trace"),
     };
     const mechanics = compileNewReleaseUnlockMechanics(
-      manager.value as UnlockableManagerTraceArtifact,
-      wrapper.value as BlueprintFunctionTraceArtifact,
+      UnlockableManagerTraceSchema.assert(manager.value),
+      BlueprintFunctionTraceSchema.assert(wrapper.value),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
@@ -107,7 +111,7 @@ function createIdentity<
     sha256: input.sha256,
     sizeBytes: input.bytes.length,
     artifactType,
-  };
+  } as NewReleaseUnlockArtifactIdentity<ArtifactType>;
 }
 
 function parseOptions(arguments_: readonly string[]): Options | string {

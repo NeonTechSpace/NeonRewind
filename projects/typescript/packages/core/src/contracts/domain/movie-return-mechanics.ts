@@ -1,0 +1,982 @@
+import type { MovieReturnMechanicsContract } from "../generated/domain/movie-return-mechanics.ts";
+import { defineArtifactSchema } from "../define-artifact-schema.ts";
+
+export const MovieReturnMechanicsJsonSchema = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neonretrorewind:schema:domain:movie-return-mechanics",
+  "title": "NeonRetroRewind movie return mechanics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "artifactType",
+    "build",
+    "sources",
+    "scope",
+    "evidenceLevel",
+    "runtimeValidation",
+    "readiness",
+    "selection"
+  ],
+  "properties": {
+    "artifactType": {
+      "const": "movie-return-mechanics"
+    },
+    "build": {
+      "$ref": "#/$defs/build"
+    },
+    "sources": {
+      "$ref": "#/$defs/sources"
+    },
+    "scope": {
+      "const": "movie-return-readiness-and-selection"
+    },
+    "evidenceLevel": {
+      "const": "decompiled-blueprint"
+    },
+    "runtimeValidation": {
+      "oneOf": [
+        {
+          "const": "not-run"
+        },
+        {
+          "$ref": "#/$defs/passedRuntimeValidation"
+        }
+      ]
+    },
+    "readiness": {
+      "$ref": "#/$defs/readiness"
+    },
+    "selection": {
+      "$ref": "#/$defs/selection"
+    }
+  },
+  "$defs": {
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "steamAppId",
+        "steamBuildId"
+      ],
+      "properties": {
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rentalEvidence",
+        "rentalBlueprintBodies",
+        "blueprintCallSites",
+        "blueprintCallerBodies",
+        "blueprintFunctionTrace",
+        "rentalFunctionTrace"
+      ],
+      "properties": {
+        "rentalEvidence": {
+          "$ref": "#/$defs/rentalEvidenceSource"
+        },
+        "rentalBlueprintBodies": {
+          "$ref": "#/$defs/rentalBlueprintBodiesSource"
+        },
+        "blueprintCallSites": {
+          "$ref": "#/$defs/blueprintCallSitesSource"
+        },
+        "blueprintCallerBodies": {
+          "$ref": "#/$defs/blueprintCallerBodiesSource"
+        },
+        "blueprintFunctionTrace": {
+          "$ref": "#/$defs/blueprintFunctionTraceSource"
+        },
+        "rentalFunctionTrace": {
+          "$ref": "#/$defs/rentalFunctionTraceSource"
+        }
+      }
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fileName",
+        "sha256",
+        "sizeBytes",
+        "artifactType"
+      ],
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/\\\\]+\\.json$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactType": {
+          "enum": [
+            "rental-evidence",
+            "rental-blueprint-bodies",
+            "blueprint-call-sites",
+            "blueprint-caller-bodies",
+            "blueprint-function-trace",
+            "rental-function-trace"
+          ]
+        }
+      }
+    },
+    "passedRuntimeValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "checkedEventCount",
+        "sources"
+      ],
+      "properties": {
+        "outcome": {
+          "const": "passed"
+        },
+        "checkedEventCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "sources": {
+          "$ref": "#/$defs/runtimeValidationSources"
+        }
+      }
+    },
+    "runtimeValidationSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "baseMechanics",
+        "observation",
+        "report"
+      ],
+      "properties": {
+        "baseMechanics": {
+          "$ref": "#/$defs/baseMechanicsSource"
+        },
+        "observation": {
+          "$ref": "#/$defs/runtimeObservationSource"
+        },
+        "report": {
+          "$ref": "#/$defs/runtimeValidationReportSource"
+        }
+      }
+    },
+    "runtimeSourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fileName",
+        "sha256",
+        "sizeBytes",
+        "artifactType"
+      ],
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^/\\\\]+\\.json$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactType": {
+          "enum": [
+            "movie-return-mechanics",
+            "movie-return-runtime-observation",
+            "movie-return-runtime-validation"
+          ]
+        }
+      }
+    },
+    "baseMechanicsSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/runtimeSourceIdentity"
+        },
+        {
+          "properties": {
+            "fileName": {
+              "const": "movie-return-mechanics.json"
+            },
+            "artifactType": {
+              "const": "movie-return-mechanics"
+            }
+          }
+        }
+      ]
+    },
+    "runtimeObservationSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/runtimeSourceIdentity"
+        },
+        {
+          "properties": {
+            "fileName": {
+              "const": "movie-return-observation.json"
+            },
+            "artifactType": {
+              "const": "movie-return-runtime-observation"
+            }
+          }
+        }
+      ]
+    },
+    "runtimeValidationReportSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/runtimeSourceIdentity"
+        },
+        {
+          "properties": {
+            "fileName": {
+              "const": "movie-return-validation.json"
+            },
+            "artifactType": {
+              "const": "movie-return-runtime-validation"
+            }
+          }
+        }
+      ]
+    },
+    "rentalEvidenceSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "rental-evidence"
+            }
+          }
+        }
+      ]
+    },
+    "rentalBlueprintBodiesSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "rental-blueprint-bodies"
+            }
+          }
+        }
+      ]
+    },
+    "blueprintCallSitesSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "blueprint-call-sites"
+            }
+          }
+        }
+      ]
+    },
+    "blueprintCallerBodiesSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "blueprint-caller-bodies"
+            }
+          }
+        }
+      ]
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trigger",
+        "source",
+        "destination",
+        "transfer",
+        "clearsSource",
+        "evidence"
+      ],
+      "properties": {
+        "trigger": {
+          "const": "new-day-event"
+        },
+        "source": {
+          "$ref": "#/$defs/rentedQueue"
+        },
+        "destination": {
+          "$ref": "#/$defs/readyQueue"
+        },
+        "transfer": {
+          "const": "append-all"
+        },
+        "clearsSource": {
+          "const": true
+        },
+        "evidence": {
+          "$ref": "#/$defs/rentalReadinessTraceEvidence"
+        }
+      }
+    },
+    "rentedQueue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "queue",
+        "evidence"
+      ],
+      "properties": {
+        "queue": {
+          "const": "rented"
+        },
+        "evidence": {
+          "$ref": "#/$defs/classFieldEvidence"
+        }
+      }
+    },
+    "readyQueue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "queue",
+        "evidence"
+      ],
+      "properties": {
+        "queue": {
+          "const": "ready-to-return"
+        },
+        "evidence": {
+          "$ref": "#/$defs/classFieldEvidence"
+        }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "callerSearch",
+        "candidateQueue",
+        "maximumUniqueMovies",
+        "firstAttempt",
+        "additionalAttemptProbability",
+        "randomDecision",
+        "candidateChoice",
+        "deduplication",
+        "outcomes",
+        "evidence",
+        "customerFlow"
+      ],
+      "properties": {
+        "callerSearch": {
+          "$ref": "#/$defs/callerSearch"
+        },
+        "candidateQueue": {
+          "const": "ready-to-return"
+        },
+        "maximumUniqueMovies": {
+          "const": 4
+        },
+        "firstAttempt": {
+          "$ref": "#/$defs/firstAttempt"
+        },
+        "additionalAttemptProbability": {
+          "$ref": "#/$defs/probabilityWithEvidence"
+        },
+        "randomDecision": {
+          "const": "weighted-boolean-per-attempt"
+        },
+        "candidateChoice": {
+          "const": "uniform-random"
+        },
+        "deduplication": {
+          "const": "add-unique"
+        },
+        "outcomes": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "weightedFailureWithNoSelection",
+            "weightedFailureWithSelection",
+            "missingCandidate"
+          ],
+          "properties": {
+            "weightedFailureWithNoSelection": {
+              "const": "not-found-empty"
+            },
+            "weightedFailureWithSelection": {
+              "const": "found-selected"
+            },
+            "missingCandidate": {
+              "const": "not-found-empty"
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/rentalSelectionTraceEvidence"
+        },
+        "customerFlow": {
+          "$ref": "#/$defs/customerFlow"
+        }
+      }
+    },
+    "callerSearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage",
+        "candidatePackageCount",
+        "scannedPackageCount",
+        "failedPackageCount",
+        "callerFound",
+        "callSiteCount"
+      ],
+      "properties": {
+        "coverage": {
+          "const": "all-parsed-blueprint-function-packages"
+        },
+        "candidatePackageCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "scannedPackageCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failedPackageCount": {
+          "const": 0
+        },
+        "callerFound": {
+          "const": true
+        },
+        "callSiteCount": {
+          "const": 2
+        }
+      }
+    },
+    "customerFlow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "callerClass",
+        "callerFunction",
+        "productPriority",
+        "movieSelectionWhen",
+        "selectorCallCount",
+        "selectorNotFound",
+        "selectedMovies",
+        "evidence"
+      ],
+      "properties": {
+        "callerClass": {
+          "const": "ExampleActor_C"
+        },
+        "callerFunction": {
+          "const": "Initialize Example Return"
+        },
+        "productPriority": {
+          "const": "ready-console-before-movies"
+        },
+        "movieSelectionWhen": {
+          "const": "no-ready-console-found"
+        },
+        "selectorCallCount": {
+          "const": 2
+        },
+        "selectorNotFound": {
+          "const": "return-without-product"
+        },
+        "selectedMovies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "iteration",
+            "destination",
+            "removesFromCandidateQueue"
+          ],
+          "properties": {
+            "iteration": {
+              "const": "all-returned-movies"
+            },
+            "destination": {
+              "const": "customer-inventory"
+            },
+            "removesFromCandidateQueue": {
+              "const": true
+            }
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/traceEvidence"
+        }
+      }
+    },
+    "firstAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "defaultProbability",
+        "override"
+      ],
+      "properties": {
+        "defaultProbability": {
+          "$ref": "#/$defs/probabilityWithEvidence"
+        },
+        "override": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "whenQueue",
+            "minimumLength",
+            "probability"
+          ],
+          "properties": {
+            "whenQueue": {
+              "const": "rented"
+            },
+            "minimumLength": {
+              "const": 3
+            },
+            "probability": {
+              "const": 0.95
+            }
+          }
+        }
+      }
+    },
+    "probabilityWithEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "evidence"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "$ref": "#/$defs/defaultEvidence"
+        }
+      }
+    },
+    "classFieldEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "fieldName"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "rental-evidence"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "fieldName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "defaultEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "propertyName"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "rental-evidence"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "propertyName": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "blueprintFunctionTraceSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "blueprint-function-trace"
+            }
+          }
+        }
+      ]
+    },
+    "rentalFunctionTraceSource": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/sourceIdentity"
+        },
+        {
+          "properties": {
+            "artifactType": {
+              "const": "rental-function-trace"
+            }
+          }
+        }
+      ]
+    },
+    "rentalReadinessTraceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "newDayFunction",
+        "readinessFunction",
+        "eventGraphFunction",
+        "statementIndexes"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "rental-function-trace"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "newDayFunction": {
+          "const": "Example Period Event"
+        },
+        "readinessFunction": {
+          "const": "Prepare Example Items"
+        },
+        "eventGraphFunction": {
+          "const": "ExecuteExampleGraph_ExampleQueueSystem"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/rentalReadinessStatementIndexes"
+        }
+      }
+    },
+    "rentalReadinessStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "newDayCall",
+        "newDayEntry",
+        "movieReadinessCall",
+        "consoleReadinessCall",
+        "readinessCall",
+        "readinessEntry",
+        "transfer",
+        "clearSource"
+      ],
+      "properties": {
+        "newDayCall": {
+          "const": 18
+        },
+        "newDayEntry": {
+          "const": 1792
+        },
+        "movieReadinessCall": {
+          "const": 1803
+        },
+        "consoleReadinessCall": {
+          "const": 1817
+        },
+        "readinessCall": {
+          "const": 0
+        },
+        "readinessEntry": {
+          "const": 2592
+        },
+        "transfer": {
+          "const": 1854
+        },
+        "clearSource": {
+          "const": 1904
+        }
+      }
+    },
+    "rentalSelectionTraceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "functionName",
+        "statementIndexes"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "rental-function-trace"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "functionName": {
+          "const": "Select Example Items"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/rentalSelectionStatementIndexes"
+        }
+      }
+    },
+    "rentalSelectionStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "limitLength",
+        "limitComparison",
+        "limitBranch",
+        "rentedLength",
+        "rentedMinimum",
+        "firstProbability",
+        "selectedLength",
+        "firstAttemptCondition",
+        "additionalProbability",
+        "weightedDecision",
+        "weightedFailure",
+        "candidateChoice",
+        "candidateValidity",
+        "missingCandidate",
+        "selectedChoice",
+        "addUnique",
+        "retry",
+        "resultLength",
+        "resultCondition",
+        "emptyResult"
+      ],
+      "properties": {
+        "limitLength": {
+          "const": 40
+        },
+        "limitComparison": {
+          "const": 69
+        },
+        "limitBranch": {
+          "const": 93
+        },
+        "rentedLength": {
+          "const": 190
+        },
+        "rentedMinimum": {
+          "const": 219
+        },
+        "firstProbability": {
+          "const": 290
+        },
+        "selectedLength": {
+          "const": 367
+        },
+        "firstAttemptCondition": {
+          "const": 396
+        },
+        "additionalProbability": {
+          "const": 467
+        },
+        "weightedDecision": {
+          "const": 543
+        },
+        "weightedFailure": {
+          "const": 562
+        },
+        "candidateChoice": {
+          "const": 598
+        },
+        "candidateValidity": {
+          "const": 645
+        },
+        "missingCandidate": {
+          "const": 669
+        },
+        "selectedChoice": {
+          "const": 705
+        },
+        "addUnique": {
+          "const": 782
+        },
+        "retry": {
+          "const": 810
+        },
+        "resultLength": {
+          "const": 855
+        },
+        "resultCondition": {
+          "const": 884
+        },
+        "emptyResult": {
+          "const": 908
+        }
+      }
+    },
+    "traceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactType",
+        "classPath",
+        "entryFunction",
+        "entryPoint",
+        "eventGraphFunction",
+        "customerFunction",
+        "statementIndexes"
+      ],
+      "properties": {
+        "artifactType": {
+          "const": "blueprint-function-trace"
+        },
+        "classPath": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "entryFunction": {
+          "const": "ReceiveBeginPlay"
+        },
+        "entryPoint": {
+          "const": 68
+        },
+        "eventGraphFunction": {
+          "const": "ExecuteExampleGraph_ExampleActor"
+        },
+        "customerFunction": {
+          "const": "Initialize Example Return"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/traceStatementIndexes"
+        }
+      }
+    },
+    "traceStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventGraphEntry",
+        "customerCall",
+        "consoleSelectionCall",
+        "consoleFailureBranch",
+        "consoleFailureTarget",
+        "selectorCalls",
+        "selectorFailureBranch",
+        "loopHeader",
+        "loopCondition",
+        "inventoryAdd",
+        "readyQueueRemoval",
+        "loopExit",
+        "loopBack"
+      ],
+      "properties": {
+        "eventGraphEntry": {
+          "const": 68
+        },
+        "customerCall": {
+          "const": 49
+        },
+        "consoleSelectionCall": {
+          "const": 230
+        },
+        "consoleFailureBranch": {
+          "const": 262
+        },
+        "consoleFailureTarget": {
+          "const": 399
+        },
+        "selectorCalls": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            {
+              "const": 465
+            },
+            {
+              "const": 519
+            }
+          ],
+          "items": false
+        },
+        "selectorFailureBranch": {
+          "const": 551
+        },
+        "loopHeader": {
+          "const": 607
+        },
+        "loopCondition": {
+          "const": 704
+        },
+        "inventoryAdd": {
+          "const": 941
+        },
+        "readyQueueRemoval": {
+          "const": 987
+        },
+        "loopExit": {
+          "const": 1456
+        },
+        "loopBack": {
+          "const": 1541
+        }
+      }
+    }
+  }
+} as const;
+
+export const MovieReturnMechanicsSchema = defineArtifactSchema<MovieReturnMechanicsContract>(MovieReturnMechanicsJsonSchema);
+export type MovieReturnMechanics = typeof MovieReturnMechanicsSchema.infer;
+
+export type PassedMovieReturnRuntimeValidation = Exclude<
+  MovieReturnMechanics["runtimeValidation"],
+  "not-run"
+>;
+type MovieReturnSourceIdentity =
+  | MovieReturnMechanics["sources"][keyof MovieReturnMechanics["sources"]]
+  | PassedMovieReturnRuntimeValidation["sources"][keyof PassedMovieReturnRuntimeValidation["sources"]];
+export type MovieReturnArtifactIdentity<
+  ArtifactType extends MovieReturnSourceIdentity["artifactType"] =
+    MovieReturnSourceIdentity["artifactType"],
+> = Extract<MovieReturnSourceIdentity, { artifactType: ArtifactType }>;
+export type BlueprintTraceEvidence =
+  MovieReturnMechanics["selection"]["customerFlow"]["evidence"];
+export type RentalReadinessTraceEvidence =
+  MovieReturnMechanics["readiness"]["evidence"];
+export type RentalSelectionTraceEvidence =
+  MovieReturnMechanics["selection"]["evidence"];

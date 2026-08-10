@@ -1,21 +1,10 @@
-export interface StructuredValuesArtifact {
-  readonly artifactType: "structured-values";
-  readonly build: {
-    readonly steamAppId: string;
-    readonly steamBuildId: string;
-  };
-  readonly dataTables: readonly StructuredDataTable[];
-}
+import type { StructuredValues } from "@neonretrorewind/core";
 
-export interface StructuredDataTable {
-  readonly path: string;
-  readonly name: string;
-  readonly type: string;
-  readonly rowStruct: string;
-  readonly rows: readonly StructuredDataTableRow[];
-}
-
-export interface StructuredDataTableRow {
-  readonly key: string;
-  readonly values: Readonly<Record<string, unknown>>;
-}
+export type StructuredValuesArtifact = Pick<
+  StructuredValues,
+  "artifactType" | "dataTables"
+> & {
+  readonly build: Pick<StructuredValues["build"], "steamAppId" | "steamBuildId">;
+};
+export type StructuredDataTable = StructuredValues["dataTables"][number];
+export type StructuredDataTableRow = StructuredDataTable["rows"][number];

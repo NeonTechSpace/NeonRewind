@@ -2,6 +2,7 @@ import type {
   NewReleaseUnlockArtifactIdentity,
   NewReleaseUnlockMechanics,
 } from "@neonretrorewind/core";
+import { NewReleaseUnlockMechanicsSchema } from "@neonretrorewind/core";
 
 import {
   assertTraceCall,
@@ -119,7 +120,7 @@ export function compileNewReleaseUnlockMechanics(
   assertTraceSymbolChild(assignment, eventGraph, "Variable", "ExampleReleaseKind");
   assertTraceLiteralChild(assignment, eventGraph, "Assignment", "boolean", "true");
 
-  return {
+  return NewReleaseUnlockMechanicsSchema.assert({
     artifactType: "new-release-unlock-mechanics",
     build: {
       steamAppId: managerTrace.build.steamAppId,
@@ -164,7 +165,7 @@ export function compileNewReleaseUnlockMechanics(
         },
       },
     },
-  };
+  });
 }
 
 function assertInputContracts(

@@ -2,6 +2,7 @@ import type {
   MembershipFeeFieldDefinition,
   MembershipFeeMechanics,
 } from "@neonretrorewind/core";
+import { MembershipFeeMechanicsSchema } from "@neonretrorewind/core";
 
 import type {
   RentalBlueprintBodiesArtifact,
@@ -89,7 +90,7 @@ export function compileMembershipFeeMechanics(
     "ExampleFeeMap.Remove(ExampleMemberKey)",
   ]);
 
-  return {
+  return MembershipFeeMechanicsSchema.assert({
     artifactType: "membership-fee-mechanics",
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
@@ -135,7 +136,7 @@ export function compileMembershipFeeMechanics(
         functionName: removeFunction,
       },
     },
-  };
+  });
 }
 
 function findFeeStruct(input: RentalEvidenceArtifact): RentalStructEvidence {

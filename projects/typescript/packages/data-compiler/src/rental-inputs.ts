@@ -1,72 +1,47 @@
-export interface RentalBuildReference {
-  readonly manifestSha256: string;
-  readonly steamAppId: string;
-  readonly steamBuildId: string;
-}
+import type { RentalBlueprintBodies, RentalEvidence } from "@neonretrorewind/core";
 
-export interface RentalMappingIdentity {
-  readonly fileName: string;
-  readonly sizeBytes: number;
-  readonly sha256: string;
-  readonly formatVersion: 4;
-}
-
-export interface RentalDefaultProperty {
-  readonly name: string;
-  readonly type: string;
-  readonly arrayIndex: number;
-  readonly value: unknown;
-}
-
-export interface RentalField {
-  readonly name: string;
-  readonly type: string;
-  readonly arrayDimension: number;
-}
-
-export interface RentalBlueprintClassEvidence {
-  readonly name: string;
-  readonly path: string;
-  readonly fields: readonly RentalField[];
-  readonly classDefault: {
-    readonly properties: readonly RentalDefaultProperty[];
-  };
-}
-
-export interface RentalStructEvidence {
-  readonly name: string;
-  readonly path: string;
-  readonly fields: readonly RentalField[];
-  readonly defaults: readonly RentalDefaultProperty[];
-}
-
-export interface RentalEvidenceArtifact {
-  readonly artifactType: "rental-evidence";
-  readonly build: RentalBuildReference;
-  readonly mappings: RentalMappingIdentity;
-  readonly packages: readonly {
-    readonly path: string;
+export type RentalBuildReference = RentalEvidence["build"];
+export type RentalMappingIdentity = RentalEvidence["mappings"];
+type RentalPackage = RentalEvidence["packages"][number];
+type RentalEvidenceBlueprintClass = RentalPackage["blueprintClasses"][number];
+type RentalStruct = RentalPackage["userDefinedStructs"][number];
+export type RentalBlueprintClassEvidence = Pick<
+  RentalEvidenceBlueprintClass,
+  "name" | "path" | "fields"
+> & {
+  readonly classDefault: Pick<
+    RentalEvidenceBlueprintClass["classDefault"],
+    "properties"
+  >;
+};
+export type RentalStructEvidence = Pick<
+  RentalStruct,
+  "name" | "path" | "fields" | "defaults"
+>;
+export type RentalField = RentalBlueprintClassEvidence["fields"][number];
+export type RentalDefaultProperty =
+  RentalBlueprintClassEvidence["classDefault"]["properties"][number];
+export type RentalEvidenceArtifact = Pick<
+  RentalEvidence,
+  "artifactType" | "build" | "mappings"
+> & {
+  readonly packages: readonly (Pick<RentalPackage, "path"> & {
     readonly blueprintClasses: readonly RentalBlueprintClassEvidence[];
     readonly userDefinedStructs: readonly RentalStructEvidence[];
-  }[];
-}
+  })[];
+};
 
-export interface RentalBlueprintFunctionInput {
-  readonly name: string;
-  readonly path: string;
-  readonly flags: string;
-  readonly bytecodeExpressionCount: number;
-}
-
-export interface RentalBlueprintBodiesArtifact {
-  readonly artifactType: "rental-blueprint-bodies";
-  readonly build: RentalBuildReference;
-  readonly mappings: RentalMappingIdentity;
-  readonly classes: readonly {
-    readonly packagePath: string;
-    readonly name: string;
-    readonly path: string;
+type RentalBlueprintBodyClass = RentalBlueprintBodies["classes"][number];
+export type RentalBlueprintFunctionInput =
+  RentalBlueprintBodyClass["functions"][number];
+export type RentalBlueprintBodiesArtifact = Pick<
+  RentalBlueprintBodies,
+  "artifactType" | "build" | "mappings"
+> & {
+  readonly classes: readonly (Pick<
+    RentalBlueprintBodyClass,
+    "packagePath" | "name" | "path" | "pseudoCode"
+  > & {
     readonly functions: readonly RentalBlueprintFunctionInput[];
-    readonly pseudoCode: string;
-  }[];
-}
+  })[];
+};

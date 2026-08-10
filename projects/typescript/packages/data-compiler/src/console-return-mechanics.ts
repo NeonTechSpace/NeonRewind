@@ -1,4 +1,7 @@
-import type { ConsoleReturnMechanics } from "@neonretrorewind/core";
+import {
+  ConsoleReturnMechanicsSchema,
+  type ConsoleReturnMechanics,
+} from "@neonretrorewind/core";
 
 import type {
   RentalBlueprintBodiesArtifact,
@@ -71,7 +74,7 @@ export function compileConsoleReturnMechanics(
     "Example Active Devices.Remove(ExampleSymbol_4bb2d3edf81f)",
   ]);
 
-  return {
+  return ConsoleReturnMechanicsSchema.assert({
     artifactType: "console-return-mechanics",
     build: {
       steamAppId: rentalEvidence.build.steamAppId,
@@ -116,7 +119,7 @@ export function compileConsoleReturnMechanics(
         functionName: queueFunction,
       },
     },
-  };
+  });
 }
 
 function findField(input: ReturnType<typeof findRentalEvidenceClass>, name: string) {
