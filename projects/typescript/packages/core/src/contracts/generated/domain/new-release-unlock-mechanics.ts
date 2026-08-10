@@ -9,6 +9,7 @@ export interface NewReleaseUnlockMechanicsContract {
   runtimeValidation: "not-run";
   unlock: Unlock;
   requestSelection: RequestSelection;
+  requestGeneration: RequestGeneration;
 }
 export interface Build {
   steamAppId: string;
@@ -23,6 +24,9 @@ export interface Sources {
   };
   propertyReaderTrace: SourceIdentity & {
     artifactType: "blueprint-property-reference-trace";
+  };
+  requestGeneratorTrace: SourceIdentity & {
+    artifactType: "blueprint-function-trace";
   };
 }
 export interface SourceIdentity {
@@ -126,4 +130,102 @@ export interface RequestStatementIndexes {
   addPrimaryRequest: 4092;
   setOnlyNewReleaseOutput: 3358;
   setMandatoryRequestOutput: 3396;
+}
+export interface RequestGeneration {
+  trigger: "generate-movie-request";
+  selector: GeneratorSelector;
+  newReleaseCandidateSelection: NewReleaseCandidateSelection;
+  effect: GeneratorEffect;
+  evidence: GeneratorEvidence;
+}
+export interface GeneratorSelector {
+  function: "Return Example Request";
+  successRequired: true;
+  copiedOutputs: GeneratorCopiedOutputs;
+  requestGenerated: true;
+}
+export interface GeneratorCopiedOutputs {
+  onlyNewRelease: "only-new-release-output";
+  primaryRequest: "mandatory-request-output";
+  optionalRequest: "optional-request-output";
+}
+export interface NewReleaseCandidateSelection {
+  condition: GeneratorCondition;
+  enumeration: CandidateEnumeration;
+  index: CandidateIndex;
+}
+export interface GeneratorCondition {
+  onlyNewRelease: true;
+  gameModeType: "ExampleMode";
+  randomGate: GeneratorRandomGate;
+  candidateCollection: "Example Candidate Map";
+  candidateCount: "greater-than-zero";
+  operator: "and";
+}
+export interface GeneratorRandomGate {
+  function: "RandomBoolWithWeight";
+  trueWeight: 0.66;
+}
+export interface CandidateEnumeration {
+  keys: "map-keys";
+  values: "map-values";
+  pairing: "shared-array-index";
+}
+export interface CandidateIndex {
+  function: "RandomInteger";
+  input: "candidate-count-minus-one";
+  engineSemantics: RandomIntegerEngineSemantics;
+  result: CandidateIndexResult;
+}
+export interface RandomIntegerEngineSemantics {
+  engineVersion: "5.4";
+  wrapper: "UKismetMathLibrary::RandomInteger";
+  implementation: "FMath::RandHelper";
+  positiveInputRange: "zero-inclusive-to-input-exclusive";
+  nonPositiveInputResult: 0;
+}
+export interface CandidateIndexResult {
+  oneCandidate: "index-zero";
+  multipleCandidates: "zero-through-candidate-count-minus-two";
+  finalEnumeratedPairSelectable: false;
+}
+export interface GeneratorEffect {
+  requestMovieSku: "selected-key";
+  reservedMovieProduct: "selected-value-product";
+  generateSuccess: true;
+  candidateSelectionRequiredForSuccess: false;
+}
+export interface GeneratorEvidence {
+  kind: "kismet-and-engine-source-analysis";
+  confidence: "direct";
+  classPath: "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C";
+  functionName: "Generate Example Request";
+  statementIndexes: GeneratorStatementIndexes;
+  engineSource: GeneratorEngineSource;
+}
+export interface GeneratorStatementIndexes {
+  selectorCall: 448;
+  selectorSuccessBranch: 570;
+  copyOnlyNewRelease: 735;
+  copyMandatoryRequest: 1272;
+  copyOptionalRequest: 1299;
+  newReleaseBranch: 1331;
+  randomGate: 1447;
+  candidateCount: 1502;
+  combinedCondition: 1631;
+  enumerateKeys: 1702;
+  enumerateValues: 1829;
+  subtractOne: 2066;
+  randomIndex: 2108;
+  selectKey: 2176;
+  assignMovieSku: 2213;
+  selectValue: 2262;
+  assignReservedProduct: 2299;
+  setGenerateSuccess: 2336;
+}
+export interface GeneratorEngineSource {
+  repository: "EpicGames/UnrealEngine";
+  commit: "847de5e2553adeb4d3498953604d0b0abe669780";
+  wrapperFile: "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl";
+  implementationFile: "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h";
 }

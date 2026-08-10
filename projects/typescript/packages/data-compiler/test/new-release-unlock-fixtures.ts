@@ -27,6 +27,11 @@ export const newReleaseUnlockSources: NewReleaseUnlockSources = {
     "blueprint-property-reference-trace",
     "c",
   ),
+  requestGeneratorTrace: identity(
+    "blueprint-function-trace.generate-movie-request.json",
+    "blueprint-function-trace",
+    "d",
+  ),
 };
 
 export function createManagerTrace(): Mutable<UnlockableManagerTraceArtifact> {
@@ -380,6 +385,294 @@ export function createPropertyReaderTrace(): Mutable<BlueprintPropertyReferenceT
     extractor: extractor(),
     totals: totals([function_], 0),
     functions: [function_],
+  };
+}
+
+export function createRequestGeneratorTrace(): Mutable<BlueprintFunctionTraceArtifact> {
+  const nodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const root = (
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol: string | null = null,
+  ) => addNode(
+    nodes,
+    null,
+    `script[${nodes.filter((node) => node.parentNodeIndex === null).length}]`,
+    statementIndex,
+    opcode,
+    kind,
+    symbol,
+  );
+  const child = (
+    parent: Mutable<BlueprintTraceNodeInput>,
+    edge: string,
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol: string | null = null,
+  ) => addNode(nodes, parent, edge, statementIndex, opcode, kind, symbol);
+  const newReleaseCandidates = "Example Candidate Map";
+
+  const selectorOutputs = [
+    "ExampleSymbol_2d9587f02b15",
+    "ExampleSymbol_2dab19f58908",
+    "ExampleSymbol_fdd233385842",
+    "ExampleSymbol_f72d95a50008",
+    "ExampleSymbol_eaf6430ce095",
+    "ExampleSymbol_ad7be0bfe1a1",
+    "ExampleSymbol_f8f40d1f8f50",
+    "ExampleSymbol_27293807bacb",
+    "ExampleSymbol_f7389c4d36a2",
+    "ExampleSymbol_3de17167922e",
+    "ExampleSymbol_def4f117dc03",
+    "ExampleSymbol_60fa85ea8d84",
+  ] as const;
+  const selector = root(448, "EX_LocalVirtualFunction", "call");
+  selector.call = call("local-virtual", "Return Example Request", 12, []);
+  for (const [position, symbol] of selectorOutputs.entries()) {
+    child(selector, `Parameters[${position}]`, 461 + position * 9, "EX_LocalVariable", "variable", symbol);
+  }
+  branch(root, child, 570, "EX_JumpIfNot", "conditional-false", selectorOutputs[0], 785);
+  jump(root, 584, "EX_PushExecutionFlow", "push-flow", "pushingAddress", 1272);
+  variableAssignment(root, child, 735, "EX_LetBool", "Only New Release", selectorOutputs[8]);
+  literalAssignment(root, child, 773, "EX_LetBool", "Request Generated", "boolean", "true");
+  jump(root, 784, "EX_PopExecutionFlow", "pop-flow");
+  variableAssignment(root, child, 1272, "EX_Let", "Primary Request", selectorOutputs[10]);
+  variableAssignment(root, child, 1299, "EX_Let", "Optional Request", selectorOutputs[11]);
+
+  jump(root, 1326, "EX_PushExecutionFlow", "push-flow", "pushingAddress", 2336);
+  branch(root, child, 1331, "EX_PopExecutionFlowIfNot", "pop-flow-if-false", selectorOutputs[8]);
+  const castAssignment = root(1362, "EX_Let", "assignment");
+  child(castAssignment, "Variable", 1371, "EX_LocalVariable", "variable", "ExampleSymbol_59b9daf98844");
+  branch(root, child, 1427, "EX_PopExecutionFlowIfNot", "pop-flow-if-false", "ExampleSymbol_cfba3a7c5b90");
+
+  const randomAssignment = root(1437, "EX_LetBool", "assignment");
+  child(randomAssignment, "Variable", 1438, "EX_LocalVariable", "variable", "ExampleSymbol_df2cd757b8a8");
+  const randomGate = child(randomAssignment, "Assignment", 1447, "EX_CallMath", "call");
+  randomGate.call = call("final", "RandomBoolWithWeight", 1, []);
+  const weight = child(randomGate, "Parameters[0]", 1456, "EX_FloatConst", "literal");
+  weight.literal = { literalType: "number", value: "0.66" };
+
+  collectionCall(root, child, 1502, "Map_Length", 1, 1511, 1577, newReleaseCandidates);
+  const positiveAssignment = root(1587, "EX_LetBool", "assignment");
+  child(positiveAssignment, "Variable", 1588, "EX_LocalVariable", "variable", "ExampleSymbol_b752835dd3cc");
+  const positive = child(positiveAssignment, "Assignment", 1597, "EX_CallMath", "call");
+  positive.call = {
+    ...call("final", "Greater_IntInt", 2, []),
+    integerArguments: [{ position: 1, value: "0" }],
+  };
+  child(positive, "Parameters[0]", 1606, "EX_LocalVariable", "variable", "ExampleSymbol_a76986845fbb");
+  const zero = child(positive, "Parameters[1]", 1615, "EX_IntConst", "literal");
+  zero.literal = { literalType: "integer", value: "0" };
+
+  const combinedAssignment = root(1621, "EX_LetBool", "assignment");
+  child(combinedAssignment, "Variable", 1622, "EX_LocalVariable", "variable", "ExampleSymbol_69ac0269c2d9");
+  const combined = child(combinedAssignment, "Assignment", 1631, "EX_CallMath", "call");
+  combined.call = call("final", "BooleanAND", 2, []);
+  child(combined, "Parameters[0]", 1640, "EX_LocalVariable", "variable", "ExampleSymbol_b752835dd3cc");
+  child(combined, "Parameters[1]", 1649, "EX_LocalVariable", "variable", "ExampleSymbol_df2cd757b8a8");
+  branch(root, child, 1659, "EX_PopExecutionFlowIfNot", "pop-flow-if-false", "ExampleSymbol_69ac0269c2d9");
+
+  const keys = collectionCall(root, child, 1702, "Map_Keys", 2, 1711, 1777, newReleaseCandidates);
+  child(keys, "Parameters[1]", 1786, "EX_LocalVariable", "variable", "ExampleSymbol_d6e3aa1b6c52");
+  const values = collectionCall(root, child, 1829, "Map_Values", 2, 1838, 1904, newReleaseCandidates);
+  child(values, "Parameters[1]", 1913, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
+  collectionCall(root, child, 1963, "Map_Length", 1, 1972, 2038, newReleaseCandidates);
+
+  const subtractAssignment = root(2048, "EX_Let", "assignment");
+  child(subtractAssignment, "Variable", 2057, "EX_LocalVariable", "variable", "ExampleSymbol_e786ddbe8538");
+  const subtract = child(subtractAssignment, "Assignment", 2066, "EX_CallMath", "call");
+  subtract.call = {
+    ...call("final", "Subtract_IntInt", 2, []),
+    integerArguments: [{ position: 1, value: "1" }],
+  };
+  child(subtract, "Parameters[0]", 2075, "EX_LocalVariable", "variable", "ExampleSymbol_a76986845fbb");
+  const one = child(subtract, "Parameters[1]", 2084, "EX_IntConst", "literal");
+  one.literal = { literalType: "integer", value: "1" };
+
+  const randomIndexAssignment = root(2090, "EX_Let", "assignment");
+  child(randomIndexAssignment, "Variable", 2099, "EX_LocalVariable", "variable", "ExampleSymbol_2570513be054");
+  const randomIndex = child(randomIndexAssignment, "Assignment", 2108, "EX_CallMath", "call");
+  randomIndex.call = call("final", "RandomInteger", 1, []);
+  child(randomIndex, "Parameters[0]", 2117, "EX_LocalVariable", "variable", "ExampleSymbol_e786ddbe8538");
+  variableAssignment(root, child, 2127, "EX_Let", "Example Selected Key", "ExampleSymbol_2570513be054");
+
+  const selectedKey = root(2176, "EX_FinalFunction", "call");
+  selectedKey.call = call("final", "Array_Get", 3, []);
+  child(selectedKey, "Parameters[0]", 2185, "EX_LocalVariable", "variable", "ExampleSymbol_d6e3aa1b6c52");
+  child(selectedKey, "Parameters[1]", 2194, "EX_LocalVariable", "variable", "Example Selected Key");
+  child(selectedKey, "Parameters[2]", 2203, "EX_LocalVariable", "variable", "ExampleSymbol_4bb2d3edf81f");
+  variableAssignment(root, child, 2213, "EX_Let", "Request Movie SKU", "ExampleSymbol_4bb2d3edf81f");
+  const selectedValue = root(2262, "EX_FinalFunction", "call");
+  selectedValue.call = call("final", "Array_Get", 3, []);
+  child(selectedValue, "Parameters[0]", 2271, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
+  child(selectedValue, "Parameters[1]", 2280, "EX_LocalVariable", "variable", "Example Selected Key");
+  child(selectedValue, "Parameters[2]", 2289, "EX_LocalVariable", "variable", "ExampleSymbol_38f1ea380eae");
+  const reservedProduct = root(2299, "EX_Let", "assignment");
+  child(reservedProduct, "Variable", 2308, "EX_InstanceVariable", "variable", "Reserved Movie Product");
+  const productMember = child(reservedProduct, "Assignment", 2317, "EX_StructMemberContext", "context", "ExampleField11_0_00000000000000000000000000000000");
+  child(productMember, "StructExpression", 2326, "EX_LocalVariable", "variable", "ExampleSymbol_38f1ea380eae");
+  jump(root, 2335, "EX_PopExecutionFlow", "pop-flow");
+  literalAssignment(root, child, 2336, "EX_LetBool", "ExampleGenerateSuccess", "boolean", "true");
+  root(2347, "EX_Return", "return");
+
+  const function_: Mutable<BlueprintTraceFunctionInput> = {
+    packagePath:
+      "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.uasset",
+    className: "BTTask_ExampleRequest_C",
+    classPath:
+      "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C",
+    functionName: "Generate Example Request",
+    functionPath:
+      "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C:Generate Example Request",
+    flags:
+      "FUNC_Public, FUNC_HasOutParms, FUNC_HasDefaults, FUNC_BlueprintCallable, FUNC_BlueprintEvent",
+    bytecodeExpressionCount: 82,
+    nodes,
+  };
+  return {
+    artifactType: "blueprint-function-trace",
+    build: createBuild(),
+    callerBodies: [{
+      fileName: "blueprint-caller-bodies.return-movie-request.json",
+      sizeBytes: 100,
+      sha256: "f".repeat(64),
+      targetFunctionName: "Generate Example Request",
+    }],
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: extractor(),
+    totals: totals([function_], 0),
+    functions: [function_],
+  };
+}
+
+function variableAssignment(
+  root: (
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol?: string | null,
+  ) => Mutable<BlueprintTraceNodeInput>,
+  child: (
+    parent: Mutable<BlueprintTraceNodeInput>,
+    edge: string,
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol?: string | null,
+  ) => Mutable<BlueprintTraceNodeInput>,
+  statementIndex: number,
+  opcode: string,
+  targetSymbol: string,
+  sourceSymbol: string,
+): void {
+  const assignment = root(statementIndex, opcode, "assignment", targetSymbol);
+  child(assignment, "Variable", statementIndex + 1, "EX_LocalVariable", "variable", targetSymbol);
+  child(assignment, "Assignment", statementIndex + 2, "EX_LocalVariable", "variable", sourceSymbol);
+}
+
+function collectionCall(
+  root: (
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol?: string | null,
+  ) => Mutable<BlueprintTraceNodeInput>,
+  child: (
+    parent: Mutable<BlueprintTraceNodeInput>,
+    edge: string,
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol?: string | null,
+  ) => Mutable<BlueprintTraceNodeInput>,
+  statementIndex: number,
+  functionName: string,
+  argumentCount: number,
+  contextStatementIndex: number,
+  fieldStatementIndex: number,
+  collectionSymbol: string,
+): Mutable<BlueprintTraceNodeInput> {
+  const functionCall = root(statementIndex, "EX_FinalFunction", "call");
+  functionCall.call = call("final", functionName, argumentCount, []);
+  const context = child(
+    functionCall,
+    "Parameters[0]",
+    contextStatementIndex,
+    "EX_Context",
+    "context",
+    collectionSymbol,
+  );
+  child(
+    context,
+    "ContextExpression",
+    fieldStatementIndex,
+    "EX_InstanceVariable",
+    "variable",
+    collectionSymbol,
+  );
+  return functionCall;
+}
+
+function branch(
+  root: (
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol?: string | null,
+  ) => Mutable<BlueprintTraceNodeInput>,
+  child: (
+    parent: Mutable<BlueprintTraceNodeInput>,
+    edge: string,
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol?: string | null,
+  ) => Mutable<BlueprintTraceNodeInput>,
+  statementIndex: number,
+  opcode: string,
+  jumpKind: NonNullable<BlueprintTraceNodeInput["jump"]>["jumpKind"],
+  conditionSymbol: string,
+  targetOffset?: number,
+): void {
+  const condition = root(statementIndex, opcode, "branch");
+  condition.jump = {
+    jumpKind,
+    targets: targetOffset === undefined
+      ? []
+      : [{ edge: "codeOffset", offset: targetOffset }],
+  };
+  child(
+    condition,
+    "BooleanExpression",
+    statementIndex + 1,
+    "EX_LocalVariable",
+    "variable",
+    conditionSymbol,
+  );
+}
+
+function jump(
+  root: (
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol?: string | null,
+  ) => Mutable<BlueprintTraceNodeInput>,
+  statementIndex: number,
+  opcode: string,
+  jumpKind: NonNullable<BlueprintTraceNodeInput["jump"]>["jumpKind"],
+  targetEdge?: string,
+  targetOffset?: number,
+): void {
+  const operation = root(statementIndex, opcode, "branch");
+  operation.jump = {
+    jumpKind,
+    targets: targetEdge === undefined
+      ? []
+      : [{ edge: targetEdge, offset: targetOffset! }],
   };
 }
 

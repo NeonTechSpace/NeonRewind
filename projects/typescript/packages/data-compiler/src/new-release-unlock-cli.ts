@@ -27,6 +27,8 @@ interface Options {
   readonly wrapperTraceSchemaPath: string;
   readonly propertyReaderTracePath: string;
   readonly propertyReaderTraceSchemaPath: string;
+  readonly requestGeneratorTracePath: string;
+  readonly requestGeneratorTraceSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -42,10 +44,11 @@ export async function runNewReleaseUnlockMechanics(
   }
 
   try {
-    const [manager, wrapper, propertyReader] = await Promise.all([
+    const [manager, wrapper, propertyReader, requestGenerator] = await Promise.all([
       readInput(options.managerTracePath, "Unlock manager trace"),
       readInput(options.wrapperTracePath, "Unlock wrapper trace"),
       readInput(options.propertyReaderTracePath, "Property-reader trace"),
+      readInput(options.requestGeneratorTracePath, "Request-generator trace"),
     ]);
     await Promise.all([
       validateInput(manager, options.managerTraceSchemaPath, "Unlock manager trace"),
@@ -54,6 +57,11 @@ export async function runNewReleaseUnlockMechanics(
         propertyReader,
         options.propertyReaderTraceSchemaPath,
         "Property-reader trace",
+      ),
+      validateInput(
+        requestGenerator,
+        options.requestGeneratorTraceSchemaPath,
+        "Request-generator trace",
       ),
     ]);
 
@@ -64,17 +72,24 @@ export async function runNewReleaseUnlockMechanics(
         propertyReader,
         "blueprint-property-reference-trace",
       ),
+      requestGeneratorTrace: createIdentity(
+        requestGenerator,
+        "blueprint-function-trace",
+      ),
     };
     const mechanics = compileNewReleaseUnlockMechanics(
       UnlockableManagerTraceSchema.assert(manager.value),
       BlueprintFunctionTraceSchema.assert(wrapper.value),
       BlueprintPropertyReferenceTraceSchema.assert(propertyReader.value),
+      BlueprintFunctionTraceSchema.assert(requestGenerator.value),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
 
     await Promise.all(
-      [manager, wrapper, propertyReader].map((input) => assertFileUnchanged(input)),
+      [manager, wrapper, propertyReader, requestGenerator].map((input) =>
+        assertFileUnchanged(input)
+      ),
     );
     const status = await writeImmutableArtifact(options.outputPath, output);
     if (status === "conflict") {
@@ -96,7 +111,7 @@ export async function runNewReleaseUnlockMechanics(
 
 export function writeNewReleaseUnlockUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-data-compiler new-release-unlock-mechanics --manager-trace <path> --manager-trace-schema <schema> --wrapper-trace <path> --wrapper-trace-schema <schema> --property-reader-trace <path> --property-reader-trace-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler new-release-unlock-mechanics --manager-trace <path> --manager-trace-schema <schema> --wrapper-trace <path> --wrapper-trace-schema <schema> --property-reader-trace <path> --property-reader-trace-schema <schema> --request-generator-trace <path> --request-generator-trace-schema <schema> --output <path>\n",
   );
 }
 
@@ -134,6 +149,8 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     "--wrapper-trace-schema",
     "--property-reader-trace",
     "--property-reader-trace-schema",
+    "--request-generator-trace",
+    "--request-generator-trace-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -154,7 +171,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
   }
   const missing = names.filter((name) => !values.has(name));
   if (missing.length > 0) {
-    return `Expected manager, wrapper, and property-reader traces, their schemas, and --output; missing ${missing.join(", ")}.`;
+    return `Expected manager, wrapper, property-reader, and request-generator traces, their schemas, and --output; missing ${missing.join(", ")}.`;
   }
   return {
     managerTracePath: values.get("--manager-trace")!,
@@ -163,6 +180,8 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     wrapperTraceSchemaPath: values.get("--wrapper-trace-schema")!,
     propertyReaderTracePath: values.get("--property-reader-trace")!,
     propertyReaderTraceSchemaPath: values.get("--property-reader-trace-schema")!,
+    requestGeneratorTracePath: values.get("--request-generator-trace")!,
+    requestGeneratorTraceSchemaPath: values.get("--request-generator-trace-schema")!,
     outputPath: values.get("--output")!,
   };
 }

@@ -889,11 +889,15 @@ That command writes a new immutable mechanics artifact which identifies the exac
 
 ## 20. Compile the new-release unlock mechanics
 
-This step joins the typed unlock-manager event graph, typed wrapper entrypoints, and the traced property reader.
+This step joins the typed unlock-manager event graph, typed wrapper entrypoints, traced property reader, and typed `Generate Example Request` body.
 It confirms that `Reset to new Day Event_Event` enters the manager at statement `3364`, calls `ExampleReleaseEnabled`, compares the Weather Actor's current date with the first save-game day plus two days, and sets `ExampleReleaseKind` to `true` when the threshold is reached.
 It also confirms that `Return Example Request` combines the flag with `RandomBoolWithWeight(0.5)` and, on success, selects guaranteed request step 1, records primary request code `5` as required, and outputs `Only New Release` as `true`.
-The compiler checks the exact build and mapping identities, wrapper entrypoints, typed calls and arguments, intermediate value flow, comparisons, branch routes, mutations, outputs, and input hashes.
-It does not infer save/load behavior, costs, dependencies, exact film identities, or runtime probabilities.
+`Generate Example Request` copies those outputs and, when `Only New Release` is true, the game-mode cast succeeds, the candidate map is nonempty, and `RandomBoolWithWeight(0.66)` succeeds, enumerates that map's keys and values and reads both at one random index.
+The Blueprint passes `candidate count - 1` to Unreal Engine 5.4's `RandomInteger`, whose implementation returns zero for nonpositive input and otherwise samples from zero inclusive to its input exclusive.
+Consequently, a one-entry map selects index zero, while a map with two or more entries can select only indices zero through `candidate count - 2`; the final enumerated key/value pair is unreachable.
+Candidate-selection failure after a successful `Return Example Request` call still rejoins `ExampleGenerateSuccess = true`.
+The compiler checks the exact build, mapping, and engine identities, trace scopes, wrapper entrypoints, typed calls and arguments, intermediate value flow, comparisons, branch routes, map access, paired array indexes, mutations, outputs, and input hashes.
+It does not infer save/load behavior, costs, dependencies, exact film identities, map enumeration identity, or runtime probabilities.
 The artifact records typed-Blueprint evidence and `runtimeValidation: not-run`.
 
 Move into the TypeScript workspace if you are not already there.
@@ -918,6 +922,8 @@ pnpm new-release-unlock-mechanics `
   --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
   --property-reader-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-unlock.json") `
   --property-reader-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" `
+  --request-generator-trace (Join-Path $buildDirectory "blueprint-function-trace.generate-movie-request.json") `
+  --request-generator-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
   --output (Join-Path $domainDirectory "new-release-unlock-mechanics.json")
 ```
 
@@ -929,6 +935,8 @@ pnpm new-release-unlock-mechanics \
   --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
   --property-reader-trace "$buildDirectory/blueprint-property-reference-trace.new-release-unlock.json" \
   --property-reader-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" \
+  --request-generator-trace "$buildDirectory/blueprint-function-trace.generate-movie-request.json" \
+  --request-generator-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
   --output "$domainDirectory/new-release-unlock-mechanics.json"
 ```
 

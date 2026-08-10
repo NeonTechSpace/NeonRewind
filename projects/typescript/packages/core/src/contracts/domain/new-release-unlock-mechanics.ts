@@ -15,7 +15,8 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
     "evidenceLevel",
     "runtimeValidation",
     "unlock",
-    "requestSelection"
+    "requestSelection",
+    "requestGeneration"
   ],
   "properties": {
     "artifactType": {
@@ -41,6 +42,9 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
     },
     "requestSelection": {
       "$ref": "#/$defs/requestSelection"
+    },
+    "requestGeneration": {
+      "$ref": "#/$defs/requestGeneration"
     }
   },
   "$defs": {
@@ -68,7 +72,8 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
       "required": [
         "managerTrace",
         "wrapperTrace",
-        "propertyReaderTrace"
+        "propertyReaderTrace",
+        "requestGeneratorTrace"
       ],
       "properties": {
         "managerTrace": {
@@ -108,6 +113,20 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
               "properties": {
                 "artifactType": {
                   "const": "blueprint-property-reference-trace"
+                }
+              }
+            }
+          ]
+        },
+        "requestGeneratorTrace": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/sourceIdentity"
+            },
+            {
+              "properties": {
+                "artifactType": {
+                  "const": "blueprint-function-trace"
                 }
               }
             }
@@ -215,6 +234,362 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
         },
         "evidence": {
           "$ref": "#/$defs/requestEvidence"
+        }
+      }
+    },
+    "requestGeneration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trigger",
+        "selector",
+        "newReleaseCandidateSelection",
+        "effect",
+        "evidence"
+      ],
+      "properties": {
+        "trigger": {
+          "const": "generate-movie-request"
+        },
+        "selector": {
+          "$ref": "#/$defs/generatorSelector"
+        },
+        "newReleaseCandidateSelection": {
+          "$ref": "#/$defs/newReleaseCandidateSelection"
+        },
+        "effect": {
+          "$ref": "#/$defs/generatorEffect"
+        },
+        "evidence": {
+          "$ref": "#/$defs/generatorEvidence"
+        }
+      }
+    },
+    "generatorSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function",
+        "successRequired",
+        "copiedOutputs",
+        "requestGenerated"
+      ],
+      "properties": {
+        "function": {
+          "const": "Return Example Request"
+        },
+        "successRequired": {
+          "const": true
+        },
+        "copiedOutputs": {
+          "$ref": "#/$defs/generatorCopiedOutputs"
+        },
+        "requestGenerated": {
+          "const": true
+        }
+      }
+    },
+    "generatorCopiedOutputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "onlyNewRelease",
+        "primaryRequest",
+        "optionalRequest"
+      ],
+      "properties": {
+        "onlyNewRelease": {
+          "const": "only-new-release-output"
+        },
+        "primaryRequest": {
+          "const": "mandatory-request-output"
+        },
+        "optionalRequest": {
+          "const": "optional-request-output"
+        }
+      }
+    },
+    "newReleaseCandidateSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "condition",
+        "enumeration",
+        "index"
+      ],
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/generatorCondition"
+        },
+        "enumeration": {
+          "$ref": "#/$defs/candidateEnumeration"
+        },
+        "index": {
+          "$ref": "#/$defs/candidateIndex"
+        }
+      }
+    },
+    "generatorCondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "onlyNewRelease",
+        "gameModeType",
+        "randomGate",
+        "candidateCollection",
+        "candidateCount",
+        "operator"
+      ],
+      "properties": {
+        "onlyNewRelease": {
+          "const": true
+        },
+        "gameModeType": {
+          "const": "ExampleMode"
+        },
+        "randomGate": {
+          "$ref": "#/$defs/generatorRandomGate"
+        },
+        "candidateCollection": {
+          "const": "Example Candidate Map"
+        },
+        "candidateCount": {
+          "const": "greater-than-zero"
+        },
+        "operator": {
+          "const": "and"
+        }
+      }
+    },
+    "generatorRandomGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function",
+        "trueWeight"
+      ],
+      "properties": {
+        "function": {
+          "const": "RandomBoolWithWeight"
+        },
+        "trueWeight": {
+          "const": 0.66
+        }
+      }
+    },
+    "candidateEnumeration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "keys",
+        "values",
+        "pairing"
+      ],
+      "properties": {
+        "keys": {
+          "const": "map-keys"
+        },
+        "values": {
+          "const": "map-values"
+        },
+        "pairing": {
+          "const": "shared-array-index"
+        }
+      }
+    },
+    "candidateIndex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function",
+        "input",
+        "engineSemantics",
+        "result"
+      ],
+      "properties": {
+        "function": {
+          "const": "RandomInteger"
+        },
+        "input": {
+          "const": "candidate-count-minus-one"
+        },
+        "engineSemantics": {
+          "$ref": "#/$defs/randomIntegerEngineSemantics"
+        },
+        "result": {
+          "$ref": "#/$defs/candidateIndexResult"
+        }
+      }
+    },
+    "randomIntegerEngineSemantics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "engineVersion",
+        "wrapper",
+        "implementation",
+        "positiveInputRange",
+        "nonPositiveInputResult"
+      ],
+      "properties": {
+        "engineVersion": {
+          "const": "5.4"
+        },
+        "wrapper": {
+          "const": "UKismetMathLibrary::RandomInteger"
+        },
+        "implementation": {
+          "const": "FMath::RandHelper"
+        },
+        "positiveInputRange": {
+          "const": "zero-inclusive-to-input-exclusive"
+        },
+        "nonPositiveInputResult": {
+          "const": 0
+        }
+      }
+    },
+    "candidateIndexResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oneCandidate",
+        "multipleCandidates",
+        "finalEnumeratedPairSelectable"
+      ],
+      "properties": {
+        "oneCandidate": {
+          "const": "index-zero"
+        },
+        "multipleCandidates": {
+          "const": "zero-through-candidate-count-minus-two"
+        },
+        "finalEnumeratedPairSelectable": {
+          "const": false
+        }
+      }
+    },
+    "generatorEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestMovieSku",
+        "reservedMovieProduct",
+        "generateSuccess",
+        "candidateSelectionRequiredForSuccess"
+      ],
+      "properties": {
+        "requestMovieSku": {
+          "const": "selected-key"
+        },
+        "reservedMovieProduct": {
+          "const": "selected-value-product"
+        },
+        "generateSuccess": {
+          "const": true
+        },
+        "candidateSelectionRequiredForSuccess": {
+          "const": false
+        }
+      }
+    },
+    "generatorEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "confidence",
+        "classPath",
+        "functionName",
+        "statementIndexes",
+        "engineSource"
+      ],
+      "properties": {
+        "kind": {
+          "const": "kismet-and-engine-source-analysis"
+        },
+        "confidence": {
+          "const": "direct"
+        },
+        "classPath": {
+          "const": "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C"
+        },
+        "functionName": {
+          "const": "Generate Example Request"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/generatorStatementIndexes"
+        },
+        "engineSource": {
+          "$ref": "#/$defs/generatorEngineSource"
+        }
+      }
+    },
+    "generatorStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selectorCall",
+        "selectorSuccessBranch",
+        "copyOnlyNewRelease",
+        "copyMandatoryRequest",
+        "copyOptionalRequest",
+        "newReleaseBranch",
+        "randomGate",
+        "candidateCount",
+        "combinedCondition",
+        "enumerateKeys",
+        "enumerateValues",
+        "subtractOne",
+        "randomIndex",
+        "selectKey",
+        "assignMovieSku",
+        "selectValue",
+        "assignReservedProduct",
+        "setGenerateSuccess"
+      ],
+      "properties": {
+        "selectorCall": { "const": 448 },
+        "selectorSuccessBranch": { "const": 570 },
+        "copyOnlyNewRelease": { "const": 735 },
+        "copyMandatoryRequest": { "const": 1272 },
+        "copyOptionalRequest": { "const": 1299 },
+        "newReleaseBranch": { "const": 1331 },
+        "randomGate": { "const": 1447 },
+        "candidateCount": { "const": 1502 },
+        "combinedCondition": { "const": 1631 },
+        "enumerateKeys": { "const": 1702 },
+        "enumerateValues": { "const": 1829 },
+        "subtractOne": { "const": 2066 },
+        "randomIndex": { "const": 2108 },
+        "selectKey": { "const": 2176 },
+        "assignMovieSku": { "const": 2213 },
+        "selectValue": { "const": 2262 },
+        "assignReservedProduct": { "const": 2299 },
+        "setGenerateSuccess": { "const": 2336 }
+      }
+    },
+    "generatorEngineSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "commit",
+        "wrapperFile",
+        "implementationFile"
+      ],
+      "properties": {
+        "repository": {
+          "const": "EpicGames/UnrealEngine"
+        },
+        "commit": {
+          "const": "847de5e2553adeb4d3498953604d0b0abe669780"
+        },
+        "wrapperFile": {
+          "const": "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl"
+        },
+        "implementationFile": {
+          "const": "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h"
         }
       }
     },

@@ -7,6 +7,7 @@ import { compileNewReleaseUnlockMechanics } from "../src/new-release-unlock-mech
 import {
   createManagerTrace,
   createPropertyReaderTrace,
+  createRequestGeneratorTrace,
   createWrapperTrace,
   newReleaseUnlockSources,
 } from "./new-release-unlock-fixtures.ts";
@@ -95,6 +96,91 @@ test("compiles the confirmed two-day new-release unlock transition", async () =>
         addPrimaryRequest: 4092,
         setOnlyNewReleaseOutput: 3358,
         setMandatoryRequestOutput: 3396,
+      },
+    },
+  });
+  assert.deepEqual(mechanics.requestGeneration, {
+    trigger: "generate-movie-request",
+    selector: {
+      function: "Return Example Request",
+      successRequired: true,
+      copiedOutputs: {
+        onlyNewRelease: "only-new-release-output",
+        primaryRequest: "mandatory-request-output",
+        optionalRequest: "optional-request-output",
+      },
+      requestGenerated: true,
+    },
+    newReleaseCandidateSelection: {
+      condition: {
+        onlyNewRelease: true,
+        gameModeType: "ExampleMode",
+        randomGate: { function: "RandomBoolWithWeight", trueWeight: 0.66 },
+        candidateCollection: "Example Candidate Map",
+        candidateCount: "greater-than-zero",
+        operator: "and",
+      },
+      enumeration: {
+        keys: "map-keys",
+        values: "map-values",
+        pairing: "shared-array-index",
+      },
+      index: {
+        function: "RandomInteger",
+        input: "candidate-count-minus-one",
+        engineSemantics: {
+          engineVersion: "5.4",
+          wrapper: "UKismetMathLibrary::RandomInteger",
+          implementation: "FMath::RandHelper",
+          positiveInputRange: "zero-inclusive-to-input-exclusive",
+          nonPositiveInputResult: 0,
+        },
+        result: {
+          oneCandidate: "index-zero",
+          multipleCandidates: "zero-through-candidate-count-minus-two",
+          finalEnumeratedPairSelectable: false,
+        },
+      },
+    },
+    effect: {
+      requestMovieSku: "selected-key",
+      reservedMovieProduct: "selected-value-product",
+      generateSuccess: true,
+      candidateSelectionRequiredForSuccess: false,
+    },
+    evidence: {
+      kind: "kismet-and-engine-source-analysis",
+      confidence: "direct",
+      classPath:
+        "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C",
+      functionName: "Generate Example Request",
+      statementIndexes: {
+        selectorCall: 448,
+        selectorSuccessBranch: 570,
+        copyOnlyNewRelease: 735,
+        copyMandatoryRequest: 1272,
+        copyOptionalRequest: 1299,
+        newReleaseBranch: 1331,
+        randomGate: 1447,
+        candidateCount: 1502,
+        combinedCondition: 1631,
+        enumerateKeys: 1702,
+        enumerateValues: 1829,
+        subtractOne: 2066,
+        randomIndex: 2108,
+        selectKey: 2176,
+        assignMovieSku: 2213,
+        selectValue: 2262,
+        assignReservedProduct: 2299,
+        setGenerateSuccess: 2336,
+      },
+      engineSource: {
+        repository: "EpicGames/UnrealEngine",
+        commit: "847de5e2553adeb4d3498953604d0b0abe669780",
+        wrapperFile:
+          "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl",
+        implementationFile:
+          "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h",
       },
     },
   });
@@ -225,15 +311,71 @@ test("rejects a property-reader trace from another build", () => {
   assert.throws(() => compileCurrent({ propertyReader }), /different game builds/u);
 });
 
+test("rejects a request generator whose selector failure route changed", () => {
+  const requestGenerator = createRequestGeneratorTrace();
+  const branch = requestGenerator.functions[0]!.nodes.find(
+    (node) => node.statementIndex === 570,
+  );
+  assert.ok(branch?.jump);
+  branch.jump = {
+    ...branch.jump,
+    targets: [{ edge: "codeOffset", offset: 786 }],
+  };
+  assert.throws(
+    () => compileCurrent({ requestGenerator }),
+    /trace branch changed/u,
+  );
+});
+
+test("rejects a changed new-release candidate collection", () => {
+  const requestGenerator = createRequestGeneratorTrace();
+  const collection = requestGenerator.functions[0]!.nodes.find(
+    (node) => node.statementIndex === 1577,
+  );
+  assert.ok(collection);
+  collection.symbol = "Another Candidate Map";
+  assert.throws(
+    () => compileCurrent({ requestGenerator }),
+    /candidate collection field changed/u,
+  );
+});
+
+test("rejects a corrected random-index upper bound not present in the game", () => {
+  const requestGenerator = createRequestGeneratorTrace();
+  const subtract = requestGenerator.functions[0]!.nodes.find(
+    (node) => node.statementIndex === 2066,
+  );
+  assert.ok(subtract?.call);
+  subtract.call = {
+    ...subtract.call,
+    functionName: "Add_IntInt",
+  };
+  assert.throws(
+    () => compileCurrent({ requestGenerator }),
+    /trace call changed/u,
+  );
+});
+
+test("rejects a request-generator trace from another build", () => {
+  const requestGenerator = createRequestGeneratorTrace();
+  requestGenerator.build.steamBuildId = "1";
+  assert.throws(
+    () => compileCurrent({ requestGenerator }),
+    /different game builds/u,
+  );
+});
+
 function compileCurrent(overrides: {
   manager?: ReturnType<typeof createManagerTrace>;
   propertyReader?: ReturnType<typeof createPropertyReaderTrace>;
+  requestGenerator?: ReturnType<typeof createRequestGeneratorTrace>;
   wrapper?: ReturnType<typeof createWrapperTrace>;
 } = {}) {
   return compileNewReleaseUnlockMechanics(
     overrides.manager ?? createManagerTrace(),
     overrides.wrapper ?? createWrapperTrace(),
     overrides.propertyReader ?? createPropertyReaderTrace(),
+    overrides.requestGenerator ?? createRequestGeneratorTrace(),
     newReleaseUnlockSources,
   );
 }

@@ -35,6 +35,9 @@ const requestClassPath =
   "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C";
 const requestFunctionName = "Return Example Request";
 const requestFunctionPath = `${requestClassPath}:${requestFunctionName}`;
+const requestGeneratorFunctionName = "Generate Example Request";
+const requestGeneratorFunctionPath = `${requestClassPath}:${requestGeneratorFunctionName}`;
+const newReleaseCandidatesSymbol = "Example Candidate Map";
 const randomResultSymbol = "ExampleSymbol_62b6867ee210";
 const requestConditionSymbol = "ExampleSymbol_470ab9997728";
 const guaranteedStepSymbol = "lGarantee Requested Step";
@@ -45,15 +48,22 @@ export interface NewReleaseUnlockSources {
   readonly managerTrace: NewReleaseUnlockArtifactIdentity<"unlockable-manager-trace">;
   readonly wrapperTrace: NewReleaseUnlockArtifactIdentity<"blueprint-function-trace">;
   readonly propertyReaderTrace: NewReleaseUnlockArtifactIdentity<"blueprint-property-reference-trace">;
+  readonly requestGeneratorTrace: NewReleaseUnlockArtifactIdentity<"blueprint-function-trace">;
 }
 
 export function compileNewReleaseUnlockMechanics(
   managerTrace: UnlockableManagerTraceArtifact,
   wrapperTrace: BlueprintFunctionTraceArtifact,
   propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
+  requestGeneratorTrace: BlueprintFunctionTraceArtifact,
   sources: NewReleaseUnlockSources,
 ): NewReleaseUnlockMechanics {
-  assertInputContracts(managerTrace, wrapperTrace, propertyReaderTrace);
+  assertInputContracts(
+    managerTrace,
+    wrapperTrace,
+    propertyReaderTrace,
+    requestGeneratorTrace,
+  );
   assertWrapperEntry(wrapperTrace, resetFunctionName, 3364);
   assertWrapperEntry(wrapperTrace, checkFunctionName, 3379);
 
@@ -133,6 +143,7 @@ export function compileNewReleaseUnlockMechanics(
   assertTraceLiteralChild(assignment, eventGraph, "Assignment", "boolean", "true");
 
   assertRequestSelection(propertyReaderTrace);
+  assertRequestGeneration(requestGeneratorTrace);
 
   return NewReleaseUnlockMechanicsSchema.assert({
     artifactType: "new-release-unlock-mechanics",
@@ -225,6 +236,93 @@ export function compileNewReleaseUnlockMechanics(
         },
       },
     },
+    requestGeneration: {
+      trigger: "generate-movie-request",
+      selector: {
+        function: "Return Example Request",
+        successRequired: true,
+        copiedOutputs: {
+          onlyNewRelease: "only-new-release-output",
+          primaryRequest: "mandatory-request-output",
+          optionalRequest: "optional-request-output",
+        },
+        requestGenerated: true,
+      },
+      newReleaseCandidateSelection: {
+        condition: {
+          onlyNewRelease: true,
+          gameModeType: "ExampleMode",
+          randomGate: {
+            function: "RandomBoolWithWeight",
+            trueWeight: 0.66,
+          },
+          candidateCollection: newReleaseCandidatesSymbol,
+          candidateCount: "greater-than-zero",
+          operator: "and",
+        },
+        enumeration: {
+          keys: "map-keys",
+          values: "map-values",
+          pairing: "shared-array-index",
+        },
+        index: {
+          function: "RandomInteger",
+          input: "candidate-count-minus-one",
+          engineSemantics: {
+            engineVersion: "5.4",
+            wrapper: "UKismetMathLibrary::RandomInteger",
+            implementation: "FMath::RandHelper",
+            positiveInputRange: "zero-inclusive-to-input-exclusive",
+            nonPositiveInputResult: 0,
+          },
+          result: {
+            oneCandidate: "index-zero",
+            multipleCandidates: "zero-through-candidate-count-minus-two",
+            finalEnumeratedPairSelectable: false,
+          },
+        },
+      },
+      effect: {
+        requestMovieSku: "selected-key",
+        reservedMovieProduct: "selected-value-product",
+        generateSuccess: true,
+        candidateSelectionRequiredForSuccess: false,
+      },
+      evidence: {
+        kind: "kismet-and-engine-source-analysis",
+        confidence: "direct",
+        classPath: requestClassPath,
+        functionName: requestGeneratorFunctionName,
+        statementIndexes: {
+          selectorCall: 448,
+          selectorSuccessBranch: 570,
+          copyOnlyNewRelease: 735,
+          copyMandatoryRequest: 1272,
+          copyOptionalRequest: 1299,
+          newReleaseBranch: 1331,
+          randomGate: 1447,
+          candidateCount: 1502,
+          combinedCondition: 1631,
+          enumerateKeys: 1702,
+          enumerateValues: 1829,
+          subtractOne: 2066,
+          randomIndex: 2108,
+          selectKey: 2176,
+          assignMovieSku: 2213,
+          selectValue: 2262,
+          assignReservedProduct: 2299,
+          setGenerateSuccess: 2336,
+        },
+        engineSource: {
+          repository: "EpicGames/UnrealEngine",
+          commit: "847de5e2553adeb4d3498953604d0b0abe669780",
+          wrapperFile:
+            "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl",
+          implementationFile:
+            "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h",
+        },
+      },
+    },
   });
 }
 
@@ -232,6 +330,7 @@ function assertInputContracts(
   managerTrace: UnlockableManagerTraceArtifact,
   wrapperTrace: BlueprintFunctionTraceArtifact,
   propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
+  requestGeneratorTrace: BlueprintFunctionTraceArtifact,
 ): void {
   if (managerTrace.artifactType !== "unlockable-manager-trace") {
     throw new Error("Expected an unlockable-manager-trace input.");
@@ -242,21 +341,27 @@ function assertInputContracts(
   if (propertyReaderTrace.artifactType !== "blueprint-property-reference-trace") {
     throw new Error("Expected a blueprint-property-reference-trace input.");
   }
+  if (requestGeneratorTrace.artifactType !== "blueprint-function-trace") {
+    throw new Error("Expected a blueprint-function-trace request-generator input.");
+  }
   if (
     JSON.stringify(managerTrace.build) !== JSON.stringify(wrapperTrace.build) ||
-    JSON.stringify(managerTrace.build) !== JSON.stringify(propertyReaderTrace.build)
+    JSON.stringify(managerTrace.build) !== JSON.stringify(propertyReaderTrace.build) ||
+    JSON.stringify(managerTrace.build) !== JSON.stringify(requestGeneratorTrace.build)
   ) {
     throw new Error("Unlock traces refer to different game builds.");
   }
   if (
     JSON.stringify(managerTrace.mappings) !== JSON.stringify(wrapperTrace.mappings) ||
-    JSON.stringify(managerTrace.mappings) !== JSON.stringify(propertyReaderTrace.mappings)
+    JSON.stringify(managerTrace.mappings) !== JSON.stringify(propertyReaderTrace.mappings) ||
+    JSON.stringify(managerTrace.mappings) !== JSON.stringify(requestGeneratorTrace.mappings)
   ) {
     throw new Error("Unlock traces refer to different mappings.");
   }
   if (
     JSON.stringify(managerTrace.engine) !== JSON.stringify(wrapperTrace.engine) ||
-    JSON.stringify(managerTrace.engine) !== JSON.stringify(propertyReaderTrace.engine)
+    JSON.stringify(managerTrace.engine) !== JSON.stringify(propertyReaderTrace.engine) ||
+    JSON.stringify(managerTrace.engine) !== JSON.stringify(requestGeneratorTrace.engine)
   ) {
     throw new Error("Unlock traces refer to different engine configurations.");
   }
@@ -276,6 +381,12 @@ function assertInputContracts(
     propertyReaderTrace.functions.length !== 1
   ) {
     throw new Error("Property-reader trace scope changed.");
+  }
+  if (
+    requestGeneratorTrace.functions.length !== 1 ||
+    requestGeneratorTrace.functions[0]?.functionPath !== requestGeneratorFunctionPath
+  ) {
+    throw new Error("Request-generator trace scope changed.");
   }
 }
 
@@ -417,6 +528,289 @@ function assertRequestSelection(trace: BlueprintPropertyReferenceTraceArtifact):
   assertTraceSymbolChild(mandatoryRequestOutput, function_, "Assignment", "Primary Request");
 }
 
+function assertRequestGeneration(trace: BlueprintFunctionTraceArtifact): void {
+  const function_ = findTraceFunction(trace.functions, requestGeneratorFunctionName);
+  if (
+    function_.classPath !== requestClassPath ||
+    function_.functionPath !== requestGeneratorFunctionPath
+  ) {
+    throw new Error("Request-generator function identity changed.");
+  }
+  assertTraceNodeTree(function_);
+
+  const selector = findTraceCall(
+    function_,
+    448,
+    requestFunctionName,
+    "local-virtual",
+    12,
+  );
+  const selectorOutputs = [
+    "ExampleSymbol_2d9587f02b15",
+    "ExampleSymbol_2dab19f58908",
+    "ExampleSymbol_fdd233385842",
+    "ExampleSymbol_f72d95a50008",
+    "ExampleSymbol_eaf6430ce095",
+    "ExampleSymbol_ad7be0bfe1a1",
+    "ExampleSymbol_f8f40d1f8f50",
+    "ExampleSymbol_27293807bacb",
+    "ExampleSymbol_f7389c4d36a2",
+    "ExampleSymbol_3de17167922e",
+    "ExampleSymbol_def4f117dc03",
+    "ExampleSymbol_60fa85ea8d84",
+  ] as const;
+  for (const [position, symbol] of selectorOutputs.entries()) {
+    assertTraceSymbolChild(selector, function_, `Parameters[${position}]`, symbol);
+  }
+  const selectorSuccess = assertTraceJump(
+    function_,
+    570,
+    "conditional-false",
+    "codeOffset",
+    785,
+  );
+  assertTraceSymbolChild(
+    selectorSuccess,
+    function_,
+    "BooleanExpression",
+    selectorOutputs[0],
+  );
+  assertTraceJump(function_, 584, "push-flow", "pushingAddress", 1272);
+  assertVariableAssignment(
+    function_,
+    735,
+    "EX_LetBool",
+    "Only New Release",
+    selectorOutputs[8],
+  );
+  assertLiteralAssignment(
+    function_,
+    773,
+    "EX_LetBool",
+    "Request Generated",
+    "boolean",
+    "true",
+  );
+  assertTraceJump(function_, 784, "pop-flow");
+  assertVariableAssignment(
+    function_,
+    1272,
+    "EX_Let",
+    "Primary Request",
+    selectorOutputs[10],
+  );
+  assertVariableAssignment(
+    function_,
+    1299,
+    "EX_Let",
+    "Optional Request",
+    selectorOutputs[11],
+  );
+
+  assertTraceJump(function_, 1326, "push-flow", "pushingAddress", 2336);
+  const newReleaseBranch = assertTraceJump(function_, 1331, "pop-flow-if-false");
+  assertTraceSymbolChild(
+    newReleaseBranch,
+    function_,
+    "BooleanExpression",
+    selectorOutputs[8],
+  );
+  const castAssignment = findTraceNode(function_, 1362);
+  assertTraceRootNode(function_, 1362, "EX_Let");
+  assertTraceSymbolChild(
+    castAssignment,
+    function_,
+    "Variable",
+    "ExampleSymbol_59b9daf98844",
+  );
+  const castBranch = assertTraceJump(function_, 1427, "pop-flow-if-false");
+  assertTraceSymbolChild(
+    castBranch,
+    function_,
+    "BooleanExpression",
+    "ExampleSymbol_cfba3a7c5b90",
+  );
+
+  const randomAssignment = findTraceNode(function_, 1437);
+  assertTraceRootNode(function_, 1437, "EX_LetBool");
+  assertTraceSymbolChild(
+    randomAssignment,
+    function_,
+    "Variable",
+    "ExampleSymbol_df2cd757b8a8",
+  );
+  const randomGate = findTraceCall(
+    function_,
+    1447,
+    "RandomBoolWithWeight",
+    "final",
+    1,
+  );
+  assertChildCall(randomAssignment, randomGate, "Assignment");
+  assertTraceLiteralChild(randomGate, function_, "Parameters[0]", "number", "0.66");
+
+  const firstLength = findTraceCall(function_, 1502, "Map_Length", "final", 1);
+  assertCollectionArgument(function_, firstLength, 1511, 1577);
+  const positiveCountAssignment = findTraceNode(function_, 1587);
+  assertTraceRootNode(function_, 1587, "EX_LetBool");
+  assertTraceSymbolChild(
+    positiveCountAssignment,
+    function_,
+    "Variable",
+    "ExampleSymbol_b752835dd3cc",
+  );
+  const positiveCount = findTraceCall(function_, 1597, "Greater_IntInt", "final", 2);
+  assertChildCall(positiveCountAssignment, positiveCount, "Assignment");
+  assertTraceSymbolChild(
+    positiveCount,
+    function_,
+    "Parameters[0]",
+    "ExampleSymbol_a76986845fbb",
+  );
+  assertTraceLiteralChild(positiveCount, function_, "Parameters[1]", "integer", "0");
+  assertIntegerArgumentEntries(positiveCount, [{ position: 1, value: "0" }]);
+
+  const combinedAssignment = findTraceNode(function_, 1621);
+  assertTraceRootNode(function_, 1621, "EX_LetBool");
+  assertTraceSymbolChild(
+    combinedAssignment,
+    function_,
+    "Variable",
+    "ExampleSymbol_69ac0269c2d9",
+  );
+  const combined = findTraceCall(function_, 1631, "BooleanAND", "final", 2);
+  assertChildCall(combinedAssignment, combined, "Assignment");
+  assertTraceSymbolChild(
+    combined,
+    function_,
+    "Parameters[0]",
+    "ExampleSymbol_b752835dd3cc",
+  );
+  assertTraceSymbolChild(
+    combined,
+    function_,
+    "Parameters[1]",
+    "ExampleSymbol_df2cd757b8a8",
+  );
+  const combinedBranch = assertTraceJump(function_, 1659, "pop-flow-if-false");
+  assertTraceSymbolChild(
+    combinedBranch,
+    function_,
+    "BooleanExpression",
+    "ExampleSymbol_69ac0269c2d9",
+  );
+
+  const keys = findTraceCall(function_, 1702, "Map_Keys", "final", 2);
+  assertCollectionArgument(function_, keys, 1711, 1777);
+  assertTraceSymbolChild(keys, function_, "Parameters[1]", "ExampleSymbol_d6e3aa1b6c52");
+  const values = findTraceCall(function_, 1829, "Map_Values", "final", 2);
+  assertCollectionArgument(function_, values, 1838, 1904);
+  assertTraceSymbolChild(
+    values,
+    function_,
+    "Parameters[1]",
+    "ExampleSymbol_5c9e16b9b19d",
+  );
+  const secondLength = findTraceCall(function_, 1963, "Map_Length", "final", 1);
+  assertCollectionArgument(function_, secondLength, 1972, 2038);
+
+  const subtractAssignment = findTraceNode(function_, 2048);
+  assertTraceRootNode(function_, 2048, "EX_Let");
+  assertTraceSymbolChild(
+    subtractAssignment,
+    function_,
+    "Variable",
+    "ExampleSymbol_e786ddbe8538",
+  );
+  const subtract = findTraceCall(function_, 2066, "Subtract_IntInt", "final", 2);
+  assertChildCall(subtractAssignment, subtract, "Assignment");
+  assertTraceSymbolChild(
+    subtract,
+    function_,
+    "Parameters[0]",
+    "ExampleSymbol_a76986845fbb",
+  );
+  assertTraceLiteralChild(subtract, function_, "Parameters[1]", "integer", "1");
+  assertIntegerArgumentEntries(subtract, [{ position: 1, value: "1" }]);
+
+  const randomIndexAssignment = findTraceNode(function_, 2090);
+  assertTraceRootNode(function_, 2090, "EX_Let");
+  assertTraceSymbolChild(
+    randomIndexAssignment,
+    function_,
+    "Variable",
+    "ExampleSymbol_2570513be054",
+  );
+  const randomIndex = findTraceCall(function_, 2108, "RandomInteger", "final", 1);
+  assertChildCall(randomIndexAssignment, randomIndex, "Assignment");
+  assertTraceSymbolChild(
+    randomIndex,
+    function_,
+    "Parameters[0]",
+    "ExampleSymbol_e786ddbe8538",
+  );
+  assertVariableAssignment(
+    function_,
+    2127,
+    "EX_Let",
+    "Example Selected Key",
+    "ExampleSymbol_2570513be054",
+  );
+
+  const selectedKey = findTraceCall(function_, 2176, "Array_Get", "final", 3);
+  assertTraceSymbolChild(selectedKey, function_, "Parameters[0]", "ExampleSymbol_d6e3aa1b6c52");
+  assertTraceSymbolChild(selectedKey, function_, "Parameters[1]", "Example Selected Key");
+  assertTraceSymbolChild(selectedKey, function_, "Parameters[2]", "ExampleSymbol_4bb2d3edf81f");
+  assertVariableAssignment(
+    function_,
+    2213,
+    "EX_Let",
+    "Request Movie SKU",
+    "ExampleSymbol_4bb2d3edf81f",
+  );
+  const selectedValue = findTraceCall(function_, 2262, "Array_Get", "final", 3);
+  assertTraceSymbolChild(
+    selectedValue,
+    function_,
+    "Parameters[0]",
+    "ExampleSymbol_5c9e16b9b19d",
+  );
+  assertTraceSymbolChild(selectedValue, function_, "Parameters[1]", "Example Selected Key");
+  assertTraceSymbolChild(
+    selectedValue,
+    function_,
+    "Parameters[2]",
+    "ExampleSymbol_38f1ea380eae",
+  );
+  const reservedProduct = findTraceNode(function_, 2299);
+  assertTraceRootNode(function_, 2299, "EX_Let");
+  assertTraceSymbolChild(reservedProduct, function_, "Variable", "Reserved Movie Product");
+  const productMember = findTraceNode(function_, 2317);
+  assertChildNode(reservedProduct, productMember, "Assignment");
+  if (
+    productMember.kind !== "context" ||
+    productMember.symbol !== "ExampleField11_0_00000000000000000000000000000000"
+  ) {
+    throw new Error("Reserved new-release product member changed.");
+  }
+  assertTraceSymbolChild(
+    productMember,
+    function_,
+    "StructExpression",
+    "ExampleSymbol_38f1ea380eae",
+  );
+  assertTraceJump(function_, 2335, "pop-flow");
+  assertLiteralAssignment(
+    function_,
+    2336,
+    "EX_LetBool",
+    "ExampleGenerateSuccess",
+    "boolean",
+    "true",
+  );
+  assertTraceRootNode(function_, 2347, "EX_Return");
+}
+
 function assertWrapperEntry(
   wrapperTrace: BlueprintFunctionTraceArtifact,
   functionName: string,
@@ -478,14 +872,62 @@ function assertLiteralAssignment(
   assertTraceLiteralChild(assignment, function_, "Assignment", literalType, value);
 }
 
-function assertChildCall(
+function assertVariableAssignment(
+  function_: ReturnType<typeof findTraceFunction>,
+  statementIndex: number,
+  opcode: string,
+  targetSymbol: string,
+  sourceSymbol: string,
+): void {
+  const assignment = findTraceNode(function_, statementIndex);
+  assertTraceRootNode(function_, statementIndex, opcode);
+  if (assignment.kind !== "assignment") {
+    throw new Error(`Blueprint trace assignment changed at statement ${statementIndex}.`);
+  }
+  assertTraceSymbolChild(assignment, function_, "Variable", targetSymbol);
+  assertTraceSymbolChild(assignment, function_, "Assignment", sourceSymbol);
+}
+
+function assertCollectionArgument(
+  function_: ReturnType<typeof findTraceFunction>,
+  callNode: ReturnType<typeof findTraceCall>,
+  contextStatementIndex: number,
+  fieldStatementIndex: number,
+): void {
+  const context = findTraceNode(function_, contextStatementIndex);
+  assertChildNode(callNode, context, "Parameters[0]");
+  if (context.kind !== "context" || context.symbol !== newReleaseCandidatesSymbol) {
+    throw new Error(
+      `New-release candidate collection changed at statement ${contextStatementIndex}.`,
+    );
+  }
+  const field = findTraceNode(function_, fieldStatementIndex);
+  assertChildNode(context, field, "ContextExpression");
+  if (field.kind !== "variable" || field.symbol !== newReleaseCandidatesSymbol) {
+    throw new Error(
+      `New-release candidate collection field changed at statement ${fieldStatementIndex}.`,
+    );
+  }
+}
+
+function assertChildNode(
   parent: ReturnType<typeof findTraceNode>,
   child: ReturnType<typeof findTraceNode>,
   edge: string,
 ): void {
   if (child.parentNodeIndex !== parent.nodeIndex || child.edge !== edge) {
-    throw new Error(`Blueprint trace operation changed for ${edge} at statement ${parent.statementIndex}.`);
+    throw new Error(
+      `Blueprint trace operation changed for ${edge} at statement ${parent.statementIndex}.`,
+    );
   }
+}
+
+function assertChildCall(
+  parent: ReturnType<typeof findTraceNode>,
+  child: ReturnType<typeof findTraceNode>,
+  edge: string,
+): void {
+  assertChildNode(parent, child, edge);
 }
 
 function assertNamedAssignment(
