@@ -261,7 +261,39 @@ Use statement indexes and paths from the source trace rather than copying the ex
 The source trace, manifest, mapping, and packages must all have matching identities.
 The output contains game-specific signature and bytecode evidence and must remain in the ignored local acquisition directory.
 
-## 17. Create the typed rental function trace
+## 17. Find an exact cooked function declaration
+
+This step scans the raw export map of every parsed package that the census reports as containing a `Function` export.
+It matches one exact function object name, then records each declaration's owner, flags, parameter signature, bytecode-expression count, superclass, interfaces, and presence in the owner's `Children` and `FuncMap` collections.
+Raw export-map matching covers declarations that may be absent from a generated class's function lookup map.
+
+```powershell
+dotnet run --project $extractor -- blueprint-function-declarations `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --target-function "Evaluate Example Record" `
+  --output (Join-Path $buildDirectory "blueprint-function-declarations.return-if-film-is-new.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-function-declarations \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --target-function "Evaluate Example Record" \
+  --output "$buildDirectory/blueprint-function-declarations.return-if-film-is-new.json"
+```
+
+The build `23896268` scan covered 604 candidate packages and 7,527 raw function exports without a package failure.
+It found one exact declaration at `ExampleRecord_C:Evaluate Example Record` with the four parameters `Example Product Struct`, `__WorldContext`, `is New`, and `is New Day Left`.
+The declaration belongs to a Blueprint function library and is present in both its owner's `Children` collection and `FuncMap`.
+This establishes declaration existence and signature, not how the `ExampleManager_C` local-virtual call resolves to an external function-library owner or what the declaration's body computes.
+The output contains game-specific declaration evidence and must remain in the ignored local acquisition directory.
+
+## 18. Create the typed rental function trace
 
 This step rereads four exact `ExampleQueueSystem` functions from cooked Kismet bytecode.
 The rental Blueprint-body artifact supplies the expected package, class, function paths, flags, and bytecode-expression counts.
@@ -301,6 +333,7 @@ The output contains game-specific bytecode structure and must remain in the igno
 
 ## Next step
 
-Continue with [domain compilation](domain-compilation-workflow.md) after the required typed traces exist.
+For the current still-new movie investigation, trace `ExampleRecord_C:Evaluate Example Record` and reconcile its external function-library owner with the serialized `ExampleManager_C` local-virtual call.
+For subsystems whose required traces already exist, continue with [domain compilation](domain-compilation-workflow.md).
 
 [Documentation overview](README.md)

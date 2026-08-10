@@ -14,6 +14,11 @@ export {
   type BlueprintCallerBodies,
 } from "./contracts/acquisition/blueprint-caller-bodies.ts";
 export {
+  BlueprintFunctionDeclarationsJsonSchema,
+  BlueprintFunctionDeclarationsSchema,
+  type BlueprintFunctionDeclarations,
+} from "./contracts/acquisition/blueprint-function-declarations.ts";
+export {
   BlueprintFunctionTraceJsonSchema,
   BlueprintFunctionTraceSchema,
   type BlueprintFunctionTrace,

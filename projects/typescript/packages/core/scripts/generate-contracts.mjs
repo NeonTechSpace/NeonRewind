@@ -13,6 +13,7 @@ const contracts = [
   ["acquisition", "blueprint-call-candidate-trace", "BlueprintCallCandidateTrace", "game-data-exporter"],
   ["acquisition", "blueprint-caller-bodies", "BlueprintCallerBodies", "game-data-exporter"],
   ["acquisition", "blueprint-function-trace", "BlueprintFunctionTrace", "game-data-exporter"],
+  ["acquisition", "blueprint-function-declarations", "BlueprintFunctionDeclarations", "game-data-exporter"],
   ["acquisition", "blueprint-property-reference-trace", "BlueprintPropertyReferenceTrace", "game-data-exporter"],
   ["acquisition", "blueprint-property-references", "BlueprintPropertyReferences", "game-data-exporter"],
   ["acquisition", "build-manifest", "BuildManifest", "game-data-exporter"],

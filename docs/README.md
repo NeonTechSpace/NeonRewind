@@ -10,7 +10,7 @@ The repository currently provides build-identified Unreal data acquisition, cano
 - The normalized film catalog covers the game's 13 catalog tables.
 - Rental, membership-fee, movie-return, and new-release request mechanics have typed or normalized evidence.
 - A user-operated movie-return observation for Steam build `23896268` completed and passed semantic validation.
-- Exact membership and expiry for the still-new movie candidate map remain unresolved. The serialized `Evaluate Example Record` call has four arguments and no exact cooked UFunction in its class lookup path. The similarly named `Evaluate Example Schedule` function has one Boolean output parameter and independently latches the current release event, so it does not supply the missing four-argument signature.
+- Exact membership and expiry for the still-new movie candidate map remain unresolved. A complete scan of build `23896268` found the serialized four-argument `Evaluate Example Record` call's exact four-parameter declaration on the `ExampleRecord_C` Blueprint function library. Its body and the call's resolution to that external owner have not yet been traced. The similarly named `ExampleManager_C:Evaluate Example Schedule` declaration has one Boolean output parameter and remains a distinct function.
 - No public guide, calculator, or website exists.
 
 ## Documentation

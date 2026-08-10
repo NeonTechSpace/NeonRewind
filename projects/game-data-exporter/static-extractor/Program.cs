@@ -92,6 +92,11 @@ internal static class Program
             return BlueprintCallCandidateTraceCommand.Run(blueprintCallCandidateArguments);
         }
 
+        if (args is ["blueprint-function-declarations", .. var declarationArguments])
+        {
+            return BlueprintFunctionDeclarationsCommand.Run(declarationArguments);
+        }
+
         if (args is ["rental-function-trace", .. var rentalFunctionTraceArguments])
         {
             return RentalFunctionTraceCommand.Run(rentalFunctionTraceArguments);
@@ -128,6 +133,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-caller-bodies --build-manifest <path> --call-sites <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-function-trace --build-manifest <path> --caller-bodies <path> [--caller-bodies <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-call-candidate-trace --build-manifest <path> --source-trace <path> --caller-function-path <path> --statement-index <integer> --expected-call-kind <kind> --expected-call-function <name> --expected-argument-count <integer> --candidate-function-path <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-function-declarations --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --target-function <name> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-function-trace --build-manifest <path> --rental-blueprint-bodies <path> --function-path <path> [--function-path <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine();
         writer.WriteLine("The package probe scans one directory using the configured UE 5.4 profile.");
@@ -147,6 +153,7 @@ internal static class Program
         writer.WriteLine("The blueprint-caller-bodies command decompiles the exact caller functions recorded by a complete call-site artifact.");
         writer.WriteLine("The blueprint-function-trace command rereads exact caller functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The blueprint-call-candidate-trace command compares one recorded call with an explicitly selected same-class candidate without asserting that they are related.");
+        writer.WriteLine("The blueprint-function-declarations command scans raw cooked Function exports for one exact object name and records declaration signatures and owner linkage.");
         writer.WriteLine("The rental-function-trace command rereads selected rental functions into typed Kismet nodes without parsing pseudocode.");
     }
 }
