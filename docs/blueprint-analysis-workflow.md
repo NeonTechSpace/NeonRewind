@@ -293,7 +293,61 @@ The declaration belongs to a Blueprint function library and is present in both i
 This establishes declaration existence and signature, not how the `ExampleManager_C` local-virtual call resolves to an external function-library owner or what the declaration's body computes.
 The output contains game-specific declaration evidence and must remain in the ignored local acquisition directory.
 
-## 18. Create the typed rental function trace
+## 18. Verify and trace an exact call target
+
+This step binds one exact call node to one exact cooked declaration and traces the bound function body.
+It requires the call to be the `ContextExpression` of `EX_Context`, the context's `ObjectExpression` to be `EX_ObjectConst`, the receiver's class path to equal the declaration owner, and the call's argument count to equal the declaration's parameter count.
+The command also verifies the declaration against the loaded class function map, package export, signature, flags, and bytecode-expression count.
+It fails closed instead of emitting an unproven relationship.
+
+```powershell
+$marketClass = "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C:"
+$filmDataClass = "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C:"
+
+dotnet run --project $extractor -- blueprint-call-target-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --source-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-candidates.json") `
+  --declarations (Join-Path $buildDirectory "blueprint-function-declarations.return-if-film-is-new.json") `
+  --caller-function-path ($marketClass + "Filter Example Schedule") `
+  --statement-index 152 `
+  --expected-call-kind "local-virtual" `
+  --expected-call-function "Evaluate Example Record" `
+  --expected-argument-count 4 `
+  --target-function-path ($filmDataClass + "Evaluate Example Record") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-call-target-trace.return-if-film-is-new.json")
+```
+
+```bash
+marketClass="ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C:"
+filmDataClass="ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C:"
+
+dotnet run --project "$extractor" -- blueprint-call-target-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --source-trace "$buildDirectory/blueprint-property-reference-trace.new-release-candidates.json" \
+  --declarations "$buildDirectory/blueprint-function-declarations.return-if-film-is-new.json" \
+  --caller-function-path "${marketClass}Filter Example Schedule" \
+  --statement-index 152 \
+  --expected-call-kind "local-virtual" \
+  --expected-call-function "Evaluate Example Record" \
+  --expected-argument-count 4 \
+  --target-function-path "${filmDataClass}Evaluate Example Record" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-call-target-trace.return-if-film-is-new.json"
+```
+
+For build `23896268`, the call at statement `152` is nested under an `EX_Context` whose object receiver is `Default__ExampleRecord_C`.
+That receiver's class path exactly matches the declaration owner, and the four call arguments match the four declared parameters.
+The traced function uses a seven-day constant and outputs `is New = (Example Period Count - Example Available Period) <= 7` and `is New Day Left = (Example Available Period + 7) - Example Period Count` after a successful `ExampleMode` cast.
+The cast-failure path outputs `false` and `0`.
+The function itself has no lower-bound check on the elapsed value, while its `ExampleManager_C` caller separately gates candidates on `Released == true` and `SecondHand == false`.
+Reads of release-date fields and a constructed string feed debug printing rather than the output calculation.
+This is static cooked-bytecode evidence, not a runtime observation.
+The output contains game-specific receiver, declaration, signature, and bytecode evidence and must remain in the ignored local acquisition directory.
+
+## 19. Create the typed rental function trace
 
 This step rereads four exact `ExampleQueueSystem` functions from cooked Kismet bytecode.
 The rental Blueprint-body artifact supplies the expected package, class, function paths, flags, and bytecode-expression counts.
@@ -333,7 +387,7 @@ The output contains game-specific bytecode structure and must remain in the igno
 
 ## Next step
 
-For the current still-new movie investigation, trace `ExampleRecord_C:Evaluate Example Record` and reconcile its external function-library owner with the serialized `ExampleManager_C` local-virtual call.
+For the current still-new movie investigation, normalize the verified target trace and caller gates into the new-release mechanic artifact.
 For subsystems whose required traces already exist, continue with [domain compilation](domain-compilation-workflow.md).
 
 [Documentation overview](README.md)

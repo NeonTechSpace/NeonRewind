@@ -11,6 +11,7 @@ const checkOnly = process.argv.includes("--check");
 const contracts = [
   ["acquisition", "blueprint-call-sites", "BlueprintCallSites", "game-data-exporter"],
   ["acquisition", "blueprint-call-candidate-trace", "BlueprintCallCandidateTrace", "game-data-exporter"],
+  ["acquisition", "blueprint-call-target-trace", "BlueprintCallTargetTrace", "game-data-exporter"],
   ["acquisition", "blueprint-caller-bodies", "BlueprintCallerBodies", "game-data-exporter"],
   ["acquisition", "blueprint-function-trace", "BlueprintFunctionTrace", "game-data-exporter"],
   ["acquisition", "blueprint-function-declarations", "BlueprintFunctionDeclarations", "game-data-exporter"],

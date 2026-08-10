@@ -4,7 +4,7 @@ This workflow validates private acquisition artifacts and compiles normalized Ne
 
 [Documentation overview](README.md) · [Previous: Blueprint analysis](blueprint-analysis-workflow.md) · [Next: runtime preparation](runtime-preparation-workflow.md)
 
-## 19. Compile the console-return mechanics
+## 20. Compile the console-return mechanics
 
 This step validates both rental artifacts and confirms the expected class, fields, defaults, functions, and decompiled expressions before writing normalized facts.
 The artifact records the configured rental duration, the eligibility comparison, the missing-weather result, and movement from the rented queue to the ready-to-return queue.
@@ -55,7 +55,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 20. Compile the membership-fee mechanics
+## 21. Compile the membership-fee mechanics
 
 This step uses the same two private rental artifacts as the console-return compiler.
 It confirms the membership fee map, the five-field fee record, both mutation functions, and their decompiled expressions.
@@ -107,7 +107,7 @@ popd >/dev/null
 
 The output contains normalized game rules and remains private and uncommitted.
 
-## 21. Compile the movie-return mechanics
+## 22. Compile the movie-return mechanics
 
 This step uses the two private rental artifacts, the complete movie-selector call-site artifact, the extracted caller-body artifact, and both typed function traces.
 It traces the new-day event through its Blueprint dispatcher and confirms that all rented movies move into the ready-to-return queue before the rented queue is cleared.
@@ -180,7 +180,7 @@ The output contains normalized game rules and remains private and uncommitted.
 After a runtime observation passes, use `pnpm movie-return-validated-mechanics` as documented in [Movie-return runtime observation](movie-return-runtime-observation.md).
 That command writes a new immutable mechanics artifact which identifies the exact base mechanics, observation, and passing validation report without rewriting the base file named by the report.
 
-## 22. Compile the new-release unlock mechanics
+## 23. Compile the new-release unlock mechanics
 
 This step joins the typed unlock-manager event graph, typed wrapper entrypoints, traced property reader, and typed `Generate Example Request` body.
 It confirms that `Reset to new Day Event_Event` enters the manager at statement `3364`, calls `ExampleReleaseEnabled`, compares the Weather Actor's current date with the first save-game day plus two days, and sets `ExampleReleaseKind` to `true` when the threshold is reached.
@@ -246,7 +246,7 @@ popd >/dev/null
 The output contract is the executable `NewReleaseUnlockMechanicsSchema` in `projects/typescript/packages/core/src/contracts/domain/new-release-unlock-mechanics.ts`.
 The generated artifact remains private and is not committed.
 
-## 23. Compile the normalized film catalog
+## 24. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact with the canonical ArkType contract and independently checks the generated JSON Schema supplied on the command line.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
