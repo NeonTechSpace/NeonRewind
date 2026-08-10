@@ -20,6 +20,43 @@ internal static class BlueprintFunctionTracer
             throw new InvalidDataException("Blueprint trace requests must be nonempty and unique.");
         }
 
+        var expectedMetadata = requests.ToDictionary(
+            request => request.FunctionPath,
+            request => request,
+            StringComparer.Ordinal);
+        return TraceSelected(
+            mappingsPath,
+            packageDirectory,
+            requests.Select(request => new BlueprintFunctionTraceSelection(
+                request.PackagePath,
+                request.ClassName,
+                request.ClassPath,
+                request.FunctionName,
+                request.FunctionPath)).ToArray(),
+            expectedMetadata);
+    }
+
+    public static IReadOnlyList<BlueprintTracedFunction> TraceSelected(
+        string mappingsPath,
+        string packageDirectory,
+        IReadOnlyList<BlueprintFunctionTraceSelection> selections)
+    {
+        if (selections.Count == 0 ||
+            selections.Select(selection => selection.FunctionPath)
+                .Distinct(StringComparer.Ordinal).Count() != selections.Count)
+        {
+            throw new InvalidDataException("Blueprint trace selections must be nonempty and unique.");
+        }
+
+        return TraceSelected(mappingsPath, packageDirectory, selections, null);
+    }
+
+    private static IReadOnlyList<BlueprintTracedFunction> TraceSelected(
+        string mappingsPath,
+        string packageDirectory,
+        IReadOnlyList<BlueprintFunctionTraceSelection> selections,
+        IReadOnlyDictionary<string, BlueprintFunctionTraceRequest>? expectedMetadata)
+    {
         var versions = new VersionContainer(EGame.GAME_UE5_4);
         using var provider = new DefaultFileProvider(
             Path.GetFullPath(packageDirectory),
@@ -40,24 +77,28 @@ internal static class BlueprintFunctionTracer
         }
 
         var functions = new List<BlueprintTracedFunction>();
-        foreach (var classGroup in requests
-            .OrderBy(request => request.PackagePath, StringComparer.Ordinal)
-            .ThenBy(request => request.ClassPath, StringComparer.Ordinal)
-            .ThenBy(request => request.FunctionPath, StringComparer.Ordinal)
-            .GroupBy(request => new TraceClassKey(
-                request.PackagePath,
-                request.ClassName,
-                request.ClassPath)))
+        foreach (var classGroup in selections
+            .OrderBy(selection => selection.PackagePath, StringComparer.Ordinal)
+            .ThenBy(selection => selection.ClassPath, StringComparer.Ordinal)
+            .ThenBy(selection => selection.FunctionPath, StringComparer.Ordinal)
+            .GroupBy(selection => new TraceClassKey(
+                selection.PackagePath,
+                selection.ClassName,
+                selection.ClassPath)))
         {
             var blueprintClass = LoadClass(provider, classGroup.Key);
-            foreach (var request in classGroup)
+            foreach (var selection in classGroup)
             {
-                var function = LoadFunction(blueprintClass, request);
+                var function = LoadFunction(blueprintClass, selection);
                 var trace = BlueprintFunctionTraceBuilder.Build(
-                    request.PackagePath,
+                    selection.PackagePath,
                     blueprintClass,
                     function);
-                VerifyMetadata(trace, request);
+                if (expectedMetadata is not null)
+                {
+                    VerifyMetadata(trace, expectedMetadata[selection.FunctionPath]);
+                }
+
                 functions.Add(trace);
             }
         }
@@ -106,7 +147,7 @@ internal static class BlueprintFunctionTracer
 
     private static UFunction LoadFunction(
         UBlueprintGeneratedClass blueprintClass,
-        BlueprintFunctionTraceRequest expected)
+        BlueprintFunctionTraceSelection expected)
     {
         var matches = blueprintClass.FuncMap
             .Where(pair => pair.Key.Text == expected.FunctionName)
@@ -149,3 +190,10 @@ internal sealed record BlueprintFunctionTraceRequest(
     string FunctionPath,
     string Flags,
     int BytecodeExpressionCount);
+
+internal sealed record BlueprintFunctionTraceSelection(
+    string PackagePath,
+    string ClassName,
+    string ClassPath,
+    string FunctionName,
+    string FunctionPath);

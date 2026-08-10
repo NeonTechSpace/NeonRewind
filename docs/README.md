@@ -32,6 +32,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Structured values | `structured-values.json` | Extracts table rows and strings into deterministic JSON |
 | Rental evidence | `rental-evidence.json` | Extracts the rental subsystem's fields, functions, explicit defaults, and default-value object references |
 | Unlockable evidence | `unlockable-evidence.json` | Extracts the unlockable subsystem's fields, functions, explicit defaults, and default-value object references |
+| Unlockable function trace | `unlockable-function-trace.json` | Converts the four unlock eligibility and mutation functions into typed Kismet nodes tied to the unlockable evidence |
 | Rental Blueprint bodies | `rental-blueprint-bodies.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Blueprint call sites | `blueprint-call-sites.movie-return.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
 | Blueprint caller bodies | `blueprint-caller-bodies.movie-return.json` | Decompiles the exact functions found by the movie-return call-site scan |
@@ -61,7 +62,7 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, unlockable-function-trace, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
 Follow [Portable local tool setup](docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
@@ -313,6 +314,32 @@ dotnet run --project "$extractor" -- unlockable-evidence \
 ```
 
 The output contains extracted game values and must remain in the ignored local acquisition directory.
+
+## 7b. Trace the unlock eligibility and mutation functions
+
+This step rereads `BP_ExampleItem_C.IsExampleEligible`, `BP_ExampleItem_C.ApplyExample`, `ExampleUnlockSystem_C.CanApplyExample`, and `ExampleUnlockSystem_C.TryApplyExample` from cooked Kismet bytecode.
+It accepts only unlockable evidence for the supplied build and mappings, confirms that each exact class and function remains present, and writes typed calls, branches, variables, literals, assignments, contexts, and returns without parsing decompiler pseudocode.
+
+```powershell
+dotnet run --project $extractor -- unlockable-function-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --unlockable-evidence (Join-Path $buildDirectory "unlockable-evidence.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "unlockable-function-trace.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- unlockable-function-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --unlockable-evidence "$buildDirectory/unlockable-evidence.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/unlockable-function-trace.json"
+```
+
+The command verifies every package and input identity before and after tracing, accepts identical existing output, and refuses to overwrite different content.
+The output contains extracted game logic and must remain in the ignored local acquisition directory.
 
 ## 8. Extract readable rental Blueprint bodies
 
