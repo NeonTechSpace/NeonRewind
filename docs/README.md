@@ -2,6 +2,8 @@
 
 NeonRetroRewind is an unofficial, open-source research and data project for *Retro Rewind: Video Store Simulator*.
 
+This is a passion project. I enjoy playing the game, which motivates me to build an accurate, evidence-backed guide for it.
+
 The repository currently provides build-identified Unreal data acquisition, canonical ArkType artifact contracts, generated JSON Schema for cross-language boundaries, normalized film and mechanic compilers, and a bounded movie-return runtime collector and validator. The public guide and website have not been built yet.
 
 ## Current status
@@ -31,7 +33,7 @@ Start with the page that matches the work you need:
 
 ## Data and distribution boundary
 
-The repository contains source code, generated boundary schemas, normalization logic, and instructions. Users provide their own licensed game installation and run acquisition locally.
+Game files and raw game data of any kind must never be committed to or published from this repository. The repository contains source code, generated boundary schemas, normalization logic, and instructions. Users provide their own licensed game installation and run acquisition locally.
 
 Do not commit or publish:
 
