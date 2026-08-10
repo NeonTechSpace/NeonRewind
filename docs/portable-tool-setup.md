@@ -104,7 +104,12 @@ Add the local tools to the current shell process only.
 
 ```powershell
 $nodeDirectory = Join-Path $typescriptTools "node-v24.19.0-win-x64"
-$env:PATH = "$((Resolve-Path $dotnetDirectory).Path);$((Resolve-Path $nodeDirectory).Path);$((Resolve-Path $pnpmDirectory).Path);$env:PATH"
+$env:PATH = @(
+  (Resolve-Path $dotnetDirectory).Path
+  (Resolve-Path $nodeDirectory).Path
+  (Resolve-Path $pnpmDirectory).Path
+  $env:PATH
+) -join [IO.Path]::PathSeparator
 
 dotnet --version
 node --version
@@ -134,4 +139,4 @@ NeonRetroRewind does not yet provide a supported mapping-generation procedure.
 Complete the probe, build-manifest, and static-census steps, then stop if you do not already have a matching mapping.
 Do not reuse a mapping from another build.
 
-Return to the [main workflow](README.md) after the local tools are available.
+Return to the [static acquisition workflow](static-acquisition-workflow.md) after the local tools are available.

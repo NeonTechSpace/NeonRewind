@@ -1,7 +1,7 @@
 # Movie-return runtime collector
 
 This directory contains the source and local build commands for the UE4SS C++ movie-return collector.
-Collector `0.1.7` registers bounded hooks for readiness, selection, customer return, and the inventory additions made inside a customer-return call. It resolves the local-virtual inventory function by exact name through the already resolved customer class hierarchy. Before registration it checks the pinned UE4SS callable-dispatch rules: a resolved function without callable dispatch is retried as load readiness, while an unsupported native-flag and dispatch combination fails closed. A customer frame binds the ExampleQueueSystem and pre-ready queue when its first nested movie-selection call begins; calls that never enter the movie branch produce no movie-return event. The selection post-hook reads both Blueprint out-parameters through `FFrame::OutParms` using UE4SS's exported `FindOutParamValueAddress`, matching the runtime host's own post-hook path. The inventory hook ignores calls outside an active customer-return frame before reading their parameters. It writes the three contracted observation event types; the inventory hook supplies state for the customer-return event and does not create another event type. While waiting, it reports only unresolved target or dispatch labels on first attempt, when the set changes, and every 30 attempts. Reflected-contract rejection, hook-registration exceptions, and guarded runtime failures report fixed labels.
+Collector `0.1.7` registers bounded hooks for readiness, selection, customer return, and the inventory additions made inside a customer-return call. It resolves the local-virtual inventory function by exact name through the already resolved customer class hierarchy. Before registration it checks the pinned UE4SS callable-dispatch rules: a resolved function without callable dispatch is retried as load readiness, while an unsupported native-flag and dispatch combination fails closed. A customer frame binds the ExampleQueueSystem and pre-ready queue when its first nested movie-selection call begins. Calls that never enter the movie branch produce no movie-return event. The selection post-hook reads both Blueprint out-parameters through `FFrame::OutParms` using UE4SS's exported `FindOutParamValueAddress`, matching the runtime host's own post-hook path. The inventory hook ignores calls outside an active customer-return frame before reading their parameters. It writes the three contracted observation event types. The inventory hook supplies state for the customer-return event and does not create another event type. While waiting, it reports only unresolved target or dispatch labels on first attempt, when the set changes, and every 30 attempts. Reflected-contract rejection, hook-registration exceptions, and guarded runtime failures report fixed labels.
 
 A user-operated collector `0.1.7` run for Steam build `23896268` completed with every required event kind and passed the repository's semantic validator with no issues. The observation, validation report, and runtime log remain private ignored artifacts.
 
@@ -50,11 +50,12 @@ Portable Git does not require installation or administrator rights.
 Open its `git-bash.exe`, or add its `cmd` directory to `PATH` for only the current PowerShell process:
 
 ```powershell
-$env:Path = "$PWD\projects\game-data-exporter\.local\portable-git\cmd;$env:Path"
+$portableGitPath = Join-Path $PWD "projects\game-data-exporter\.local\portable-git\cmd"
+$env:Path = $portableGitPath + [IO.Path]::PathSeparator + $env:Path
 git --version
 ```
 
-Extracted directory names can differ between Portable Git releases; use the directory that directly contains `cmd\git.exe`.
+Extracted directory names can differ between Portable Git releases. Use the directory that directly contains `cmd\git.exe`.
 
 ## 1. Prepare the portable tools
 
@@ -118,8 +119,8 @@ bash projects/game-data-exporter/runtime-collector/Build-Collector.sh
 
 The first build compiles the pinned UE4SS baseline and then the collector.
 Ninja keeps the native incremental state in the persistent build directory, and Cargo keeps its Rust build state there as well.
-Later builds ask Ninja whether the baseline has pending work; with the same toolchain, dependency revisions, build configuration, and baseline source, changing only collector source compiles and links only the collector's native code.
-The upstream Rust integration may still run a quick Cargo freshness check; Cargo reuses its persistent output and does not recompile unchanged Rust crates.
+Later builds ask Ninja whether the baseline has pending work. With the same toolchain, dependency revisions, build configuration, and baseline source, changing only collector source compiles and links only the collector's native code.
+The upstream Rust integration may still run a quick Cargo freshness check. Cargo reuses its persistent output and does not recompile unchanged Rust crates.
 There is no compiler-cache service or background build process to preserve between commands.
 
 To prepare or verify only the persistent baseline without building the collector:
@@ -132,7 +133,7 @@ To prepare or verify only the persistent baseline without building the collector
 bash projects/game-data-exporter/runtime-collector/Build-Collector.sh -BaselineOnly
 ```
 
-Local builds use at most six logical processors by default. The memory-heavy Unreal baseline target uses at most four of that limit; the remaining baseline and collector use the full limit.
+Local builds use at most six logical processors by default. The memory-heavy Unreal baseline target uses at most four of that limit, while the remaining baseline and collector use the full limit.
 Nested Rust compilation stays within the outer build limit rather than adding another group of parallel jobs.
 To choose an explicit positive limit, pass `-ParallelJobs` through either shell:
 
@@ -154,7 +155,7 @@ Deleting or damaging the active build directory also requires a new baseline.
 Changing only collector source does not invalidate the baseline.
 
 If a build is interrupted, rerun the same build command.
-Ninja keeps completed outputs and schedules unfinished or invalid targets again; no manual process or cache cleanup is required.
+Ninja keeps completed outputs and schedules unfinished or invalid targets again. No manual process or cache cleanup is required.
 
 Building does not copy anything into the game directory.
-The runtime exporter can stage the DLL with its exact path, size, SHA-256 hash, generated config, observation schema, target-mechanics identity, and output root. Installation and cleanup remain separate explicit commands; none of the build or staging commands starts the game.
+The runtime exporter can stage the DLL with its exact path, size, SHA-256 hash, generated config, observation schema, target-mechanics identity, and output root. Installation and cleanup remain separate explicit commands, and none of the build or staging commands starts the game.

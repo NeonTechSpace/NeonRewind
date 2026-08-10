@@ -1,7 +1,7 @@
 # Movie-return runtime observation
 
 This document defines the first controlled runtime observation for movie returns.
-Collector `0.1.7`, its observation schema, build instructions, and exact install and cleanup commands are implemented. A user-operated run for Steam build `23896268` completed and passed the semantic validator with all required event kinds and no issues; the private artifacts remain ignored.
+Collector `0.1.7`, its observation schema, build instructions, and exact install and cleanup commands are implemented. A user-operated run for Steam build `23896268` completed and passed the semantic validator with all required event kinds and no issues. The private artifacts remain ignored.
 The [runtime-host investigation](movie-return-runtime-host.md) defines the compatibility probe, temporary installation footprint, and approval gates that precede the collector.
 
 ## Goal
@@ -67,7 +67,7 @@ Each record must contain:
 Every movie collection records its actual `totalCount`, a `truncated` flag, and at most 256 captured `movies`.
 The collector sets `truncated` when the actual collection exceeds that capture limit.
 The schema permits duplicate references, more than four selected movies, and disagreement between a selector's found flag and result count so the validator can retain those observations as mismatches.
-`NeonRetroRewind.MovieReturnRuntimeCollector` is the observation-record identity; the UE4SS mod name `NeonRetroRewindMovieReturnCollector` is a separate runtime-host identifier.
+`NeonRetroRewind.MovieReturnRuntimeCollector` is the observation-record identity, while the UE4SS mod name `NeonRetroRewindMovieReturnCollector` is a separate runtime-host identifier.
 
 Movie references must use stable runtime object paths when available.
 If stable paths are unavailable, the collector must assign run-local opaque identifiers that cannot be used outside that observation.
@@ -185,12 +185,12 @@ pnpm movie-return-validated-mechanics \
 
 The linker validates both artifacts with their canonical ArkType contracts, independently checks the generated mechanics JSON Schema, requires matching builds and the exact mechanics identity recorded by the report, and rechecks all three inputs before writing.
 The output records the base mechanics, observation, and report identities under `runtimeValidation` while retaining `evidenceLevel: "decompiled-blueprint"`.
-The original mechanics remain the source of truth for static rules and the collector target; the linked artifact is derived evidence for downstream use.
+The original mechanics remain the source of truth for static rules and the collector target. The linked artifact is derived evidence for downstream use.
 An incomplete or mismatched report cannot produce a linked artifact.
 Identical output is unchanged, and different existing output is retained with exit code `7`.
 
 ## Evidence effect
 
 A passing run supports only the deterministic claims exercised by that run and its exact game build.
-The linked normalized artifact remains `decompiled-blueprint` because the rule definitions still come from static Blueprint evidence; its `runtimeValidation` field identifies the exact passing runtime evidence.
+The linked normalized artifact remains `decompiled-blueprint` because the rule definitions still come from static Blueprint evidence. Its `runtimeValidation` field identifies the exact passing runtime evidence.
 The probability values remain supported by typed Blueprint evidence until a separate statistical validation is designed and completed.
