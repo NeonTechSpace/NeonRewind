@@ -165,4 +165,94 @@ internal static class UnlockableArtifactValidator
             throw new InvalidDataException("Static census package totals are inconsistent.");
         }
     }
+
+    public static void ValidateImplementationSites(
+        UnlockableImplementationSites sites,
+        BuildManifest manifest,
+        string manifestSha256,
+        MappingIdentity mappings)
+    {
+        if (sites.ArtifactType != "unlockable-implementation-sites" ||
+            sites.Build is null || sites.StaticCensus is null || sites.UnlockableEvidence is null ||
+            sites.UnlockableFunctionTrace is null || sites.Mappings is null || sites.Engine is null ||
+            sites.Extractor is null || sites.TargetFunctionNames is null || sites.Totals is null ||
+            sites.DerivedClasses is null || sites.Overrides is null || sites.ManagerEventGraphs is null ||
+            sites.CallSites is null || sites.Failures is null)
+        {
+            throw new InvalidDataException("Unlockable implementation sites are incomplete.");
+        }
+
+        if (sites.Build.ManifestSha256 != manifestSha256 ||
+            sites.Build.SteamAppId != manifest.Steam.AppId ||
+            sites.Build.SteamBuildId != manifest.Steam.BuildId ||
+            sites.Engine != manifest.Engine || sites.Mappings != mappings)
+        {
+            throw new InvalidDataException(
+                "Unlockable implementation sites do not belong to the supplied build and mappings.");
+        }
+
+        if (sites.BaseClassPath != UnlockableImplementationSiteScanner.BaseClassPath ||
+            sites.CandidateRule != UnlockableImplementationSiteScanner.CandidateRule ||
+            sites.Coverage != "complete" ||
+            !sites.TargetFunctionNames.SequenceEqual(
+                UnlockableImplementationSiteScanner.TargetFunctionNames,
+                StringComparer.Ordinal) ||
+            sites.Extractor.Name != "NeonRetroRewind.StaticExtractor" ||
+            string.IsNullOrWhiteSpace(sites.Extractor.Version) ||
+            string.IsNullOrWhiteSpace(sites.Extractor.Cue4ParseVersion) ||
+            sites.Failures.Count != 0)
+        {
+            throw new InvalidDataException(
+                "Unlockable implementation-site scope or coverage is not the expected complete scan.");
+        }
+
+        if (!IsCompleteInputIdentity(sites.StaticCensus) ||
+            !IsCompleteInputIdentity(sites.UnlockableEvidence) ||
+            !IsCompleteInputIdentity(sites.UnlockableFunctionTrace))
+        {
+            throw new InvalidDataException(
+                "Unlockable implementation-site input identities are incomplete.");
+        }
+
+        if (sites.Totals.ScannedPackageCount != sites.Totals.CandidatePackageCount ||
+            sites.Totals.FailedPackageCount != sites.Failures.Count ||
+            sites.Totals.DerivedClassCount != sites.DerivedClasses.Count ||
+            sites.Totals.OverrideCount != sites.Overrides.Count ||
+            sites.Totals.ManagerEventGraphCount != sites.ManagerEventGraphs.Count ||
+            sites.Totals.CallSiteCount != sites.CallSites.Count ||
+            sites.Totals.CandidatePackageCount <= 0 || sites.Totals.ClassCount <= 0 ||
+            sites.Totals.FunctionCount <= 0)
+        {
+            throw new InvalidDataException("Unlockable implementation-site totals are inconsistent.");
+        }
+
+        const string expectedFunctionPath =
+            "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C:ExecuteExampleGraph_ExampleUnlockSystem";
+        if (sites.ManagerEventGraphs.Count != 1)
+        {
+            throw new InvalidDataException("Expected exactly one complete unlock-manager event graph.");
+        }
+
+        var manager = sites.ManagerEventGraphs[0];
+        if (manager is null ||
+            manager.PackagePath != "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset" ||
+            manager.ClassName != "ExampleUnlockSystem_C" ||
+            manager.ClassPath != UnlockableImplementationSiteScanner.ManagerClassPath ||
+            manager.FunctionName != "ExecuteExampleGraph_ExampleUnlockSystem" ||
+            manager.FunctionPath != expectedFunctionPath ||
+            string.IsNullOrWhiteSpace(manager.Flags) ||
+            manager.BytecodeExpressionCount <= 0)
+        {
+            throw new InvalidDataException("Expected exactly one complete unlock-manager event graph.");
+        }
+    }
+
+    private static bool IsCompleteInputIdentity(UnlockableEvidenceInput input)
+        => IsCompleteInputIdentity(input.FileName, input.SizeBytes, input.Sha256);
+
+    private static bool IsCompleteInputIdentity(StaticCensusInput input)
+        => IsCompleteInputIdentity(input.FileName, input.SizeBytes, input.Sha256);
+
+    private static bool IsCompleteInputIdentity(string fileName, long sizeBytes, string sha256)
+        => !string.IsNullOrWhiteSpace(fileName) && sizeBytes > 0 && sha256 is { Length: 64 };
 }

@@ -34,6 +34,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Unlockable evidence | `unlockable-evidence.json` | Extracts the unlockable subsystem's fields, functions, explicit defaults, and default-value object references |
 | Unlockable function trace | `unlockable-function-trace.json` | Converts the four unlock eligibility and mutation functions into typed Kismet nodes tied to the unlockable evidence |
 | Unlockable implementation sites | `unlockable-implementation-sites.json` | Scans generated Blueprint classes for item-base descendants, hook overrides, manager event graphs, and calls to the four traced hooks |
+| Unlockable manager trace | `unlockable-manager-trace.json` | Converts the one discovered unlock-manager event graph into typed Kismet nodes tied to the complete implementation-site scan |
 | Rental Blueprint bodies | `rental-blueprint-bodies.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Blueprint call sites | `blueprint-call-sites.movie-return.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
 | Blueprint caller bodies | `blueprint-caller-bodies.movie-return.json` | Decompiles the exact functions found by the movie-return call-site scan |
@@ -63,7 +64,7 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, unlockable-function-trace, unlockable-implementation-sites, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, unlockable-function-trace, unlockable-implementation-sites, unlockable-manager-trace, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
 Follow [Portable local tool setup](docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
@@ -373,6 +374,32 @@ The artifact records complete or partial scan coverage and package failures expl
 Function-name call sites are candidates because virtual Kismet calls do not always encode a unique declaring class; inheritance and override records use exact class paths.
 The command verifies all package and input identities before and after scanning, accepts identical existing output, and refuses to overwrite different content.
 The output contains extracted game metadata and must remain in the ignored local acquisition directory.
+
+## 7d. Trace the unlock-manager event graph
+
+This step rereads the one `ExecuteExampleGraph_ExampleUnlockSystem` function recorded by a complete implementation-site scan.
+It requires the exact build and mappings, confirms that the discovery artifact has complete coverage and exactly one expected manager event graph, and rechecks that function's path, flags, and bytecode-expression count while producing typed Kismet nodes.
+
+```powershell
+dotnet run --project $extractor -- unlockable-manager-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --unlockable-implementation-sites (Join-Path $buildDirectory "unlockable-implementation-sites.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "unlockable-manager-trace.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- unlockable-manager-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --unlockable-implementation-sites "$buildDirectory/unlockable-implementation-sites.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/unlockable-manager-trace.json"
+```
+
+The command verifies every package and input identity before and after tracing, accepts identical existing output, and refuses to overwrite different content.
+The output contains extracted game logic and must remain in the ignored local acquisition directory.
 
 ## 8. Extract readable rental Blueprint bodies
 
