@@ -1,4 +1,9 @@
 export {
+  BlueprintCallCandidateTraceJsonSchema,
+  BlueprintCallCandidateTraceSchema,
+  type BlueprintCallCandidateTrace,
+} from "./contracts/acquisition/blueprint-call-candidate-trace.ts";
+export {
   BlueprintCallSitesJsonSchema,
   BlueprintCallSitesSchema,
   type BlueprintCallSites,

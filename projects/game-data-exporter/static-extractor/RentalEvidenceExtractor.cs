@@ -57,51 +57,11 @@ internal static class RentalEvidenceExtractor
         => fields
             .Select(field => new FieldEvidence(
                 Name: field.Name.Text,
-                Type: ReadFieldType(field),
+                Type: BlueprintFieldTypeReader.Read(field),
                 ArrayDimension: field is FProperty property ? property.ArrayDim : 1))
             .OrderBy(field => field.Name, StringComparer.Ordinal)
             .ThenBy(field => field.Type, StringComparer.Ordinal)
             .ToArray();
-
-    private static string ReadFieldType(FField? field)
-    {
-        if (field is null)
-        {
-            return "unknown";
-        }
-
-        var type = field switch
-        {
-            FArrayProperty value => $"Array<{ReadFieldType(value.Inner)}>",
-            FMapProperty value => $"Map<{ReadFieldType(value.KeyProp)}, {ReadFieldType(value.ValueProp)}>",
-            FSetProperty value => $"Set<{ReadFieldType(value.ElementProp)}>",
-            FSoftClassProperty value => $"SoftClass<{ResolvePath(value.PropertyClass) ?? "unknown"}>",
-            FSoftObjectProperty value => $"SoftObject<{ResolvePath(value.PropertyClass) ?? "unknown"}>",
-            FClassProperty value => $"Class<{ResolvePath(value.PropertyClass) ?? "unknown"}>",
-            FWeakObjectProperty value => $"WeakObject<{ResolvePath(value.PropertyClass) ?? "unknown"}>",
-            FObjectProperty value => $"Object<{ResolvePath(value.PropertyClass) ?? "unknown"}>",
-            FInterfaceProperty value => $"Interface<{ResolvePath(value.InterfaceClass) ?? "unknown"}>",
-            FStructProperty value => $"Struct<{ResolvePath(value.Struct) ?? "unknown"}>",
-            FEnumProperty value => $"Enum<{ResolvePath(value.Enum) ?? "unknown"}>",
-            FByteProperty value when value.Enum is not null && !value.Enum.IsNull =>
-                $"Byte<{ResolvePath(value.Enum) ?? "unknown"}>",
-            _ => ReadSimpleFieldType(field),
-        };
-
-        return type;
-    }
-
-    private static string ReadSimpleFieldType(FField field)
-    {
-        const string suffix = "Property";
-        var type = field.GetType().Name;
-        if (type.StartsWith('F') && type.EndsWith(suffix, StringComparison.Ordinal))
-        {
-            return type[1..^suffix.Length];
-        }
-
-        return type;
-    }
 
     private static IReadOnlyList<DefaultPropertyEvidence> ExtractProperties(IEnumerable<FPropertyTag> tags)
         => tags

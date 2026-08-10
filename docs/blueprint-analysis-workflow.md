@@ -217,7 +217,51 @@ dotnet run --project "$extractor" -- blueprint-function-trace \
 
 The output contains game-specific bytecode structure and must remain in the ignored local acquisition directory.
 
-## 16. Create the typed rental function trace
+## 16. Trace an explicit call candidate
+
+This step binds one exact call node from a Blueprint property-reference trace to one explicitly selected function on the same cooked class.
+It records the call signature, the candidate parameter signature, and the candidate's typed Kismet body.
+The output always labels the relationship `unproven`, even when a name, parameter count, or control-flow fragment is similar.
+
+```powershell
+$marketClass = "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C:"
+
+dotnet run --project $extractor -- blueprint-call-candidate-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --source-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-candidates.json") `
+  --caller-function-path ($marketClass + "Filter Example Schedule") `
+  --statement-index 152 `
+  --expected-call-kind "local-virtual" `
+  --expected-call-function "Evaluate Example Record" `
+  --expected-argument-count 4 `
+  --candidate-function-path ($marketClass + "Evaluate Example Schedule") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-call-candidate-trace.return-if-new-movie-release-today.json")
+```
+
+```bash
+marketClass="ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C:"
+
+dotnet run --project "$extractor" -- blueprint-call-candidate-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --source-trace "$buildDirectory/blueprint-property-reference-trace.new-release-candidates.json" \
+  --caller-function-path "${marketClass}Filter Example Schedule" \
+  --statement-index 152 \
+  --expected-call-kind "local-virtual" \
+  --expected-call-function "Evaluate Example Record" \
+  --expected-argument-count 4 \
+  --candidate-function-path "${marketClass}Evaluate Example Schedule" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-call-candidate-trace.return-if-new-movie-release-today.json"
+```
+
+Use statement indexes and paths from the source trace rather than copying the example into another build.
+The source trace, manifest, mapping, and packages must all have matching identities.
+The output contains game-specific signature and bytecode evidence and must remain in the ignored local acquisition directory.
+
+## 17. Create the typed rental function trace
 
 This step rereads four exact `ExampleQueueSystem` functions from cooked Kismet bytecode.
 The rental Blueprint-body artifact supplies the expected package, class, function paths, flags, and bytecode-expression counts.

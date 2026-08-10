@@ -24,7 +24,7 @@ internal static class BlueprintFunctionTracer
             request => request.FunctionPath,
             request => request,
             StringComparer.Ordinal);
-        return TraceSelected(
+        return TraceSelectedDetailed(
             mappingsPath,
             packageDirectory,
             requests.Select(request => new BlueprintFunctionTraceSelection(
@@ -33,7 +33,10 @@ internal static class BlueprintFunctionTracer
                 request.ClassPath,
                 request.FunctionName,
                 request.FunctionPath)).ToArray(),
-            expectedMetadata);
+            expectedMetadata,
+            includeSignatures: false)
+            .Select(result => result.Function)
+            .ToArray();
     }
 
     public static IReadOnlyList<BlueprintTracedFunction> TraceSelected(
@@ -48,14 +51,39 @@ internal static class BlueprintFunctionTracer
             throw new InvalidDataException("Blueprint trace selections must be nonempty and unique.");
         }
 
-        return TraceSelected(mappingsPath, packageDirectory, selections, null);
+        return TraceSelectedDetailed(
+                mappingsPath,
+                packageDirectory,
+                selections,
+                null,
+                includeSignatures: false)
+            .Select(result => result.Function)
+            .ToArray();
     }
 
-    private static IReadOnlyList<BlueprintTracedFunction> TraceSelected(
+    public static BlueprintTracedFunctionWithSignature TraceCandidate(
+        string mappingsPath,
+        string packageDirectory,
+        BlueprintFunctionTraceSelection selection)
+    {
+        var result = TraceSelectedDetailed(
+            mappingsPath,
+            packageDirectory,
+            [selection],
+            null,
+            includeSignatures: true).Single();
+        return new BlueprintTracedFunctionWithSignature(
+            result.Function,
+            result.Signature ?? throw new InvalidDataException(
+                $"Blueprint candidate signature is missing: {selection.FunctionPath}"));
+    }
+
+    private static IReadOnlyList<BlueprintTracedFunctionResult> TraceSelectedDetailed(
         string mappingsPath,
         string packageDirectory,
         IReadOnlyList<BlueprintFunctionTraceSelection> selections,
-        IReadOnlyDictionary<string, BlueprintFunctionTraceRequest>? expectedMetadata)
+        IReadOnlyDictionary<string, BlueprintFunctionTraceRequest>? expectedMetadata,
+        bool includeSignatures)
     {
         var versions = new VersionContainer(EGame.GAME_UE5_4);
         using var provider = new DefaultFileProvider(
@@ -76,7 +104,7 @@ internal static class BlueprintFunctionTracer
             throw new InvalidDataException("Package containers did not mount completely.");
         }
 
-        var functions = new List<BlueprintTracedFunction>();
+        var functions = new List<BlueprintTracedFunctionResult>();
         foreach (var classGroup in selections
             .OrderBy(selection => selection.PackagePath, StringComparer.Ordinal)
             .ThenBy(selection => selection.ClassPath, StringComparer.Ordinal)
@@ -99,14 +127,16 @@ internal static class BlueprintFunctionTracer
                     VerifyMetadata(trace, expectedMetadata[selection.FunctionPath]);
                 }
 
-                functions.Add(trace);
+                functions.Add(new BlueprintTracedFunctionResult(
+                    trace,
+                    includeSignatures ? BlueprintFunctionSignatureReader.Read(function) : null));
             }
         }
 
         return functions
-            .OrderBy(function => function.PackagePath, StringComparer.Ordinal)
-            .ThenBy(function => function.ClassPath, StringComparer.Ordinal)
-            .ThenBy(function => function.FunctionPath, StringComparer.Ordinal)
+            .OrderBy(result => result.Function.PackagePath, StringComparer.Ordinal)
+            .ThenBy(result => result.Function.ClassPath, StringComparer.Ordinal)
+            .ThenBy(result => result.Function.FunctionPath, StringComparer.Ordinal)
             .ToArray();
     }
 
@@ -197,3 +227,11 @@ internal sealed record BlueprintFunctionTraceSelection(
     string ClassPath,
     string FunctionName,
     string FunctionPath);
+
+internal sealed record BlueprintTracedFunctionWithSignature(
+    BlueprintTracedFunction Function,
+    BlueprintFunctionSignature Signature);
+
+internal sealed record BlueprintTracedFunctionResult(
+    BlueprintTracedFunction Function,
+    BlueprintFunctionSignature? Signature);
