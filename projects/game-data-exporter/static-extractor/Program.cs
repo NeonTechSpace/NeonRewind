@@ -72,6 +72,11 @@ internal static class Program
             return BlueprintPropertyReferencesCommand.Run(blueprintPropertyReferenceArguments);
         }
 
+        if (args is ["blueprint-property-reference-trace", .. var propertyReferenceTraceArguments])
+        {
+            return BlueprintPropertyReferenceTraceCommand.Run(propertyReferenceTraceArguments);
+        }
+
         if (args is ["blueprint-caller-bodies", .. var blueprintCallerBodiesArguments])
         {
             return BlueprintCallerBodiesCommand.Run(blueprintCallerBodiesArguments);
@@ -114,6 +119,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-blueprint-bodies --build-manifest <path> --rental-evidence <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-call-sites --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --target-function <name> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-property-references --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --target-property <name> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-property-reference-trace --build-manifest <path> --property-references <path> --function-path <path> [--function-path <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-caller-bodies --build-manifest <path> --call-sites <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-function-trace --build-manifest <path> --caller-bodies <path> [--caller-bodies <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-function-trace --build-manifest <path> --rental-blueprint-bodies <path> --function-path <path> [--function-path <path> ...] --mappings <path> --package-directory <path> --output <path>");
@@ -131,6 +137,7 @@ internal static class Program
         writer.WriteLine("The rental-blueprint-bodies command writes pseudocode and function metadata for the rental Blueprint classes.");
         writer.WriteLine("The blueprint-call-sites command scans parsed Blueprint bytecode for calls to one exact function name.");
         writer.WriteLine("The blueprint-property-references command scans parsed Blueprint bytecode for exact Kismet property-pointer names.");
+        writer.WriteLine("The blueprint-property-reference-trace command rereads selected property-reader functions into typed Kismet nodes.");
         writer.WriteLine("The blueprint-caller-bodies command decompiles the exact caller functions recorded by a complete call-site artifact.");
         writer.WriteLine("The blueprint-function-trace command rereads exact caller functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The rental-function-trace command rereads selected rental functions into typed Kismet nodes without parsing pseudocode.");

@@ -36,6 +36,7 @@ The commands form one pipeline, and each command uses the file produced by the p
 | Unlockable implementation sites | `unlockable-implementation-sites.json` | Scans generated Blueprint classes for item-base descendants, hook overrides, manager event graphs, and calls to the four traced hooks |
 | Unlockable manager trace | `unlockable-manager-trace.json` | Converts the one discovered unlock-manager event graph into typed Kismet nodes tied to the complete implementation-site scan |
 | Blueprint property references | `blueprint-property-references.new-release-unlock.json` | Searches parsed Blueprint bytecode for exact references to one property name and classifies reads, writes, and metadata |
+| Blueprint property-reference trace | `blueprint-property-reference-trace.new-release-unlock.json` | Converts selected functions with recorded property reads into typed Kismet nodes tied to the complete reference scan |
 | Rental Blueprint bodies | `rental-blueprint-bodies.json` | Decompiles the rental subsystem's cooked Blueprint bytecode into reviewable pseudocode |
 | Blueprint call sites | `blueprint-call-sites.movie-return.json` | Searches parsed Blueprint bytecode for calls to the movie-return selector |
 | Blueprint caller bodies | `blueprint-caller-bodies.movie-return.json` | Decompiles the exact functions found by the movie-return call-site scan |
@@ -66,7 +67,7 @@ You need the following items:
 - The .NET 10 SDK for the acquisition commands.
 - Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, unlockable-function-trace, unlockable-implementation-sites, unlockable-manager-trace, blueprint-property-references, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
+- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, unlockable-function-trace, unlockable-implementation-sites, unlockable-manager-trace, blueprint-property-references, blueprint-property-reference-trace, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
 Follow [Portable local tool setup](docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
@@ -430,6 +431,34 @@ dotnet run --project "$extractor" -- blueprint-property-references \
 
 The command verifies every package and input identity before and after scanning, accepts identical existing output, and refuses to overwrite different content.
 The output contains game-specific function locations and must remain in the ignored local acquisition directory.
+
+## 7f. Trace a discovered property reader
+
+This step accepts only a complete property-reference artifact for the supplied build and mappings.
+Each requested function must contain a recorded property read; the command rereads its cooked bytecode into typed Kismet nodes and rechecks every recorded reference in that function against the trace.
+
+```powershell
+dotnet run --project $extractor -- blueprint-property-reference-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --property-references (Join-Path $buildDirectory "blueprint-property-references.new-release-unlock.json") `
+  --function-path "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C:Return Example Request" `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-unlock.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-property-reference-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --property-references "$buildDirectory/blueprint-property-references.new-release-unlock.json" \
+  --function-path "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C:Return Example Request" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-property-reference-trace.new-release-unlock.json"
+```
+
+The command verifies package and input identities before and after tracing, accepts identical existing output, and refuses to overwrite different content.
+The output contains extracted game logic and must remain in the ignored local acquisition directory.
 
 ## 8. Extract readable rental Blueprint bodies
 

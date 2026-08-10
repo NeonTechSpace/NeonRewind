@@ -19,6 +19,11 @@ export {
   type BlueprintPropertyReferences,
 } from "./contracts/acquisition/blueprint-property-references.ts";
 export {
+  BlueprintPropertyReferenceTraceJsonSchema,
+  BlueprintPropertyReferenceTraceSchema,
+  type BlueprintPropertyReferenceTrace,
+} from "./contracts/acquisition/blueprint-property-reference-trace.ts";
+export {
   BuildManifestJsonSchema,
   BuildManifestSchema,
   type BuildManifest,
