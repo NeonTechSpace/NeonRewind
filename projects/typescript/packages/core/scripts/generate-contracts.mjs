@@ -37,7 +37,7 @@ const contracts = [
   ["domain", "film-catalog", "FilmCatalog", null],
   ["domain", "membership-fee-mechanics", "MembershipFeeMechanics", null],
   ["domain", "movie-return-mechanics", "MovieReturnMechanics", "core"],
-  ["domain", "new-release-unlock-mechanics", "NewReleaseUnlockMechanics", null],
+  ["domain", "new-release-mechanics", "NewReleaseMechanics", null],
 ];
 
 const staleStandaloneSchemas = [
@@ -46,7 +46,7 @@ const staleStandaloneSchemas = [
     "console-return-mechanics",
     "film-catalog",
     "membership-fee-mechanics",
-    "new-release-unlock-mechanics",
+    "new-release-mechanics",
   ].map((name) => resolve(packageDirectory, "schemas", `${name}.schema.json`)),
 ];
 

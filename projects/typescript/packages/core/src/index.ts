@@ -131,11 +131,11 @@ export {
   type RentalSelectionTraceEvidence,
 } from "./contracts/domain/movie-return-mechanics.ts";
 export {
-  NewReleaseUnlockMechanicsJsonSchema,
-  NewReleaseUnlockMechanicsSchema,
-  type NewReleaseUnlockArtifactIdentity,
-  type NewReleaseUnlockMechanics,
-} from "./contracts/domain/new-release-unlock-mechanics.ts";
+  NewReleaseMechanicsJsonSchema,
+  NewReleaseMechanicsSchema,
+  type NewReleaseArtifactIdentity,
+  type NewReleaseMechanics,
+} from "./contracts/domain/new-release-mechanics.ts";
 
 export {
   MovieReturnObservationJsonSchema,

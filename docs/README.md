@@ -8,9 +8,9 @@ The repository currently provides build-identified Unreal data acquisition, cano
 
 - Static acquisition reads a user-owned Steam installation and produces ignored, immutable evidence artifacts.
 - The normalized film catalog covers the game's 13 catalog tables.
-- Rental, membership-fee, movie-return, and new-release request mechanics have typed or normalized evidence.
+- Rental, membership-fee, movie-return, and new-release mechanics have typed or normalized evidence.
 - A user-operated movie-return observation for Steam build `23896268` completed and passed semantic validation.
-- Still-new movie eligibility is statically traced for build `23896268`. The serialized four-argument `ExampleManager_C` call has an `EX_ObjectConst` receiver for `Default__ExampleRecord_C`, whose class owns the exact four-parameter `Evaluate Example Record` declaration. The function returns `is New = (Example Period Count - Example Available Period) <= 7` and `is New Day Left = (Example Available Period + 7) - Example Period Count`, or `false` and `0` when the game-mode cast fails. The caller separately requires the film to be released and not second-hand. Exact runtime map contents and film identities remain unresolved.
+- The normalized new-release artifact covers the two-day unlock, request routing and generation, and still-new candidate eligibility for build `23896268`. Eligibility requires a released, non-second-hand film and uses `(Example Period Count - Example Available Period) <= 7`, with no lower-bound check in the predicate. Exact runtime map contents and film identities remain unresolved.
 - No public guide, calculator, or website exists.
 
 ## Documentation

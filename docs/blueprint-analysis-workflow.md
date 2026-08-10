@@ -387,7 +387,7 @@ The output contains game-specific bytecode structure and must remain in the igno
 
 ## Next step
 
-For the current still-new movie investigation, normalize the verified target trace and caller gates into the new-release mechanic artifact.
+Compile the verified target trace and caller gates into the normalized new-release mechanic artifact by following the [domain compilation workflow](domain-compilation-workflow.md).
 For subsystems whose required traces already exist, continue with [domain compilation](domain-compilation-workflow.md).
 
 [Documentation overview](README.md)

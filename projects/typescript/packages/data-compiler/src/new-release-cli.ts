@@ -3,17 +3,18 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
 import {
+  BlueprintCallTargetTraceSchema,
   BlueprintFunctionTraceSchema,
   BlueprintPropertyReferenceTraceSchema,
   UnlockableManagerTraceSchema,
-  type NewReleaseUnlockArtifactIdentity,
+  type NewReleaseArtifactIdentity,
 } from "@neonretrorewind/core";
 
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import {
-  compileNewReleaseUnlockMechanics,
-  type NewReleaseUnlockSources,
-} from "./new-release-unlock-mechanics.ts";
+  compileNewReleaseMechanics,
+  type NewReleaseSources,
+} from "./new-release-mechanics.ts";
 import { validateJsonSchema } from "./schema-validation.ts";
 
 const invalidArgumentsExitCode = 2;
@@ -29,26 +30,39 @@ interface Options {
   readonly propertyReaderTraceSchemaPath: string;
   readonly requestGeneratorTracePath: string;
   readonly requestGeneratorTraceSchemaPath: string;
+  readonly candidateMapTracePath: string;
+  readonly candidateMapTraceSchemaPath: string;
+  readonly callTargetTracePath: string;
+  readonly callTargetTraceSchemaPath: string;
   readonly outputPath: string;
 }
 
-export async function runNewReleaseUnlockMechanics(
+export async function runNewReleaseMechanics(
   arguments_: readonly string[],
 ): Promise<void> {
   const options = parseOptions(arguments_);
   if (typeof options === "string") {
     console.error(options);
-    writeNewReleaseUnlockUsage(process.stderr);
+    writeNewReleaseUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
     return;
   }
 
   try {
-    const [manager, wrapper, propertyReader, requestGenerator] = await Promise.all([
+    const [
+      manager,
+      wrapper,
+      propertyReader,
+      requestGenerator,
+      candidateMap,
+      callTarget,
+    ] = await Promise.all([
       readInput(options.managerTracePath, "Unlock manager trace"),
       readInput(options.wrapperTracePath, "Unlock wrapper trace"),
       readInput(options.propertyReaderTracePath, "Property-reader trace"),
       readInput(options.requestGeneratorTracePath, "Request-generator trace"),
+      readInput(options.candidateMapTracePath, "Candidate-map trace"),
+      readInput(options.callTargetTracePath, "Call-target trace"),
     ]);
     await Promise.all([
       validateInput(manager, options.managerTraceSchemaPath, "Unlock manager trace"),
@@ -63,9 +77,19 @@ export async function runNewReleaseUnlockMechanics(
         options.requestGeneratorTraceSchemaPath,
         "Request-generator trace",
       ),
+      validateInput(
+        candidateMap,
+        options.candidateMapTraceSchemaPath,
+        "Candidate-map trace",
+      ),
+      validateInput(
+        callTarget,
+        options.callTargetTraceSchemaPath,
+        "Call-target trace",
+      ),
     ]);
 
-    const sources: NewReleaseUnlockSources = {
+    const sources: NewReleaseSources = {
       managerTrace: createIdentity(manager, "unlockable-manager-trace"),
       wrapperTrace: createIdentity(wrapper, "blueprint-function-trace"),
       propertyReaderTrace: createIdentity(
@@ -76,42 +100,49 @@ export async function runNewReleaseUnlockMechanics(
         requestGenerator,
         "blueprint-function-trace",
       ),
+      candidateMapTrace: createIdentity(
+        candidateMap,
+        "blueprint-property-reference-trace",
+      ),
+      callTargetTrace: createIdentity(callTarget, "blueprint-call-target-trace"),
     };
-    const mechanics = compileNewReleaseUnlockMechanics(
+    const mechanics = compileNewReleaseMechanics(
       UnlockableManagerTraceSchema.assert(manager.value),
       BlueprintFunctionTraceSchema.assert(wrapper.value),
       BlueprintPropertyReferenceTraceSchema.assert(propertyReader.value),
       BlueprintFunctionTraceSchema.assert(requestGenerator.value),
+      BlueprintPropertyReferenceTraceSchema.assert(candidateMap.value),
+      BlueprintCallTargetTraceSchema.assert(callTarget.value),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
 
     await Promise.all(
-      [manager, wrapper, propertyReader, requestGenerator].map((input) =>
+      [manager, wrapper, propertyReader, requestGenerator, candidateMap, callTarget].map((input) =>
         assertFileUnchanged(input)
       ),
     );
     const status = await writeImmutableArtifact(options.outputPath, output);
     if (status === "conflict") {
       console.error(
-        `New-release unlock mechanics conflict with existing output: ${options.outputPath}`,
+        `New-release mechanics conflict with existing output: ${options.outputPath}`,
       );
       process.exitCode = outputConflictExitCode;
       return;
     }
 
     const verb = status === "created" ? "wrote" : "is unchanged";
-    console.log(`New-release unlock mechanics ${verb}: ${options.outputPath}`);
+    console.log(`New-release mechanics ${verb}: ${options.outputPath}`);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown failure.";
-    console.error(`New-release-unlock-mechanics compilation failed: ${message}`);
+    console.error(`New-release-mechanics compilation failed: ${message}`);
     process.exitCode = inputFailureExitCode;
   }
 }
 
-export function writeNewReleaseUnlockUsage(stream: NodeJS.WritableStream): void {
+export function writeNewReleaseUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-data-compiler new-release-unlock-mechanics --manager-trace <path> --manager-trace-schema <schema> --wrapper-trace <path> --wrapper-trace-schema <schema> --property-reader-trace <path> --property-reader-trace-schema <schema> --request-generator-trace <path> --request-generator-trace-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler new-release-mechanics --manager-trace <path> --manager-trace-schema <schema> --wrapper-trace <path> --wrapper-trace-schema <schema> --property-reader-trace <path> --property-reader-trace-schema <schema> --request-generator-trace <path> --request-generator-trace-schema <schema> --candidate-map-trace <path> --candidate-map-trace-schema <schema> --call-target-trace <path> --call-target-trace-schema <schema> --output <path>\n",
   );
 }
 
@@ -131,14 +162,14 @@ async function validateInput(
 }
 
 function createIdentity<
-  ArtifactType extends NewReleaseUnlockArtifactIdentity["artifactType"],
->(input: InputFile, artifactType: ArtifactType): NewReleaseUnlockArtifactIdentity<ArtifactType> {
+  ArtifactType extends NewReleaseArtifactIdentity["artifactType"],
+>(input: InputFile, artifactType: ArtifactType): NewReleaseArtifactIdentity<ArtifactType> {
   return {
     fileName: basename(input.path),
     sha256: input.sha256,
     sizeBytes: input.bytes.length,
     artifactType,
-  } as NewReleaseUnlockArtifactIdentity<ArtifactType>;
+  } as NewReleaseArtifactIdentity<ArtifactType>;
 }
 
 function parseOptions(arguments_: readonly string[]): Options | string {
@@ -151,6 +182,10 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     "--property-reader-trace-schema",
     "--request-generator-trace",
     "--request-generator-trace-schema",
+    "--candidate-map-trace",
+    "--candidate-map-trace-schema",
+    "--call-target-trace",
+    "--call-target-trace-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -159,7 +194,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     const name = arguments_[index];
     const value = arguments_[index + 1];
     if (name === undefined || !allowed.has(name)) {
-      return `Unknown new-release-unlock-mechanics option ${name ?? "<missing>"}.`;
+      return `Unknown new-release-mechanics option ${name ?? "<missing>"}.`;
     }
     if (value === undefined || value.startsWith("--")) {
       return `Expected a value for ${name}.`;
@@ -171,7 +206,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
   }
   const missing = names.filter((name) => !values.has(name));
   if (missing.length > 0) {
-    return `Expected manager, wrapper, property-reader, and request-generator traces, their schemas, and --output; missing ${missing.join(", ")}.`;
+    return `Expected manager, wrapper, property-reader, request-generator, candidate-map, and call-target traces, their schemas, and --output; missing ${missing.join(", ")}.`;
   }
   return {
     managerTracePath: values.get("--manager-trace")!,
@@ -182,6 +217,10 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     propertyReaderTraceSchemaPath: values.get("--property-reader-trace-schema")!,
     requestGeneratorTracePath: values.get("--request-generator-trace")!,
     requestGeneratorTraceSchemaPath: values.get("--request-generator-trace-schema")!,
+    candidateMapTracePath: values.get("--candidate-map-trace")!,
+    candidateMapTraceSchemaPath: values.get("--candidate-map-trace-schema")!,
+    callTargetTracePath: values.get("--call-target-trace")!,
+    callTargetTraceSchemaPath: values.get("--call-target-trace-schema")!,
     outputPath: values.get("--output")!,
   };
 }

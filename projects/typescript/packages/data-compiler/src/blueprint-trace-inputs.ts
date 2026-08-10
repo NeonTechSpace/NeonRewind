@@ -1,4 +1,5 @@
 import type {
+  BlueprintCallTargetTrace,
   BlueprintFunctionTrace,
   BlueprintPropertyReferenceTrace,
   RentalFunctionTrace,
@@ -16,6 +17,14 @@ export type BlueprintFunctionTraceArtifact = Omit<
 > & {
   readonly callerBodies: readonly BlueprintFunctionTrace["callerBodies"][number][];
   readonly functions: readonly BlueprintTraceFunctionInput[];
+};
+export type BlueprintCallTargetTraceArtifact = Omit<
+  BlueprintCallTargetTrace,
+  "binding"
+> & {
+  readonly binding: Omit<BlueprintCallTargetTrace["binding"], "function"> & {
+    readonly function: BlueprintTraceFunctionInput;
+  };
 };
 export type BlueprintPropertyReferenceTraceArtifact = Omit<
   BlueprintPropertyReferenceTrace,

@@ -1,15 +1,16 @@
-// Generated from src/contracts/domain/new-release-unlock-mechanics.ts by pnpm contracts:generate. Do not edit.
+// Generated from src/contracts/domain/new-release-mechanics.ts by pnpm contracts:generate. Do not edit.
 
-export interface NewReleaseUnlockMechanicsContract {
-  artifactType: "new-release-unlock-mechanics";
+export interface NewReleaseMechanicsContract {
+  artifactType: "new-release-mechanics";
   build: Build;
   sources: Sources;
-  scope: "new-release-unlock";
+  scope: "new-release";
   evidenceLevel: "typed-blueprint";
   runtimeValidation: "not-run";
   unlock: Unlock;
   requestSelection: RequestSelection;
   requestGeneration: RequestGeneration;
+  candidateEligibility: CandidateEligibility;
 }
 export interface Build {
   steamAppId: string;
@@ -28,12 +29,22 @@ export interface Sources {
   requestGeneratorTrace: SourceIdentity & {
     artifactType: "blueprint-function-trace";
   };
+  candidateMapTrace: SourceIdentity & {
+    artifactType: "blueprint-property-reference-trace";
+  };
+  callTargetTrace: SourceIdentity & {
+    artifactType: "blueprint-call-target-trace";
+  };
 }
 export interface SourceIdentity {
   fileName: string;
   sha256: string;
   sizeBytes: number;
-  artifactType: "unlockable-manager-trace" | "blueprint-function-trace" | "blueprint-property-reference-trace";
+  artifactType:
+    | "unlockable-manager-trace"
+    | "blueprint-function-trace"
+    | "blueprint-property-reference-trace"
+    | "blueprint-call-target-trace";
 }
 export interface Unlock {
   trigger: "reset-to-new-day-event";
@@ -228,4 +239,95 @@ export interface GeneratorEngineSource {
   commit: "847de5e2553adeb4d3498953604d0b0abe669780";
   wrapperFile: "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl";
   implementationFile: "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h";
+}
+export interface CandidateEligibility {
+  rebuild: CandidateRebuild;
+  preconditions: CandidatePreconditions;
+  predicate: CandidatePredicate;
+  outcomes: CandidateOutcomes;
+  evidence: CandidateEvidence;
+}
+export interface CandidateRebuild {
+  trigger: "filter-all-new-release-movie-data";
+  requiresWeatherReference: true;
+  sourceCollection: "Example Source Map";
+  candidateCollection: "Example Candidate Map";
+  candidateCollectionClearedBeforeScan: true;
+  iteration: "source-map-values";
+}
+export interface CandidatePreconditions {
+  released: true;
+  secondHandAvailable: false;
+  operator: "and";
+}
+export interface CandidatePredicate {
+  function: "Evaluate Example Record";
+  ownerClass: "ExampleRecord_C";
+  durationDays: 7;
+  elapsedDays: "days-passed-minus-available-in-game-day";
+  comparison: "elapsed-days-less-than-or-equal-to-duration";
+  lowerBoundEnforced: false;
+  remainingDays: "available-in-game-day-plus-duration-minus-days-passed";
+  gameModeCastFailure: GameModeCastFailure;
+}
+export interface GameModeCastFailure {
+  isNew: false;
+  remainingDays: 0;
+}
+export interface CandidateOutcomes {
+  eligible: CandidateOutcomeEligible;
+  preconditionFailure: CandidateOutcomePreconditionFailure;
+  predicateFailure: CandidateOutcomePredicateFailure;
+  remainingDaysConsumedByCaller: false;
+}
+export interface CandidateOutcomeEligible {
+  collection: "Example Candidate Map";
+  key: "product-sku";
+  secondHandAvailable: false;
+  basePrice: 0;
+}
+export interface CandidateOutcomePreconditionFailure {
+  collection: "Example Source Map";
+  effect: "no-mutation";
+}
+export interface CandidateOutcomePredicateFailure {
+  collection: "Example Source Map";
+  key: "product-sku";
+  secondHandAvailable: true;
+  basePrice: 0;
+}
+export interface CandidateEvidence {
+  kind: "kismet-analysis";
+  confidence: "direct";
+  marketClassPath: "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C";
+  rebuildFunction: "ExampleRebuildCandidates";
+  filterFunction: "Filter Example Schedule";
+  predicateClassPath: "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C";
+  predicateFunction: "Evaluate Example Record";
+  bindingRule: "exact-context-object-class-and-declaration";
+  relationship: "verified";
+  statementIndexes: CandidateStatementIndexes;
+}
+export interface CandidateStatementIndexes {
+  clearCandidateCollection: 66;
+  enumerateSourceValues: 118;
+  callPerFilmFilter: 390;
+  checkSecondHand: 10;
+  checkReleased: 49;
+  combinePreconditions: 88;
+  preconditionBranch: 116;
+  predicateCall: 152;
+  predicateBranch: 203;
+  addEligible: 418;
+  addIneligible: 697;
+  durationAssignment: 0;
+  gameModeCastBranch: 117;
+  elapsedSubtract: 1512;
+  compareDuration: 1634;
+  remainingAdd: 1680;
+  remainingSubtract: 1744;
+  setEligible: 1838;
+  setRemainingDays: 1857;
+  castFailureSetEligible: 1889;
+  castFailureSetRemainingDays: 1900;
 }

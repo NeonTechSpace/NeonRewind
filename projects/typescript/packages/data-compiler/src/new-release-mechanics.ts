@@ -1,8 +1,8 @@
 import type {
-  NewReleaseUnlockArtifactIdentity,
-  NewReleaseUnlockMechanics,
+  NewReleaseArtifactIdentity,
+  NewReleaseMechanics,
 } from "@neonretrorewind/core";
-import { NewReleaseUnlockMechanicsSchema } from "@neonretrorewind/core";
+import { NewReleaseMechanicsSchema } from "@neonretrorewind/core";
 
 import {
   assertTraceCall,
@@ -16,10 +16,12 @@ import {
   findTraceNode,
 } from "./blueprint-trace-assertions.ts";
 import type {
+  BlueprintCallTargetTraceArtifact,
   BlueprintFunctionTraceArtifact,
   BlueprintPropertyReferenceTraceArtifact,
   UnlockableManagerTraceArtifact,
 } from "./blueprint-trace-inputs.ts";
+import { compileNewReleaseCandidateEligibility } from "./new-release-candidate-eligibility.ts";
 
 const classPath =
   "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C";
@@ -44,25 +46,31 @@ const guaranteedStepSymbol = "lGarantee Requested Step";
 const optionalPassSymbol = "lRun Optional Pass";
 const newReleaseRequestedSymbol = "lNew Released Requested";
 
-export interface NewReleaseUnlockSources {
-  readonly managerTrace: NewReleaseUnlockArtifactIdentity<"unlockable-manager-trace">;
-  readonly wrapperTrace: NewReleaseUnlockArtifactIdentity<"blueprint-function-trace">;
-  readonly propertyReaderTrace: NewReleaseUnlockArtifactIdentity<"blueprint-property-reference-trace">;
-  readonly requestGeneratorTrace: NewReleaseUnlockArtifactIdentity<"blueprint-function-trace">;
+export interface NewReleaseSources {
+  readonly managerTrace: NewReleaseArtifactIdentity<"unlockable-manager-trace">;
+  readonly wrapperTrace: NewReleaseArtifactIdentity<"blueprint-function-trace">;
+  readonly propertyReaderTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
+  readonly requestGeneratorTrace: NewReleaseArtifactIdentity<"blueprint-function-trace">;
+  readonly candidateMapTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
+  readonly callTargetTrace: NewReleaseArtifactIdentity<"blueprint-call-target-trace">;
 }
 
-export function compileNewReleaseUnlockMechanics(
+export function compileNewReleaseMechanics(
   managerTrace: UnlockableManagerTraceArtifact,
   wrapperTrace: BlueprintFunctionTraceArtifact,
   propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
   requestGeneratorTrace: BlueprintFunctionTraceArtifact,
-  sources: NewReleaseUnlockSources,
-): NewReleaseUnlockMechanics {
+  candidateMapTrace: BlueprintPropertyReferenceTraceArtifact,
+  callTargetTrace: BlueprintCallTargetTraceArtifact,
+  sources: NewReleaseSources,
+): NewReleaseMechanics {
   assertInputContracts(
     managerTrace,
     wrapperTrace,
     propertyReaderTrace,
     requestGeneratorTrace,
+    candidateMapTrace,
+    callTargetTrace,
   );
   assertWrapperEntry(wrapperTrace, resetFunctionName, 3364);
   assertWrapperEntry(wrapperTrace, checkFunctionName, 3379);
@@ -145,14 +153,14 @@ export function compileNewReleaseUnlockMechanics(
   assertRequestSelection(propertyReaderTrace);
   assertRequestGeneration(requestGeneratorTrace);
 
-  return NewReleaseUnlockMechanicsSchema.assert({
-    artifactType: "new-release-unlock-mechanics",
+  return NewReleaseMechanicsSchema.assert({
+    artifactType: "new-release-mechanics",
     build: {
       steamAppId: managerTrace.build.steamAppId,
       steamBuildId: managerTrace.build.steamBuildId,
     },
     sources,
-    scope: "new-release-unlock",
+    scope: "new-release",
     evidenceLevel: "typed-blueprint",
     runtimeValidation: "not-run",
     unlock: {
@@ -323,6 +331,11 @@ export function compileNewReleaseUnlockMechanics(
         },
       },
     },
+    candidateEligibility: compileNewReleaseCandidateEligibility(
+      candidateMapTrace,
+      callTargetTrace,
+      sources.candidateMapTrace,
+    ),
   });
 }
 
@@ -331,6 +344,8 @@ function assertInputContracts(
   wrapperTrace: BlueprintFunctionTraceArtifact,
   propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
   requestGeneratorTrace: BlueprintFunctionTraceArtifact,
+  candidateMapTrace: BlueprintPropertyReferenceTraceArtifact,
+  callTargetTrace: BlueprintCallTargetTraceArtifact,
 ): void {
   if (managerTrace.artifactType !== "unlockable-manager-trace") {
     throw new Error("Expected an unlockable-manager-trace input.");
@@ -344,26 +359,27 @@ function assertInputContracts(
   if (requestGeneratorTrace.artifactType !== "blueprint-function-trace") {
     throw new Error("Expected a blueprint-function-trace request-generator input.");
   }
-  if (
-    JSON.stringify(managerTrace.build) !== JSON.stringify(wrapperTrace.build) ||
-    JSON.stringify(managerTrace.build) !== JSON.stringify(propertyReaderTrace.build) ||
-    JSON.stringify(managerTrace.build) !== JSON.stringify(requestGeneratorTrace.build)
-  ) {
-    throw new Error("Unlock traces refer to different game builds.");
+  if (candidateMapTrace.artifactType !== "blueprint-property-reference-trace") {
+    throw new Error("Expected a candidate-map property-reference trace input.");
   }
-  if (
-    JSON.stringify(managerTrace.mappings) !== JSON.stringify(wrapperTrace.mappings) ||
-    JSON.stringify(managerTrace.mappings) !== JSON.stringify(propertyReaderTrace.mappings) ||
-    JSON.stringify(managerTrace.mappings) !== JSON.stringify(requestGeneratorTrace.mappings)
-  ) {
-    throw new Error("Unlock traces refer to different mappings.");
+  if (callTargetTrace.artifactType !== "blueprint-call-target-trace") {
+    throw new Error("Expected a Blueprint call-target trace input.");
   }
-  if (
-    JSON.stringify(managerTrace.engine) !== JSON.stringify(wrapperTrace.engine) ||
-    JSON.stringify(managerTrace.engine) !== JSON.stringify(propertyReaderTrace.engine) ||
-    JSON.stringify(managerTrace.engine) !== JSON.stringify(requestGeneratorTrace.engine)
-  ) {
-    throw new Error("Unlock traces refer to different engine configurations.");
+  const otherInputs = [
+    wrapperTrace,
+    propertyReaderTrace,
+    requestGeneratorTrace,
+    candidateMapTrace,
+    callTargetTrace,
+  ];
+  if (otherInputs.some((input) => !sameBuild(managerTrace.build, input.build))) {
+    throw new Error("New-release inputs refer to different game builds.");
+  }
+  if (otherInputs.some((input) => !sameMappings(managerTrace.mappings, input.mappings))) {
+    throw new Error("New-release inputs refer to different mappings.");
+  }
+  if (otherInputs.some((input) => !sameEngine(managerTrace.engine, input.engine))) {
+    throw new Error("New-release inputs refer to different engine configurations.");
   }
   if (
     managerTrace.requestedFunctionPaths.length !== 1 ||
@@ -388,6 +404,35 @@ function assertInputContracts(
   ) {
     throw new Error("Request-generator trace scope changed.");
   }
+}
+
+function sameBuild(
+  expected: UnlockableManagerTraceArtifact["build"],
+  actual: UnlockableManagerTraceArtifact["build"],
+): boolean {
+  return expected.manifestSha256 === actual.manifestSha256 &&
+    expected.steamAppId === actual.steamAppId &&
+    expected.steamBuildId === actual.steamBuildId;
+}
+
+function sameMappings(
+  expected: UnlockableManagerTraceArtifact["mappings"],
+  actual: UnlockableManagerTraceArtifact["mappings"],
+): boolean {
+  return expected.fileName === actual.fileName &&
+    expected.sizeBytes === actual.sizeBytes &&
+    expected.sha256 === actual.sha256 &&
+    expected.formatVersion === actual.formatVersion;
+}
+
+function sameEngine(
+  expected: UnlockableManagerTraceArtifact["engine"],
+  actual: UnlockableManagerTraceArtifact["engine"],
+): boolean {
+  return expected.version === actual.version &&
+    expected.cue4ParseProfile === actual.cue4ParseProfile &&
+    expected.source === actual.source &&
+    expected.confidence === actual.confidence;
 }
 
 function assertRequestSelection(trace: BlueprintPropertyReferenceTraceArtifact): void {

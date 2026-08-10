@@ -1,19 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { NewReleaseUnlockMechanicsSchema } from "@neonretrorewind/core";
+import { NewReleaseMechanicsSchema } from "@neonretrorewind/core";
 
-import { compileNewReleaseUnlockMechanics } from "../src/new-release-unlock-mechanics.ts";
+import { compileNewReleaseMechanics } from "../src/new-release-mechanics.ts";
 import {
   createManagerTrace,
+  createCandidateMapTrace,
+  createCallTargetTrace,
   createPropertyReaderTrace,
   createRequestGeneratorTrace,
   createWrapperTrace,
-  newReleaseUnlockSources,
-} from "./new-release-unlock-fixtures.ts";
+  newReleaseSources,
+} from "./new-release-fixtures.ts";
 
-test("compiles the confirmed two-day new-release unlock transition", async () => {
+test("compiles the complete normalized new-release mechanics", async () => {
   const mechanics = compileCurrent();
+
+  assert.equal(mechanics.artifactType, "new-release-mechanics");
+  assert.equal(mechanics.scope, "new-release");
+  assert.deepEqual(mechanics.sources, newReleaseSources);
 
   assert.deepEqual(mechanics.unlock, {
     trigger: "reset-to-new-day-event",
@@ -51,7 +57,7 @@ test("compiles the confirmed two-day new-release unlock transition", async () =>
     },
   });
 
-  assert.equal(NewReleaseUnlockMechanicsSchema.allows(mechanics), true);
+  assert.equal(NewReleaseMechanicsSchema.allows(mechanics), true);
   assert.deepEqual(mechanics.requestSelection, {
     trigger: "return-movie-request",
     condition: {
@@ -184,6 +190,86 @@ test("compiles the confirmed two-day new-release unlock transition", async () =>
       },
     },
   });
+  assert.deepEqual(mechanics.candidateEligibility, {
+    rebuild: {
+      trigger: "filter-all-new-release-movie-data",
+      requiresWeatherReference: true,
+      sourceCollection: "Example Source Map",
+      candidateCollection: "Example Candidate Map",
+      candidateCollectionClearedBeforeScan: true,
+      iteration: "source-map-values",
+    },
+    preconditions: {
+      released: true,
+      secondHandAvailable: false,
+      operator: "and",
+    },
+    predicate: {
+      function: "Evaluate Example Record",
+      ownerClass: "ExampleRecord_C",
+      durationDays: 7,
+      elapsedDays: "days-passed-minus-available-in-game-day",
+      comparison: "elapsed-days-less-than-or-equal-to-duration",
+      lowerBoundEnforced: false,
+      remainingDays: "available-in-game-day-plus-duration-minus-days-passed",
+      gameModeCastFailure: { isNew: false, remainingDays: 0 },
+    },
+    outcomes: {
+      eligible: {
+        collection: "Example Candidate Map",
+        key: "product-sku",
+        secondHandAvailable: false,
+        basePrice: 0,
+      },
+      preconditionFailure: {
+        collection: "Example Source Map",
+        effect: "no-mutation",
+      },
+      predicateFailure: {
+        collection: "Example Source Map",
+        key: "product-sku",
+        secondHandAvailable: true,
+        basePrice: 0,
+      },
+      remainingDaysConsumedByCaller: false,
+    },
+    evidence: {
+      kind: "kismet-analysis",
+      confidence: "direct",
+      marketClassPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C",
+      rebuildFunction: "ExampleRebuildCandidates",
+      filterFunction: "Filter Example Schedule",
+      predicateClassPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C",
+      predicateFunction: "Evaluate Example Record",
+      bindingRule: "exact-context-object-class-and-declaration",
+      relationship: "verified",
+      statementIndexes: {
+        clearCandidateCollection: 66,
+        enumerateSourceValues: 118,
+        callPerFilmFilter: 390,
+        checkSecondHand: 10,
+        checkReleased: 49,
+        combinePreconditions: 88,
+        preconditionBranch: 116,
+        predicateCall: 152,
+        predicateBranch: 203,
+        addEligible: 418,
+        addIneligible: 697,
+        durationAssignment: 0,
+        gameModeCastBranch: 117,
+        elapsedSubtract: 1512,
+        compareDuration: 1634,
+        remainingAdd: 1680,
+        remainingSubtract: 1744,
+        setEligible: 1838,
+        setRemainingDays: 1857,
+        castFailureSetEligible: 1889,
+        castFailureSetRemainingDays: 1900,
+      },
+    },
+  });
 });
 
 test("rejects a changed reset wrapper entrypoint", () => {
@@ -250,6 +336,29 @@ test("rejects traces from different builds", () => {
   const wrapper = createWrapperTrace();
   wrapper.build.steamBuildId = "1";
   assert.throws(() => compileCurrent({ wrapper }), /different game builds/u);
+});
+
+test("accepts matching input identities with different property order", () => {
+  const wrapper = createWrapperTrace();
+  wrapper.build = {
+    steamBuildId: wrapper.build.steamBuildId,
+    manifestSha256: wrapper.build.manifestSha256,
+    steamAppId: wrapper.build.steamAppId,
+  };
+  wrapper.mappings = {
+    formatVersion: wrapper.mappings.formatVersion,
+    sha256: wrapper.mappings.sha256,
+    fileName: wrapper.mappings.fileName,
+    sizeBytes: wrapper.mappings.sizeBytes,
+  };
+  wrapper.engine = {
+    confidence: wrapper.engine.confidence,
+    source: wrapper.engine.source,
+    cue4ParseProfile: wrapper.engine.cue4ParseProfile,
+    version: wrapper.engine.version,
+  };
+
+  assert.doesNotThrow(() => compileCurrent({ wrapper }));
 });
 
 test("rejects a changed new-release request weight", () => {
@@ -365,17 +474,57 @@ test("rejects a request-generator trace from another build", () => {
   );
 });
 
+test("rejects a changed released-film gate", () => {
+  const candidateMap = createCandidateMapTrace();
+  const released = candidateMap.functions
+    .find((function_) => function_.functionName === "Filter Example Schedule")!
+    .nodes.find((node) => node.statementIndex === 76);
+  assert.ok(released?.literal);
+  released.literal = { ...released.literal, value: "false" };
+  assert.throws(() => compileCurrent({ candidateMap }), /trace literal changed/u);
+});
+
+test("rejects a changed still-new duration", () => {
+  const callTarget = createCallTargetTrace();
+  const duration = callTarget.binding.function.nodes.find(
+    (node) => node.statementIndex === 18,
+  );
+  assert.ok(duration?.literal);
+  duration.literal = { ...duration.literal, value: "8" };
+  assert.throws(() => compileCurrent({ callTarget }), /trace literal changed/u);
+});
+
+test("rejects a changed candidate-predicate receiver", () => {
+  const callTarget = createCallTargetTrace();
+  callTarget.binding.receiver.classPath =
+    "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C";
+  assert.throws(() => compileCurrent({ callTarget }), /target identity changed/u);
+});
+
+test("rejects a call target linked to another candidate-map trace", () => {
+  const callTarget = createCallTargetTrace();
+  callTarget.sourceTrace.sha256 = "f".repeat(64);
+  assert.throws(
+    () => compileCurrent({ callTarget }),
+    /not bound to the candidate-map trace/u,
+  );
+});
+
 function compileCurrent(overrides: {
   manager?: ReturnType<typeof createManagerTrace>;
   propertyReader?: ReturnType<typeof createPropertyReaderTrace>;
   requestGenerator?: ReturnType<typeof createRequestGeneratorTrace>;
   wrapper?: ReturnType<typeof createWrapperTrace>;
+  candidateMap?: ReturnType<typeof createCandidateMapTrace>;
+  callTarget?: ReturnType<typeof createCallTargetTrace>;
 } = {}) {
-  return compileNewReleaseUnlockMechanics(
+  return compileNewReleaseMechanics(
     overrides.manager ?? createManagerTrace(),
     overrides.wrapper ?? createWrapperTrace(),
     overrides.propertyReader ?? createPropertyReaderTrace(),
     overrides.requestGenerator ?? createRequestGeneratorTrace(),
-    newReleaseUnlockSources,
+    overrides.candidateMap ?? createCandidateMapTrace(),
+    overrides.callTarget ?? createCallTargetTrace(),
+    newReleaseSources,
   );
 }

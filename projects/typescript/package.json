@@ -12,7 +12,7 @@
     "membership-fee-mechanics": "node packages/data-compiler/src/cli.ts membership-fee-mechanics",
     "movie-return-mechanics": "node packages/data-compiler/src/cli.ts movie-return-mechanics",
     "movie-return-validated-mechanics": "node packages/data-compiler/src/cli.ts movie-return-validated-mechanics",
-    "new-release-unlock-mechanics": "node packages/data-compiler/src/cli.ts new-release-unlock-mechanics",
+    "new-release-mechanics": "node packages/data-compiler/src/cli.ts new-release-mechanics",
     "movie-return-validation": "node packages/validator/src/cli.ts movie-return",
     "test": "pnpm --recursive --if-present test"
   },

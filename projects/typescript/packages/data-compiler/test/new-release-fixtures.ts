@@ -1,21 +1,28 @@
-import type { NewReleaseUnlockArtifactIdentity } from "@neonretrorewind/core";
+import type {
+  NewReleaseArtifactIdentity,
+} from "@neonretrorewind/core";
 
 import type {
+  BlueprintCallTargetTraceArtifact,
   BlueprintFunctionTraceArtifact,
   BlueprintPropertyReferenceTraceArtifact,
   BlueprintTraceFunctionInput,
   BlueprintTraceNodeInput,
   UnlockableManagerTraceArtifact,
 } from "../src/blueprint-trace-inputs.ts";
-import type { NewReleaseUnlockSources } from "../src/new-release-unlock-mechanics.ts";
+import type { NewReleaseSources } from "../src/new-release-mechanics.ts";
 import { createBuild, createMappings, type Mutable } from "./rental-fixtures.ts";
 
 export const unlockClassPath =
   "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C";
 export const unlockEventGraph = "ExecuteExampleGraph_ExampleUnlockSystem";
 const unlockFunctionPath = `${unlockClassPath}:${unlockEventGraph}`;
+const marketClassPath =
+  "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C";
+const rebuildFunctionName = "ExampleRebuildCandidates";
+const filterFunctionName = "Filter Example Schedule";
 
-export const newReleaseUnlockSources: NewReleaseUnlockSources = {
+export const newReleaseSources: NewReleaseSources = {
   managerTrace: identity("unlockable-manager-trace.json", "unlockable-manager-trace", "a"),
   wrapperTrace: identity(
     "blueprint-function-trace.unlock-manager-entry.json",
@@ -31,6 +38,16 @@ export const newReleaseUnlockSources: NewReleaseUnlockSources = {
     "blueprint-function-trace.generate-movie-request.json",
     "blueprint-function-trace",
     "d",
+  ),
+  candidateMapTrace: identity(
+    "blueprint-property-reference-trace.new-release-candidates.v2.json",
+    "blueprint-property-reference-trace",
+    "1",
+  ),
+  callTargetTrace: identity(
+    "blueprint-call-target-trace.return-if-film-is-new.json",
+    "blueprint-call-target-trace",
+    "2",
   ),
 };
 
@@ -548,6 +565,312 @@ export function createRequestGeneratorTrace(): Mutable<BlueprintFunctionTraceArt
   };
 }
 
+export function createCandidateMapTrace(): Mutable<BlueprintPropertyReferenceTraceArtifact> {
+  const rebuildNodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const rebuildRoot = fixtureRoot(rebuildNodes);
+  const weatherValid = rebuildRoot(15, "EX_CallMath", "call");
+  weatherValid.call = call("final", "IsValid", 1, []);
+  addNode(rebuildNodes, weatherValid, "Parameters[0]", 24, "EX_InstanceVariable", "variable", "Weather ref");
+  const validityBranch = rebuildRoot(34, "EX_PopExecutionFlowIfNot", "branch");
+  validityBranch.jump = { jumpKind: "pop-flow-if-false", targets: [] };
+  addNode(rebuildNodes, validityBranch, "BooleanExpression", 35, "EX_LocalVariable", "variable", "ExampleSymbol_9858083e331f");
+  const clearContext = rebuildRoot(44, "EX_Context", "context", "None");
+  const clear = addNode(rebuildNodes, clearContext, "ContextExpression", 66, "EX_FinalFunction", "call");
+  clear.call = call("final", "Map_Clear", 1, []);
+  addNode(rebuildNodes, clear, "Parameters[0]", 75, "EX_InstanceVariable", "variable", "Example Candidate Map");
+  const values = rebuildRoot(118, "EX_FinalFunction", "call");
+  values.call = call("final", "Map_Values", 2, []);
+  addNode(rebuildNodes, values, "Parameters[0]", 127, "EX_InstanceVariable", "variable", "Example Source Map");
+  addNode(rebuildNodes, values, "Parameters[1]", 136, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
+  const item = rebuildRoot(353, "EX_FinalFunction", "call");
+  item.call = call("final", "Array_Get", 3, []);
+  addNode(rebuildNodes, item, "Parameters[0]", 362, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
+  addNode(rebuildNodes, item, "Parameters[1]", 371, "EX_LocalVariable", "variable", "Temp_int_Array_Index_Variable");
+  addNode(rebuildNodes, item, "Parameters[2]", 380, "EX_LocalVariable", "variable", "ExampleSymbol_4bb2d3edf81f");
+  const filterCall = rebuildRoot(390, "EX_LocalVirtualFunction", "call");
+  filterCall.call = call("local-virtual", "Filter Example Schedule", 2, []);
+  const date = addNode(rebuildNodes, filterCall, "Parameters[0]", 403, "EX_Context", "context", "ExampleCurrentPeriod");
+  addNode(rebuildNodes, date, "ObjectExpression", 404, "EX_InstanceVariable", "variable", "Weather ref");
+  addNode(rebuildNodes, date, "ContextExpression", 425, "EX_InstanceVariable", "variable", "ExampleCurrentPeriod");
+  addNode(rebuildNodes, filterCall, "Parameters[1]", 434, "EX_LocalVariable", "variable", "ExampleSymbol_4bb2d3edf81f");
+
+  const filterNodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const filterRoot = fixtureRoot(filterNodes);
+  const secondHand = filterRoot(10, "EX_CallMath", "call");
+  secondHand.call = call("final", "EqualEqual_BoolBool", 2, []);
+  addNode(filterNodes, secondHand, "Parameters[0]", 19, "EX_StructMemberContext", "context", "ExampleField14_0_00000000000000000000000000000000");
+  const falseLiteral = addNode(filterNodes, secondHand, "Parameters[1]", 37, "EX_False", "literal");
+  falseLiteral.literal = { literalType: "boolean", value: "false" };
+  const released = filterRoot(49, "EX_CallMath", "call");
+  released.call = call("final", "EqualEqual_BoolBool", 2, []);
+  addNode(filterNodes, released, "Parameters[0]", 58, "EX_StructMemberContext", "context", "ExampleField12_0_00000000000000000000000000000000");
+  const trueLiteral = addNode(filterNodes, released, "Parameters[1]", 76, "EX_True", "literal");
+  trueLiteral.literal = { literalType: "boolean", value: "true" };
+  const combined = filterRoot(88, "EX_CallMath", "call");
+  combined.call = call("final", "BooleanAND", 2, []);
+  addNode(filterNodes, combined, "Parameters[0]", 97, "EX_LocalVariable", "variable", "ExampleSymbol_d2ee12acae76");
+  addNode(filterNodes, combined, "Parameters[1]", 106, "EX_LocalVariable", "variable", "ExampleSymbol_a0a6ec447959");
+  const preconditionBranch = filterRoot(116, "EX_JumpIfNot", "branch");
+  preconditionBranch.jump = { jumpKind: "conditional-false", targets: [{ edge: "codeOffset", offset: 770 }] };
+  addNode(filterNodes, preconditionBranch, "BooleanExpression", 121, "EX_LocalVariable", "variable", "ExampleSymbol_69ac0269c2d9");
+  const predicate = filterRoot(152, "EX_LocalVirtualFunction", "call");
+  predicate.call = call("local-virtual", "Evaluate Example Record", 4, []);
+  addNode(filterNodes, predicate, "Parameters[0]", 165, "EX_StructMemberContext", "context", "ExampleField11_0_00000000000000000000000000000000");
+  addNode(filterNodes, predicate, "Parameters[1]", 183, "EX_Self", "operation");
+  addNode(filterNodes, predicate, "Parameters[2]", 184, "EX_LocalVariable", "variable", "ExampleSymbol_cb75a284c42b");
+  addNode(filterNodes, predicate, "Parameters[3]", 193, "EX_LocalVariable", "variable", "ExampleSymbol_c12d64d7fc3d");
+  const predicateBranch = filterRoot(203, "EX_JumpIfNot", "branch");
+  predicateBranch.jump = { jumpKind: "conditional-false", targets: [{ edge: "codeOffset", offset: 496 }] };
+  addNode(filterNodes, predicateBranch, "BooleanExpression", 208, "EX_LocalVariable", "variable", "ExampleSymbol_cb75a284c42b");
+  fixtureLiteralAssignment(filterNodes, filterRoot, 299, "EX_LetBool", "ExampleField14_0_00000000000000000000000000000000", "boolean", "false", 300, 318, "EX_StructMemberContext", "context");
+  fixtureLiteralAssignment(filterNodes, filterRoot, 364, "EX_Let", "ExampleField01_0_00000000000000000000000000000000", "integer", "0", 373, 391, "EX_StructMemberContext", "context");
+  const eligible = filterRoot(418, "EX_FinalFunction", "call");
+  eligible.call = call("final", "Map_Add", 3, []);
+  addNode(filterNodes, eligible, "Parameters[0]", 427, "EX_InstanceVariable", "variable", "Example Candidate Map");
+  addNode(filterNodes, eligible, "Parameters[1]", 436, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  addNode(filterNodes, eligible, "Parameters[2]", 481, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record");
+  const successJump = filterRoot(491, "EX_Jump", "branch");
+  successJump.jump = { jumpKind: "unconditional", targets: [{ edge: "codeOffset", offset: 770 }] };
+  fixtureLiteralAssignment(filterNodes, filterRoot, 578, "EX_LetBool", "ExampleField14_0_00000000000000000000000000000000", "boolean", "true", 579, 597, "EX_StructMemberContext", "context");
+  fixtureLiteralAssignment(filterNodes, filterRoot, 643, "EX_Let", "ExampleField01_0_00000000000000000000000000000000", "integer", "0", 652, 670, "EX_StructMemberContext", "context");
+  const ineligible = filterRoot(697, "EX_FinalFunction", "call");
+  ineligible.call = call("final", "Map_Add", 3, []);
+  addNode(filterNodes, ineligible, "Parameters[0]", 706, "EX_InstanceVariable", "variable", "Example Source Map");
+  addNode(filterNodes, ineligible, "Parameters[1]", 715, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  addNode(filterNodes, ineligible, "Parameters[2]", 760, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record_1");
+  filterRoot(770, "EX_Return", "return");
+
+  const functions = [
+    candidateFunction(rebuildFunctionName, rebuildNodes),
+    candidateFunction(filterFunctionName, filterNodes),
+  ];
+  return {
+    artifactType: "blueprint-property-reference-trace",
+    build: createBuild(),
+    blueprintPropertyReferences: {
+      fileName: "blueprint-property-references.new-release-candidates.v3.json",
+      sizeBytes: 100,
+      sha256: "9".repeat(64),
+      targetPropertyName: "Example Candidate Map",
+    },
+    requestedFunctionPaths: functions.map((function_) => function_.functionPath),
+    selectionRule: "explicit-functions-with-read-references",
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: extractor(),
+    totals: totals(functions, 0),
+    functions,
+  };
+}
+
+export function createCallTargetTrace(): Mutable<BlueprintCallTargetTraceArtifact> {
+  const nodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const root = fixtureRoot(nodes);
+  fixtureLiteralAssignment(nodes, root, 0, "EX_Let", "ExampleDuration", "integer", "7", 9, 18);
+  const gameMode = root(33, "EX_CallMath", "call");
+  gameMode.call = call("final", "GetGameMode", 1, []);
+  addNode(nodes, gameMode, "Parameters[0]", 42, "EX_LocalVariable", "variable", "__WorldContext");
+  const castBranch = root(117, "EX_JumpIfNot", "branch");
+  castBranch.jump = { jumpKind: "conditional-false", targets: [{ edge: "codeOffset", offset: 1889 }] };
+  addNode(nodes, castBranch, "BooleanExpression", 122, "EX_LocalVariable", "variable", "ExampleSymbol_cfba3a7c5b90");
+  const elapsed = root(1512, "EX_CallMath", "call");
+  elapsed.call = call("final", "Subtract_IntInt", 2, []);
+  addNode(nodes, elapsed, "Parameters[0]", 1521, "EX_Context", "context", "Example Period Count");
+  addNode(nodes, elapsed, "Parameters[1]", 1596, "EX_StructMemberContext", "context", "Example Available Period_0_00000000000000000000000000000000");
+  const compare = root(1634, "EX_CallMath", "call");
+  compare.call = call("final", "LessEqual_IntInt", 2, []);
+  addNode(nodes, compare, "Parameters[0]", 1643, "EX_LocalVariable", "variable", "ExampleSymbol_e786ddbe8538");
+  addNode(nodes, compare, "Parameters[1]", 1652, "EX_LocalVariable", "variable", "ExampleDuration");
+  const addDuration = root(1680, "EX_CallMath", "call");
+  addDuration.call = call("final", "Add_IntInt", 2, []);
+  addNode(nodes, addDuration, "Parameters[0]", 1689, "EX_StructMemberContext", "context", "Example Available Period_0_00000000000000000000000000000000");
+  addNode(nodes, addDuration, "Parameters[1]", 1716, "EX_LocalVariable", "variable", "ExampleDuration");
+  const remaining = root(1744, "EX_CallMath", "call");
+  remaining.call = call("final", "Subtract_IntInt", 2, []);
+  addNode(nodes, remaining, "Parameters[0]", 1753, "EX_LocalVariable", "variable", "ExampleSymbol_fbf99360b7d0");
+  addNode(nodes, remaining, "Parameters[1]", 1762, "EX_Context", "context", "Example Period Count");
+  fixtureVariableAssignment(nodes, root, 1838, "EX_LetBool", "is New", "ExampleSymbol_a3f5a084342d", 1839, 1848);
+  fixtureVariableAssignment(nodes, root, 1857, "EX_Let", "is New Day Left", "ExampleSymbol_0e5eff394dbb", 1866, 1875);
+  const successJump = root(1884, "EX_Jump", "branch");
+  successJump.jump = { jumpKind: "unconditional", targets: [{ edge: "codeOffset", offset: 1923 }] };
+  fixtureLiteralAssignment(nodes, root, 1889, "EX_LetBool", "is New", "boolean", "false", 1890, 1899);
+  fixtureLiteralAssignment(nodes, root, 1900, "EX_Let", "is New Day Left", "integer", "0", 1909, 1918);
+  root(1923, "EX_Return", "return");
+
+  const predicateClassPath =
+    "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C";
+  const predicatePath = `${predicateClassPath}:Evaluate Example Record`;
+  const signature = {
+    parameterCount: 4,
+    parameters: [
+      parameter(0, "Example Product Struct", "Struct<Example Product Struct>", "Parm, OutParm"),
+      parameter(1, "__WorldContext", "Object", "Parm"),
+      parameter(2, "is New", "Bool", "Parm, OutParm"),
+      parameter(3, "is New Day Left", "Int", "Parm, OutParm"),
+    ],
+  };
+  return {
+    artifactType: "blueprint-call-target-trace",
+    build: createBuild(),
+    sourceTrace: {
+      ...newReleaseSources.candidateMapTrace,
+      targetPropertyName: "Example Candidate Map",
+    },
+    declarations: {
+      fileName: "blueprint-function-declarations.return-if-film-is-new.json",
+      sizeBytes: 100,
+      sha256: "3".repeat(64),
+      artifactType: "blueprint-function-declarations",
+      targetFunctionName: "Evaluate Example Record",
+      declarationRule: "exact-raw-function-export-object-name",
+    },
+    recordedCall: {
+      callerFunctionPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C:Filter Example Schedule",
+      statementIndex: 152,
+      opcode: "EX_LocalVirtualFunction",
+      call: {
+        callKind: "local-virtual",
+        functionName: "Evaluate Example Record",
+        argumentCount: 4,
+        integerArguments: [],
+      },
+    },
+    binding: {
+      bindingRule: "exact-context-object-class-and-declaration",
+      relationship: "verified",
+      receiverClassMatchesDeclarationOwner: true,
+      argumentCountMatchesParameterCount: true,
+      receiver: {
+        contextStatementIndex: 130,
+        contextOpcode: "EX_Context",
+        callEdge: "ContextExpression",
+        receiverStatementIndex: 131,
+        receiverOpcode: "EX_ObjectConst",
+        receiverEdge: "ObjectExpression",
+        objectName: "Default__ExampleRecord_C",
+        objectPath:
+          "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.Default__ExampleRecord_C",
+        classPath: predicateClassPath,
+        exportType: "ExampleRecord_C",
+      },
+      declaration: {
+        packagePath:
+          "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.uasset",
+        packageExportIndex: 14,
+        objectPath: predicatePath,
+        ownerPath: predicateClassPath,
+        signature,
+      },
+      function: {
+        packagePath:
+          "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.uasset",
+        className: "ExampleRecord_C",
+        classPath: predicateClassPath,
+        functionName: "Evaluate Example Record",
+        functionPath: predicatePath,
+        flags: "FUNC_Public, FUNC_BlueprintCallable",
+        bytecodeExpressionCount: 12,
+        nodes,
+      },
+    },
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: extractor(),
+  };
+}
+
+function fixtureRoot(nodes: Mutable<BlueprintTraceNodeInput>[]) {
+  return (
+    statementIndex: number,
+    opcode: string,
+    kind: BlueprintTraceNodeInput["kind"],
+    symbol: string | null = null,
+  ) => addNode(
+    nodes,
+    null,
+    `script[${nodes.filter((node) => node.parentNodeIndex === null).length}]`,
+    statementIndex,
+    opcode,
+    kind,
+    symbol,
+  );
+}
+
+function fixtureLiteralAssignment(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  opcode: string,
+  symbol: string,
+  literalType: "boolean" | "integer",
+  value: string,
+  variableStatementIndex: number,
+  literalStatementIndex: number,
+  variableOpcode = "EX_LocalVariable",
+  variableKind: BlueprintTraceNodeInput["kind"] = "variable",
+): void {
+  const assignment = root(statementIndex, opcode, "assignment", opcode === "EX_Let" ? symbol : null);
+  addNode(
+    nodes,
+    assignment,
+    "Variable",
+    variableStatementIndex,
+    variableOpcode,
+    variableKind,
+    symbol,
+  );
+  const literal = addNode(
+    nodes,
+    assignment,
+    "Assignment",
+    literalStatementIndex,
+    literalType === "boolean" ? (value === "true" ? "EX_True" : "EX_False") : "EX_IntConst",
+    "literal",
+  );
+  literal.literal = { literalType, value };
+}
+
+function fixtureVariableAssignment(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  opcode: string,
+  targetSymbol: string,
+  sourceSymbol: string,
+  variableStatementIndex: number,
+  sourceStatementIndex: number,
+): void {
+  const assignment = root(statementIndex, opcode, "assignment", opcode === "EX_Let" ? targetSymbol : null);
+  addNode(nodes, assignment, "Variable", variableStatementIndex, "EX_LocalOutVariable", "variable", targetSymbol);
+  addNode(nodes, assignment, "Assignment", sourceStatementIndex, "EX_LocalVariable", "variable", sourceSymbol);
+}
+
+function candidateFunction(
+  functionName: string,
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+): Mutable<BlueprintTraceFunctionInput> {
+  return {
+    packagePath: "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.uasset",
+    className: "ExampleManager_C",
+    classPath: marketClassPath,
+    functionName,
+    functionPath: `${marketClassPath}:${functionName}`,
+    flags: "FUNC_Public, FUNC_BlueprintCallable",
+    bytecodeExpressionCount: nodes.filter((node) => node.parentNodeIndex === null).length,
+    nodes,
+  };
+}
+
+function parameter(
+  position: number,
+  name: string,
+  type: string,
+  flags: string,
+) {
+  return { position, name, type, arrayDimension: 1, flags };
+}
+
 function variableAssignment(
   root: (
     statementIndex: number,
@@ -809,15 +1132,15 @@ function extractor() {
   };
 }
 
-function identity<ArtifactType extends NewReleaseUnlockArtifactIdentity["artifactType"]>(
+function identity<ArtifactType extends NewReleaseArtifactIdentity["artifactType"]>(
   fileName: string,
   artifactType: ArtifactType,
   hashCharacter: string,
-): NewReleaseUnlockArtifactIdentity<ArtifactType> {
+): NewReleaseArtifactIdentity<ArtifactType> {
   return {
     fileName,
     artifactType,
     sizeBytes: 100,
     sha256: hashCharacter.repeat(64),
-  } as NewReleaseUnlockArtifactIdentity<ArtifactType>;
+  } as NewReleaseArtifactIdentity<ArtifactType>;
 }

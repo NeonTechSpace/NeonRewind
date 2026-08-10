@@ -1,10 +1,10 @@
-import type { NewReleaseUnlockMechanicsContract } from "../generated/domain/new-release-unlock-mechanics.ts";
+import type { NewReleaseMechanicsContract } from "../generated/domain/new-release-mechanics.ts";
 import { defineArtifactSchema } from "../define-artifact-schema.ts";
 
-export const NewReleaseUnlockMechanicsJsonSchema = {
+export const NewReleaseMechanicsJsonSchema = {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:domain:new-release-unlock-mechanics",
-  "title": "NeonRetroRewind new-release unlock mechanics",
+  "$id": "urn:neonretrorewind:schema:domain:new-release-mechanics",
+  "title": "NeonRetroRewind new-release mechanics",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,11 +16,12 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
     "runtimeValidation",
     "unlock",
     "requestSelection",
-    "requestGeneration"
+    "requestGeneration",
+    "candidateEligibility"
   ],
   "properties": {
     "artifactType": {
-      "const": "new-release-unlock-mechanics"
+      "const": "new-release-mechanics"
     },
     "build": {
       "$ref": "#/$defs/build"
@@ -29,7 +30,7 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
       "$ref": "#/$defs/sources"
     },
     "scope": {
-      "const": "new-release-unlock"
+      "const": "new-release"
     },
     "evidenceLevel": {
       "const": "typed-blueprint"
@@ -45,6 +46,9 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
     },
     "requestGeneration": {
       "$ref": "#/$defs/requestGeneration"
+    },
+    "candidateEligibility": {
+      "$ref": "#/$defs/candidateEligibility"
     }
   },
   "$defs": {
@@ -73,7 +77,9 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
         "managerTrace",
         "wrapperTrace",
         "propertyReaderTrace",
-        "requestGeneratorTrace"
+        "requestGeneratorTrace",
+        "candidateMapTrace",
+        "callTargetTrace"
       ],
       "properties": {
         "managerTrace": {
@@ -131,6 +137,34 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
               }
             }
           ]
+        },
+        "candidateMapTrace": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/sourceIdentity"
+            },
+            {
+              "properties": {
+                "artifactType": {
+                  "const": "blueprint-property-reference-trace"
+                }
+              }
+            }
+          ]
+        },
+        "callTargetTrace": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/sourceIdentity"
+            },
+            {
+              "properties": {
+                "artifactType": {
+                  "const": "blueprint-call-target-trace"
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -160,9 +194,332 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
           "enum": [
             "unlockable-manager-trace",
             "blueprint-function-trace",
-            "blueprint-property-reference-trace"
+            "blueprint-property-reference-trace",
+            "blueprint-call-target-trace"
           ]
         }
+      }
+    },
+    "candidateEligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rebuild",
+        "preconditions",
+        "predicate",
+        "outcomes",
+        "evidence"
+      ],
+      "properties": {
+        "rebuild": {
+          "$ref": "#/$defs/candidateRebuild"
+        },
+        "preconditions": {
+          "$ref": "#/$defs/candidatePreconditions"
+        },
+        "predicate": {
+          "$ref": "#/$defs/candidatePredicate"
+        },
+        "outcomes": {
+          "$ref": "#/$defs/candidateOutcomes"
+        },
+        "evidence": {
+          "$ref": "#/$defs/candidateEvidence"
+        }
+      }
+    },
+    "candidateRebuild": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trigger",
+        "requiresWeatherReference",
+        "sourceCollection",
+        "candidateCollection",
+        "candidateCollectionClearedBeforeScan",
+        "iteration"
+      ],
+      "properties": {
+        "trigger": {
+          "const": "filter-all-new-release-movie-data"
+        },
+        "requiresWeatherReference": {
+          "const": true
+        },
+        "sourceCollection": {
+          "const": "Example Source Map"
+        },
+        "candidateCollection": {
+          "const": "Example Candidate Map"
+        },
+        "candidateCollectionClearedBeforeScan": {
+          "const": true
+        },
+        "iteration": {
+          "const": "source-map-values"
+        }
+      }
+    },
+    "candidatePreconditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "released",
+        "secondHandAvailable",
+        "operator"
+      ],
+      "properties": {
+        "released": {
+          "const": true
+        },
+        "secondHandAvailable": {
+          "const": false
+        },
+        "operator": {
+          "const": "and"
+        }
+      }
+    },
+    "candidatePredicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "function",
+        "ownerClass",
+        "durationDays",
+        "elapsedDays",
+        "comparison",
+        "lowerBoundEnforced",
+        "remainingDays",
+        "gameModeCastFailure"
+      ],
+      "properties": {
+        "function": {
+          "const": "Evaluate Example Record"
+        },
+        "ownerClass": {
+          "const": "ExampleRecord_C"
+        },
+        "durationDays": {
+          "const": 7
+        },
+        "elapsedDays": {
+          "const": "days-passed-minus-available-in-game-day"
+        },
+        "comparison": {
+          "const": "elapsed-days-less-than-or-equal-to-duration"
+        },
+        "lowerBoundEnforced": {
+          "const": false
+        },
+        "remainingDays": {
+          "const": "available-in-game-day-plus-duration-minus-days-passed"
+        },
+        "gameModeCastFailure": {
+          "$ref": "#/$defs/gameModeCastFailure"
+        }
+      }
+    },
+    "gameModeCastFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "isNew",
+        "remainingDays"
+      ],
+      "properties": {
+        "isNew": {
+          "const": false
+        },
+        "remainingDays": {
+          "const": 0
+        }
+      }
+    },
+    "candidateOutcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible",
+        "preconditionFailure",
+        "predicateFailure",
+        "remainingDaysConsumedByCaller"
+      ],
+      "properties": {
+        "eligible": {
+          "$ref": "#/$defs/candidateOutcomeEligible"
+        },
+        "preconditionFailure": {
+          "$ref": "#/$defs/candidateOutcomePreconditionFailure"
+        },
+        "predicateFailure": {
+          "$ref": "#/$defs/candidateOutcomePredicateFailure"
+        },
+        "remainingDaysConsumedByCaller": {
+          "const": false
+        }
+      }
+    },
+    "candidateOutcomeEligible": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "key",
+        "secondHandAvailable",
+        "basePrice"
+      ],
+      "properties": {
+        "collection": {
+          "const": "Example Candidate Map"
+        },
+        "key": {
+          "const": "product-sku"
+        },
+        "secondHandAvailable": {
+          "const": false
+        },
+        "basePrice": {
+          "const": 0
+        }
+      }
+    },
+    "candidateOutcomePreconditionFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "effect"
+      ],
+      "properties": {
+        "collection": {
+          "const": "Example Source Map"
+        },
+        "effect": {
+          "const": "no-mutation"
+        }
+      }
+    },
+    "candidateOutcomePredicateFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collection",
+        "key",
+        "secondHandAvailable",
+        "basePrice"
+      ],
+      "properties": {
+        "collection": {
+          "const": "Example Source Map"
+        },
+        "key": {
+          "const": "product-sku"
+        },
+        "secondHandAvailable": {
+          "const": true
+        },
+        "basePrice": {
+          "const": 0
+        }
+      }
+    },
+    "candidateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "confidence",
+        "marketClassPath",
+        "rebuildFunction",
+        "filterFunction",
+        "predicateClassPath",
+        "predicateFunction",
+        "bindingRule",
+        "relationship",
+        "statementIndexes"
+      ],
+      "properties": {
+        "kind": {
+          "const": "kismet-analysis"
+        },
+        "confidence": {
+          "const": "direct"
+        },
+        "marketClassPath": {
+          "const": "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C"
+        },
+        "rebuildFunction": {
+          "const": "ExampleRebuildCandidates"
+        },
+        "filterFunction": {
+          "const": "Filter Example Schedule"
+        },
+        "predicateClassPath": {
+          "const": "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C"
+        },
+        "predicateFunction": {
+          "const": "Evaluate Example Record"
+        },
+        "bindingRule": {
+          "const": "exact-context-object-class-and-declaration"
+        },
+        "relationship": {
+          "const": "verified"
+        },
+        "statementIndexes": {
+          "$ref": "#/$defs/candidateStatementIndexes"
+        }
+      }
+    },
+    "candidateStatementIndexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clearCandidateCollection",
+        "enumerateSourceValues",
+        "callPerFilmFilter",
+        "checkSecondHand",
+        "checkReleased",
+        "combinePreconditions",
+        "preconditionBranch",
+        "predicateCall",
+        "predicateBranch",
+        "addEligible",
+        "addIneligible",
+        "durationAssignment",
+        "gameModeCastBranch",
+        "elapsedSubtract",
+        "compareDuration",
+        "remainingAdd",
+        "remainingSubtract",
+        "setEligible",
+        "setRemainingDays",
+        "castFailureSetEligible",
+        "castFailureSetRemainingDays"
+      ],
+      "properties": {
+        "clearCandidateCollection": { "const": 66 },
+        "enumerateSourceValues": { "const": 118 },
+        "callPerFilmFilter": { "const": 390 },
+        "checkSecondHand": { "const": 10 },
+        "checkReleased": { "const": 49 },
+        "combinePreconditions": { "const": 88 },
+        "preconditionBranch": { "const": 116 },
+        "predicateCall": { "const": 152 },
+        "predicateBranch": { "const": 203 },
+        "addEligible": { "const": 418 },
+        "addIneligible": { "const": 697 },
+        "durationAssignment": { "const": 0 },
+        "gameModeCastBranch": { "const": 117 },
+        "elapsedSubtract": { "const": 1512 },
+        "compareDuration": { "const": 1634 },
+        "remainingAdd": { "const": 1680 },
+        "remainingSubtract": { "const": 1744 },
+        "setEligible": { "const": 1838 },
+        "setRemainingDays": { "const": 1857 },
+        "castFailureSetEligible": { "const": 1889 },
+        "castFailureSetRemainingDays": { "const": 1900 }
       }
     },
     "unlock": {
@@ -908,12 +1265,12 @@ export const NewReleaseUnlockMechanicsJsonSchema = {
   }
 } as const;
 
-export const NewReleaseUnlockMechanicsSchema = defineArtifactSchema<NewReleaseUnlockMechanicsContract>(NewReleaseUnlockMechanicsJsonSchema);
-export type NewReleaseUnlockMechanics = typeof NewReleaseUnlockMechanicsSchema.infer;
+export const NewReleaseMechanicsSchema = defineArtifactSchema<NewReleaseMechanicsContract>(NewReleaseMechanicsJsonSchema);
+export type NewReleaseMechanics = typeof NewReleaseMechanicsSchema.infer;
 
-type NewReleaseUnlockSourceIdentity =
-  NewReleaseUnlockMechanics["sources"][keyof NewReleaseUnlockMechanics["sources"]];
-export type NewReleaseUnlockArtifactIdentity<
-  ArtifactType extends NewReleaseUnlockSourceIdentity["artifactType"] =
-    NewReleaseUnlockSourceIdentity["artifactType"],
-> = Extract<NewReleaseUnlockSourceIdentity, { artifactType: ArtifactType }>;
+type NewReleaseSourceIdentity =
+  NewReleaseMechanics["sources"][keyof NewReleaseMechanics["sources"]];
+export type NewReleaseArtifactIdentity<
+  ArtifactType extends NewReleaseSourceIdentity["artifactType"] =
+    NewReleaseSourceIdentity["artifactType"],
+> = Extract<NewReleaseSourceIdentity, { artifactType: ArtifactType }>;
