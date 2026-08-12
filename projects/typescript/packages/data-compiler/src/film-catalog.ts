@@ -88,8 +88,8 @@ const catalogTableDefinitions: readonly CatalogTableDefinition[] = [
 
 const excludedTableNames = new Set([
   "ExampleAuxiliaryTable",
-  "ExampleScheduleTable",
 ]);
+const newReleaseTableName = "ExampleScheduleTable";
 
 const sourceFieldPrefixes = [
   "ExampleCatalogField01",
@@ -124,9 +124,17 @@ export function compileFilmCatalog(
 
     return table.rows.map((row) => compileFilm(row, table, definition));
   });
+  const newReleaseTable = tablesByName.get(newReleaseTableName);
+  if (newReleaseTable === undefined) {
+    throw new Error(`Missing new-release table ${newReleaseTableName}.`);
+  }
+  const newReleaseFilms = newReleaseTable.rows.map((row) =>
+    compileNewReleaseFilm(row, newReleaseTable),
+  );
 
-  assertUniqueSkus(films);
+  assertUniqueSkus([...films, ...newReleaseFilms]);
   films.sort((left, right) => left.sku - right.sku);
+  newReleaseFilms.sort((left, right) => left.sku - right.sku);
 
   return FilmCatalogSchema.assert({
     artifactType: "film-catalog",
@@ -138,11 +146,14 @@ export function compileFilmCatalog(
     totals: {
       sourceFilmTableCount: filmTables.length,
       catalogTableCount: catalogTableDefinitions.length,
+      newReleaseTableCount: 1,
       excludedTableCount: excludedTableNames.size,
       genreCount: catalogTableDefinitions.length,
       filmCount: films.length,
+      newReleaseFilmCount: newReleaseFilms.length,
     },
     films,
+    newReleaseFilms,
   });
 }
 
@@ -173,6 +184,7 @@ function assertExpectedTables(
 ): void {
   const expectedNames = new Set([
     ...catalogTableDefinitions.map((definition) => definition.sourceName),
+    newReleaseTableName,
     ...excludedTableNames,
   ]);
 
@@ -202,9 +214,35 @@ function compileFilm(
     );
   }
 
+  return compileFilmRecord(row, table, definition.genre);
+}
+
+function compileNewReleaseFilm(
+  row: StructuredDataTableRow,
+  table: StructuredDataTable,
+): FilmRecord {
+  assertSourceFields(row, table);
+  const sourceGenre = readString(row, table, "ExampleCatalogField03");
+  const definition = catalogTableDefinitions.find(
+    (candidate) => candidate.sourceGenre === sourceGenre,
+  );
+  if (definition === undefined) {
+    throw new Error(
+      `Unexpected Genre value in ${table.path} row ${row.key}.`,
+    );
+  }
+
+  return compileFilmRecord(row, table, definition.genre);
+}
+
+function compileFilmRecord(
+  row: StructuredDataTableRow,
+  table: StructuredDataTable,
+  genre: FilmGenre,
+): FilmRecord {
   return {
     sku: readInteger(row, table, "ExampleCatalogField08"),
-    genre: definition.genre,
+    genre,
     productName: readString(row, table, "ExampleCatalogField07"),
     subjectName: readString(row, table, "ExampleCatalogField10"),
     backgroundImage: readString(row, table, "ExampleCatalogField01"),
@@ -304,7 +342,7 @@ function assertUniqueSkus(films: readonly FilmRecord[]): void {
 
   for (const film of films) {
     if (skus.has(film.sku)) {
-      throw new Error(`Duplicate catalog SKU ${film.sku}.`);
+      throw new Error(`Duplicate film SKU ${film.sku}.`);
     }
 
     skus.add(film.sku);

@@ -60,12 +60,15 @@ export const FilmCatalogSchema = type({
   totals: type({
     sourceFilmTableCount: type("number.integer").atLeast(0),
     catalogTableCount: type("number.integer").atLeast(0),
+    newReleaseTableCount: type("number.integer").atLeast(0),
     excludedTableCount: type("number.integer").atLeast(0),
     genreCount: type("number.integer").atLeast(0),
     filmCount: type("number.integer").atLeast(0),
+    newReleaseFilmCount: type("number.integer").atLeast(0),
     "+": "reject",
   }).readonly(),
   films: $definitionFilm.array().readonly(),
+  newReleaseFilms: $definitionFilm.array().readonly(),
   "+": "reject",
 }).readonly();
 export type FilmCatalog = typeof FilmCatalogSchema.infer;

@@ -40,8 +40,10 @@ test("compiles stable film records and preserves row evidence", async () => {
 
   assert.equal(catalog.totals.sourceFilmTableCount, 15);
   assert.equal(catalog.totals.catalogTableCount, 13);
-  assert.equal(catalog.totals.excludedTableCount, 2);
+  assert.equal(catalog.totals.newReleaseTableCount, 1);
+  assert.equal(catalog.totals.excludedTableCount, 1);
   assert.equal(catalog.totals.filmCount, 13);
+  assert.equal(catalog.totals.newReleaseFilmCount, 2);
   assert.deepEqual(
     catalog.films.map((film) => film.sku),
     [...catalog.films.map((film) => film.sku)].sort((left, right) => left - right),
@@ -53,14 +55,32 @@ test("compiles stable film records and preserves row evidence", async () => {
     rowKey: "row-ExampleSeasonalAsset",
   });
   assert.equal("ExampleCatalogField03_test" in (catalog.films[0] ?? {}), false);
+  assert.deepEqual(
+    catalog.newReleaseFilms.map((film) => film.sku),
+    [1_000, 1_001],
+  );
+  assert.equal(catalog.newReleaseFilms[0]?.genre, "sci-fi");
+  assert.equal(catalog.newReleaseFilms[0]?.newToUnlock, true);
+  assert.deepEqual(catalog.newReleaseFilms[0]?.evidence, {
+    kind: "data-table",
+    tablePath: "/Game/ExampleScheduleTable.uasset",
+    rowKey: "row-NewRelease-2",
+  });
 
   assert.equal(FilmCatalogSchema.allows(catalog), true);
 });
 
-test("rejects a duplicate catalog SKU", () => {
+test("rejects a duplicate film SKU", () => {
   assert.throws(
     () => compileFilmCatalog(createInput({ duplicateSku: true }), sourceIdentity),
-    /Duplicate catalog SKU/u,
+    /Duplicate film SKU/u,
+  );
+});
+
+test("rejects a new-release SKU that overlaps the general catalog", () => {
+  assert.throws(
+    () => compileFilmCatalog(createInput({ overlappingNewReleaseSku: true }), sourceIdentity),
+    /Duplicate film SKU/u,
   );
 });
 
@@ -78,10 +98,19 @@ test("rejects a source genre that conflicts with its catalog table", () => {
   );
 });
 
+test("rejects an unknown new-release source genre", () => {
+  assert.throws(
+    () => compileFilmCatalog(createInput({ unknownNewReleaseGenre: true }), sourceIdentity),
+    /Unexpected Genre value/u,
+  );
+});
+
 interface FixtureOptions {
   readonly duplicateSku?: boolean;
   readonly includeUnknownTable?: boolean;
   readonly mismatchGenre?: boolean;
+  readonly overlappingNewReleaseSku?: boolean;
+  readonly unknownNewReleaseGenre?: boolean;
 }
 
 function createInput(options: FixtureOptions = {}): StructuredValuesArtifact {
@@ -107,7 +136,30 @@ function createInput(options: FixtureOptions = {}): StructuredValuesArtifact {
 
   dataTables.push(
     createExcludedTable("ExampleAuxiliaryTable"),
-    createExcludedTable("ExampleScheduleTable"),
+    {
+      path: "/Game/ExampleScheduleTable.uasset",
+      name: "ExampleScheduleTable",
+      type: "DataTable",
+      rowStruct: "ExampleRecordStruct",
+      rows: [
+        {
+          key: "row-NewRelease-1",
+          values: createValues(
+            options.overlappingNewReleaseSku
+              ? 100 + tableDefinitions.length
+              : 1_001,
+            options.unknownNewReleaseGenre
+              ? "unexpected"
+              : tableDefinitions[0][1],
+            true,
+          ),
+        },
+        {
+          key: "row-NewRelease-2",
+          values: createValues(1_000, tableDefinitions[10][1], true),
+        },
+      ],
+    },
   );
   if (options.includeUnknownTable) {
     dataTables.push(createExcludedTable("Unexpected"));
@@ -133,14 +185,18 @@ function createExcludedTable(name: string) {
   };
 }
 
-function createValues(sku: number, genre: string): Record<string, unknown> {
+function createValues(
+  sku: number,
+  genre: string,
+  newToUnlock = false,
+): Record<string, unknown> {
   return {
     ExampleCatalogField01_test: "background",
     ExampleCatalogField02_test: "palette",
     ExampleCatalogField03_test: genre,
     ExampleCatalogField04_test: 1,
     ExampleCatalogField05_test: 2,
-    ExampleCatalogField06_test: false,
+    ExampleCatalogField06_test: newToUnlock,
     ExampleCatalogField07_test: "product",
     ExampleCatalogField08_test: sku,
     ExampleCatalogField09_test: "subject-image",

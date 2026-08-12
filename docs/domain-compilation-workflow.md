@@ -262,9 +262,11 @@ The generated artifact remains private and is not committed.
 ## 24. Compile the normalized film catalog
 
 The TypeScript compiler validates the structured-values artifact with its canonical ArkType contract.
-It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
+It maps the 13 catalog DataTables into the general `films` collection and maps `ExampleScheduleTable` into the separate `newReleaseFilms` collection.
+Both collections retain the source table path and row key for each record.
 The game's numeric SKU is the unique film key, and records are written in ascending SKU order.
-Two auxiliary tables reuse the same Unreal row structure and are explicitly excluded from the film catalog.
+The compiler rejects duplicate SKUs within or across the collections.
+The remaining `ExampleAuxiliaryTable` auxiliary table reuses the same Unreal row structure and is explicitly excluded from the film catalog.
 
 Move into the TypeScript workspace and install its locked dependencies.
 
