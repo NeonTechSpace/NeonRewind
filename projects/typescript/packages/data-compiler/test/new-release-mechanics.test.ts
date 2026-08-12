@@ -11,6 +11,8 @@ import {
   createMarketEntryTrace,
   createPropertyReaderTrace,
   createRequestGeneratorTrace,
+  createScheduleCallerTrace,
+  createScheduleCallTargetTrace,
   createSourceMapTrace,
   createWrapperTrace,
   newReleaseSources,
@@ -22,6 +24,86 @@ test("compiles the complete normalized new-release mechanics", async () => {
   assert.equal(mechanics.artifactType, "new-release-mechanics");
   assert.equal(mechanics.scope, "new-release");
   assert.deepEqual(mechanics.sources, newReleaseSources);
+  assert.deepEqual(mechanics.monthlySchedule, {
+    calendar: {
+      firstDay: 1,
+      lastDay: 28,
+      calendarMapClearedBeforeGeneration: true,
+      calendarUiMapClearedBeforeGeneration: true,
+    },
+    eventCodes: { noEvent: 0, newReleaseMovie: 1 },
+    movieReleaseCounter: {
+      field: "ExampleLastReleasePeriod",
+      initialValues: { firstSaveDay: 0, laterMonth: 2 },
+      increment: { amount: 1, when: "day-not-present-in-force-map" },
+      randomThreshold: {
+        function: "RandomIntegerInRange",
+        minimum: 4,
+        maximum: 5,
+        bounds: "inclusive",
+        draw: "each-nonseasonal-evaluation",
+        comparison: "counter-greater-than-or-equal",
+      },
+      resetOnRelease: 0,
+    },
+    forcedInputs: {
+      nonFirstSaveMatchingDayCount: 0,
+      firstSaveFullGameMovieReleaseDay: 3,
+      firstSaveDemoMovieReleaseDayOne: 3,
+      firstSaveDemoMovieReleaseDayTwo: 6,
+      firstSaveDemoNoEventDay: 7,
+      movieReleaseEntryCounterValue: 0,
+      noEventEntryCounterValue: 2,
+    },
+    seasonalPrecedence: {
+      selection: "weather-season-return-event",
+      noEventCode: 0,
+      nonzeroEventBlocksNewRelease: true,
+      counterContinuesAcrossBlockedDay: true,
+    },
+    evidence: {
+      kind: "kismet-analysis",
+      confidence: "direct",
+      classPath:
+        "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.ExampleScheduler_C",
+      callerFunction: "ExecuteExampleGraph_ExampleScheduler",
+      scheduleFunction: "Generate Example Event",
+      bindingRule: "exact-local-virtual-caller-class-and-declaration",
+      relationship: "verified",
+      statementIndexes: {
+        callerFirstSaveCheck: 877,
+        callerNonFirstSaveMap: 900,
+        callerMovieEventArray: 948,
+        callerFullGameMap: 997,
+        callerNoEventArray: 1045,
+        callerDemoMap: 1180,
+        callerDemoCheck: 1237,
+        callerScheduleCall: 1278,
+        clearExampleScheduleAreaMap: 27,
+        clearExampleScheduleAreaUiMap: 68,
+        targetFirstSaveCheck: 109,
+        initialCounterSelection: 215,
+        loopStart: 286,
+        loopCondition: 301,
+        forcedMapFind: 403,
+        forcedMovieFind: 583,
+        resetFromForcedMovie: 668,
+        randomThreshold: 1047,
+        compareThreshold: 1077,
+        resetFromThreshold: 1119,
+        seasonalSelection: 912,
+        seasonalBranch: 1015,
+        selectMovieEvent: 1245,
+        addExampleScheduleAreaDay: 1357,
+        incrementLoopDay: 1859,
+        incrementCounter: 1933,
+        forcedNoEventFind: 2187,
+        setFromForcedNoEvent: 2272,
+        addSeasonalDay: 2901,
+        addExampleScheduleAreaUiDay: 3304,
+      },
+    },
+  });
 
   assert.deepEqual(mechanics.unlock, {
     trigger: "reset-to-new-day-event",
@@ -703,6 +785,55 @@ test("rejects cleanup of a different map", () => {
   );
 });
 
+test("rejects a changed monthly release threshold", () => {
+  const scheduleCallTarget = createScheduleCallTargetTrace();
+  const maximum = scheduleCallTarget.binding.function.nodes.find(
+    (node) => node.statementIndex === 1061,
+  )!.literal!;
+  (maximum as { value: string }).value = "6";
+
+  assert.throws(
+    () => compileCurrent({ scheduleCallTarget }),
+    /literal changed/u,
+  );
+});
+
+test("rejects a changed seasonal precedence route", () => {
+  const scheduleCallTarget = createScheduleCallTargetTrace();
+  const seasonalRoute = scheduleCallTarget.binding.function.nodes.find(
+    (node) => node.statementIndex === 1015,
+  )!.jump!.targets[0]!;
+  (seasonalRoute as { offset: number }).offset = 2536;
+
+  assert.throws(
+    () => compileCurrent({ scheduleCallTarget }),
+    /branch changed/u,
+  );
+});
+
+test("rejects a changed forced demo day", () => {
+  const scheduleCaller = createScheduleCallerTrace();
+  const demoDay = scheduleCaller.functions[0]!.nodes.find(
+    (node) => node.statementIndex === 1208,
+  )!.literal!;
+  (demoDay as { value: string }).value = "5";
+
+  assert.throws(
+    () => compileCurrent({ scheduleCaller }),
+    /literal changed/u,
+  );
+});
+
+test("rejects a monthly-schedule target from another source trace", () => {
+  const scheduleCallTarget = createScheduleCallTargetTrace();
+  scheduleCallTarget.sourceTrace.sha256 = "f".repeat(64);
+
+  assert.throws(
+    () => compileCurrent({ scheduleCallTarget }),
+    /source trace identity changed/u,
+  );
+});
+
 function compileCurrent(overrides: {
   manager?: ReturnType<typeof createManagerTrace>;
   propertyReader?: ReturnType<typeof createPropertyReaderTrace>;
@@ -712,6 +843,8 @@ function compileCurrent(overrides: {
   wrapper?: ReturnType<typeof createWrapperTrace>;
   candidateMap?: ReturnType<typeof createCandidateMapTrace>;
   callTarget?: ReturnType<typeof createCallTargetTrace>;
+  scheduleCaller?: ReturnType<typeof createScheduleCallerTrace>;
+  scheduleCallTarget?: ReturnType<typeof createScheduleCallTargetTrace>;
 } = {}) {
   return compileNewReleaseMechanics(
     overrides.manager ?? createManagerTrace(),
@@ -722,6 +855,8 @@ function compileCurrent(overrides: {
     overrides.sourceMap ?? createSourceMapTrace(),
     overrides.candidateMap ?? createCandidateMapTrace(),
     overrides.callTarget ?? createCallTargetTrace(),
+    overrides.scheduleCaller ?? createScheduleCallerTrace(),
+    overrides.scheduleCallTarget ?? createScheduleCallTargetTrace(),
     newReleaseSources,
   );
 }

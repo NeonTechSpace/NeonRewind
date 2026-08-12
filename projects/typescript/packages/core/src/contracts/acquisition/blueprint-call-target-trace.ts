@@ -202,7 +202,7 @@ const $definitionDeclarationsInput = type({
   declarationRule: type.unit("exact-raw-function-export-object-name"),
   "+": "reject",
 }).readonly();
-const $definitionReceiver = type({
+const $definitionObjectConstantReceiver = type({
   contextStatementIndex: type("number.integer").atLeast(0),
   contextOpcode: type.unit("EX_Context"),
   callEdge: type.unit("ContextExpression"),
@@ -215,6 +215,13 @@ const $definitionReceiver = type({
   exportType: $definitionNonEmptyString,
   "+": "reject",
 }).readonly();
+const $definitionCallerClassReceiver = type({
+  classPath: $definitionNonEmptyString,
+  callStatementIndex: type("number.integer").atLeast(0),
+  callOpcode: type.unit("EX_LocalVirtualFunction"),
+  callerFunctionPath: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
 const $definitionTargetDeclaration = type({
   packagePath: type("string")
     .matching(new RegExp("\\.uasset$"))
@@ -225,16 +232,30 @@ const $definitionTargetDeclaration = type({
   signature: $definitionSignature,
   "+": "reject",
 }).readonly();
-const $definitionBinding = type({
+const $definitionObjectConstantBinding = type({
   bindingRule: type.unit("exact-context-object-class-and-declaration"),
   relationship: type.unit("verified"),
   receiverClassMatchesDeclarationOwner: type.unit(true),
   argumentCountMatchesParameterCount: type.unit(true),
-  receiver: $definitionReceiver,
+  receiver: $definitionObjectConstantReceiver,
   declaration: $definitionTargetDeclaration,
   function: $definitionFunction,
   "+": "reject",
 }).readonly();
+const $definitionCallerClassBinding = type({
+  bindingRule: type.unit("exact-local-virtual-caller-class-and-declaration"),
+  relationship: type.unit("verified"),
+  receiverClassMatchesDeclarationOwner: type.unit(true),
+  argumentCountMatchesParameterCount: type.unit(true),
+  receiver: $definitionCallerClassReceiver,
+  declaration: $definitionTargetDeclaration,
+  function: $definitionFunction,
+  "+": "reject",
+}).readonly();
+const $definitionBinding = type.or(
+  $definitionObjectConstantBinding,
+  $definitionCallerClassBinding,
+);
 
 export const BlueprintCallTargetTraceSchema = type({
   artifactType: type.unit("blueprint-call-target-trace"),

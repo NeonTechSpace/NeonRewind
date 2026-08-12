@@ -59,6 +59,16 @@ export const newReleaseSources: NewReleaseSources = {
     "blueprint-call-target-trace",
     "2",
   ),
+  scheduleCallerTrace: identity(
+    "blueprint-property-reference-trace.calendar-map.json",
+    "blueprint-property-reference-trace",
+    "3",
+  ),
+  scheduleCallTargetTrace: identity(
+    "blueprint-call-target-trace.generate-month-event.json",
+    "blueprint-call-target-trace",
+    "4",
+  ),
 };
 
 export function createManagerTrace(): Mutable<UnlockableManagerTraceArtifact> {
@@ -1045,6 +1055,913 @@ export function createCallTargetTrace(): Mutable<BlueprintCallTargetTraceArtifac
     mappings: createMappings(),
     engine: engine(),
     extractor: extractor(),
+  };
+}
+
+export function createScheduleCallerTrace(): Mutable<BlueprintPropertyReferenceTraceArtifact> {
+  const nodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const root = fixtureRoot(nodes);
+
+  const firstSave = root(877, "EX_LocalVirtualFunction", "call");
+  firstSave.call = call(
+    "local-virtual",
+    "Return Is it the First day of SaveGame?",
+    1,
+    [],
+  );
+  addNode(
+    nodes,
+    firstSave,
+    "Parameters[0]",
+    890,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_32904955f3e6",
+  );
+
+  const nonFirstSaveMap = root(900, "EX_SetMap", "operation");
+  addNode(
+    nodes,
+    nonFirstSaveMap,
+    "MapProperty",
+    901,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_61f1e174a7f2",
+  );
+  addIntegerLiteral(nodes, nonFirstSaveMap, "Elements[0]", 914, 0);
+  const emptyDay = addNode(
+    nodes,
+    nonFirstSaveMap,
+    "Elements[1]",
+    919,
+    "EX_StructConst",
+    "operation",
+  );
+  addNode(nodes, emptyDay, "Properties[0]", 932, "EX_ArrayConst", "operation");
+
+  const movieEvents = root(948, "EX_SetArray", "operation");
+  addNode(
+    nodes,
+    movieEvents,
+    "AssigningProperty",
+    949,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_12ac84ddab95",
+  );
+  addIntegerLiteral(nodes, movieEvents, "Elements[0]", 958, 1, "EX_ByteConst");
+  addEventArrayFixture(
+    nodes,
+    root,
+    961,
+    970,
+    979,
+    988,
+    "ExampleSymbol_acf5973f84c3",
+    "ExampleSymbol_12ac84ddab95",
+  );
+
+  const fullGameMap = root(997, "EX_SetMap", "operation");
+  addNode(
+    nodes,
+    fullGameMap,
+    "MapProperty",
+    998,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_76da57e5c31a",
+  );
+  addIntegerLiteral(nodes, fullGameMap, "Elements[0]", 1011, 3);
+  addNode(
+    nodes,
+    fullGameMap,
+    "Elements[1]",
+    1016,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_acf5973f84c3",
+  );
+
+  const firstSaveValue = root(1026, "EX_LetBool", "assignment");
+  addNode(
+    nodes,
+    firstSaveValue,
+    "Variable",
+    1027,
+    "EX_LocalVariable",
+    "variable",
+    "Temp_bool_Variable",
+  );
+  addNode(
+    nodes,
+    firstSaveValue,
+    "Assignment",
+    1036,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_32904955f3e6",
+  );
+
+  const noEvents = root(1045, "EX_SetArray", "operation");
+  addNode(
+    nodes,
+    noEvents,
+    "AssigningProperty",
+    1046,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_8691914c8e3f",
+  );
+  addIntegerLiteral(nodes, noEvents, "Elements[0]", 1055, 0, "EX_ByteConst");
+  addEventArrayFixture(
+    nodes,
+    root,
+    1079,
+    1088,
+    1097,
+    1106,
+    "ExampleSymbol_966f3400f27e",
+    "ExampleSymbol_8691914c8e3f",
+  );
+
+  const demoMap = root(1180, "EX_SetMap", "operation");
+  addNode(
+    nodes,
+    demoMap,
+    "MapProperty",
+    1181,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_91871c7462dc",
+  );
+  for (const [index, day, eventStruct] of [
+    [0, 3, "ExampleSymbol_acf5973f84c3"],
+    [1, 6, "ExampleSymbol_acf5973f84c3"],
+    [2, 7, "ExampleSymbol_966f3400f27e"],
+  ] as const) {
+    addIntegerLiteral(nodes, demoMap, `Elements[${index * 2}]`, 1194 + index * 14, day);
+    addNode(
+      nodes,
+      demoMap,
+      `Elements[${index * 2 + 1}]`,
+      1199 + index * 14,
+      "EX_LocalVariable",
+      "variable",
+      eventStruct,
+    );
+  }
+
+  const demoCheck = root(1237, "EX_LetBool", "assignment");
+  addNode(
+    nodes,
+    demoCheck,
+    "Variable",
+    1238,
+    "EX_LocalVariable",
+    "variable",
+    "Temp_bool_Variable_1",
+  );
+  const demoContext = addNode(
+    nodes,
+    demoCheck,
+    "Assignment",
+    1247,
+    "EX_Context",
+    "context",
+    "is Demo",
+  );
+  addNode(
+    nodes,
+    demoContext,
+    "ContextExpression",
+    1269,
+    "EX_InstanceVariable",
+    "variable",
+    "is Demo",
+  );
+
+  const scheduleCall = root(1278, "EX_LocalVirtualFunction", "call");
+  scheduleCall.call = call("local-virtual", "Generate Example Event", 1, []);
+  const firstSaveSelection = addBooleanSwitchFixture(
+    nodes,
+    scheduleCall,
+    "Parameters[0]",
+    1291,
+    "Temp_bool_Variable",
+    "ExampleSymbol_61f1e174a7f2",
+  );
+  const demoSelection = addBooleanSwitchFixture(
+    nodes,
+    firstSaveSelection,
+    "Cases[1].CaseTerm",
+    1326,
+    "Temp_bool_Variable_1",
+    "ExampleSymbol_76da57e5c31a",
+    "ExampleSymbol_91871c7462dc",
+  );
+  if (demoSelection.parentNodeIndex !== firstSaveSelection.nodeIndex) {
+    throw new Error("Invalid monthly-schedule fixture.");
+  }
+
+  const function_: Mutable<BlueprintTraceFunctionInput> = {
+    packagePath:
+      "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.uasset",
+    className: "ExampleScheduler_C",
+    classPath:
+      "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.ExampleScheduler_C",
+    functionName: "ExecuteExampleGraph_ExampleScheduler",
+    functionPath:
+      "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.ExampleScheduler_C:ExecuteExampleGraph_ExampleScheduler",
+    flags: "FUNC_Final, FUNC_UbergraphFunction, FUNC_HasDefaults",
+    bytecodeExpressionCount: 237,
+    nodes,
+  };
+  return {
+    artifactType: "blueprint-property-reference-trace",
+    build: createBuild(),
+    blueprintPropertyReferences: {
+      fileName: "blueprint-property-references.calendar-map.json",
+      sizeBytes: 100,
+      sha256: "5".repeat(64),
+      targetPropertyName: "ExampleScheduleArea Map",
+    },
+    requestedFunctionPaths: [function_.functionPath],
+    selectionRule: "explicit-functions-with-read-references",
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: extractor(),
+    totals: totals([function_], 0),
+    functions: [function_],
+  };
+}
+
+export function createScheduleCallTargetTrace(): Mutable<BlueprintCallTargetTraceArtifact> {
+  const nodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const root = fixtureRoot(nodes);
+  const movieCounter = "ExampleLastReleasePeriod";
+
+  addMapCallFixture(nodes, root, 27, "Map_Clear", "ExampleScheduleArea Map", 1);
+  addMapCallFixture(nodes, root, 68, "Map_Clear", "ExampleScheduleArea UI Map", 1);
+
+  const firstSave = root(109, "EX_LocalVirtualFunction", "call");
+  firstSave.call = call(
+    "local-virtual",
+    "Return Is it the First day of SaveGame?",
+    1,
+    [],
+  );
+  addNode(
+    nodes,
+    firstSave,
+    "Parameters[0]",
+    122,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_32904955f3e6",
+  );
+  addLiteralAssignmentFixture(nodes, root, 132, 141, 150, "Temp_int_Variable_1", 2);
+  addLiteralAssignmentFixture(nodes, root, 155, 164, 173, "Temp_int_Variable_2", 0);
+  addVariableAssignmentFixture(
+    nodes,
+    root,
+    178,
+    179,
+    188,
+    "Temp_bool_Variable_1",
+    "ExampleSymbol_32904955f3e6",
+    "EX_LetBool",
+  );
+  const initialCounter = root(197, "EX_Let", "assignment", movieCounter);
+  addNode(nodes, initialCounter, "Variable", 206, "EX_InstanceVariable", "variable", movieCounter);
+  const initialSelection = addBooleanSwitchFixture(
+    nodes,
+    initialCounter,
+    "Assignment",
+    215,
+    "Temp_bool_Variable_1",
+    "Temp_int_Variable_1",
+    "Temp_int_Variable_2",
+  );
+  if (initialSelection.parentNodeIndex !== initialCounter.nodeIndex) {
+    throw new Error("Invalid monthly-schedule fixture.");
+  }
+
+  addLiteralAssignmentFixture(nodes, root, 268, 277, 286, "Temp_int_Variable", 1);
+  const loopCondition = root(301, "EX_CallMath", "call");
+  loopCondition.call = call("final", "LessEqual_IntInt", 2, []);
+  addNode(
+    nodes,
+    loopCondition,
+    "Parameters[0]",
+    310,
+    "EX_LocalVariable",
+    "variable",
+    "Temp_int_Variable",
+  );
+  addIntegerLiteral(nodes, loopCondition, "Parameters[1]", 319, 28);
+  addBranchFixture(nodes, root, 325, "conditional-false", 1647);
+  addVariableAssignmentFixture(
+    nodes,
+    root,
+    344,
+    353,
+    362,
+    "Generate Example Event - Current Loop I",
+    "Temp_int_Variable",
+  );
+
+  const forcedFind = root(403, "EX_FinalFunction", "call");
+  forcedFind.call = call("final", "Map_Find", 3, []);
+  addNode(nodes, forcedFind, "Parameters[0]", 412, "EX_LocalVariable", "variable", "ExampleForcedEvents");
+  addNode(nodes, forcedFind, "Parameters[1]", 421, "EX_LocalVariable", "variable", "Temp_int_Variable");
+  addNode(nodes, forcedFind, "Parameters[2]", 430, "EX_LocalVariable", "variable", "ExampleSymbol_c49af706dd70");
+  addBranchFixture(nodes, root, 440, "conditional-false", 1915);
+
+  addLiteralAssignmentFixture(
+    nodes,
+    root,
+    523,
+    532,
+    541,
+    "Temp_byte_Variable_5",
+    1,
+    "EX_ByteConst",
+  );
+  addArrayFindFixture(
+    nodes,
+    root,
+    583,
+    592,
+    610,
+    "Temp_byte_Variable_5",
+    "ExampleSymbol_c49af706dd70",
+  );
+  addNotEqualMinusOneFixture(
+    nodes,
+    root,
+    630,
+    "ExampleSymbol_e14d36c37b81",
+  );
+  addBranchFixture(nodes, root, 654, "conditional-false", 2058);
+  addLiteralAssignmentFixture(nodes, root, 668, 677, 686, movieCounter, 0);
+
+  for (const [statement, output, name] of [
+    [716, 738, "ExampleSeasonEvent2"],
+    [748, 770, "ExampleSeasonEvent3"],
+    [780, 802, "ExampleSeasonEvent4"],
+    [812, 834, "ExampleSeasonEvent1"],
+  ] as const) {
+    const seasonalCall = root(statement, "EX_LocalVirtualFunction", "call");
+    seasonalCall.call = call("local-virtual", name, 2, []);
+    addNode(
+      nodes,
+      seasonalCall,
+      "Parameters[0]",
+      statement + 13,
+      "EX_InstanceVariable",
+      "variable",
+      "Generate Example Event - Current Loop I",
+    );
+    addNode(
+      nodes,
+      seasonalCall,
+      "Parameters[1]",
+      output,
+      "EX_LocalVariable",
+      "variable",
+      `CallFunc_${name.replaceAll(" ", "_")}_Event`,
+    );
+  }
+  const season = root(844, "EX_Let", "assignment", "Temp_byte_Variable");
+  addNode(nodes, season, "Variable", 853, "EX_LocalVariable", "variable", "Temp_byte_Variable");
+  const seasonContext = addNode(
+    nodes,
+    season,
+    "Assignment",
+    862,
+    "EX_Context",
+    "context",
+    "Season",
+  );
+  addNode(nodes, seasonContext, "ObjectExpression", 863, "EX_InstanceVariable", "variable", "Example Clock Reference");
+  addNode(nodes, seasonContext, "ContextExpression", 884, "EX_InstanceVariable", "variable", "Season");
+  const seasonComparison = root(903, "EX_CallMath", "call");
+  seasonComparison.call = call("final", "EqualEqual_ByteByte", 2, []);
+  const seasonSelection = addNode(
+    nodes,
+    seasonComparison,
+    "Parameters[0]",
+    912,
+    "EX_SwitchValue",
+    "branch",
+  );
+  addNode(nodes, seasonSelection, "IndexTerm", 919, "EX_LocalVariable", "variable", "Temp_byte_Variable");
+  for (const [index, symbol] of [
+    [0, "Temp_byte_Variable_1"],
+    [1, "ExampleSymbol_802a7881eb4c"],
+    [2, "ExampleSymbol_b4b1db4b3f0a"],
+    [3, "ExampleSymbol_3de8670e5951"],
+    [4, "ExampleSymbol_de1725b614ba"],
+  ] as const) {
+    addNode(
+      nodes,
+      seasonSelection,
+      `Cases[${index}].CaseTerm`,
+      934 + index * 15,
+      "EX_LocalVariable",
+      "variable",
+      symbol,
+    );
+  }
+  addIntegerLiteral(nodes, seasonComparison, "Parameters[1]", 1012, 0, "EX_ByteConst");
+  addBranchFixture(nodes, root, 1015, "conditional-false", 2535);
+
+  addRandomThresholdFixture(nodes, root, 1047, 1056, 1061, 1077, 1086, 1095, 1105, 1142);
+  addLiteralAssignmentFixture(nodes, root, 1119, 1128, 1137, movieCounter, 0);
+  addLiteralAssignmentFixture(
+    nodes,
+    root,
+    1142,
+    1151,
+    1160,
+    "Temp_byte_Variable_2",
+    1,
+    "EX_ByteConst",
+  );
+  addLiteralAssignmentFixture(
+    nodes,
+    root,
+    1162,
+    1171,
+    1180,
+    "Temp_byte_Variable_3",
+    0,
+    "EX_ByteConst",
+  );
+  const releaseDue = root(1192, "EX_CallMath", "call");
+  releaseDue.call = call("final", "EqualEqual_IntInt", 2, []);
+  addNode(nodes, releaseDue, "Parameters[0]", 1201, "EX_InstanceVariable", "variable", movieCounter);
+  addIntegerLiteral(nodes, releaseDue, "Parameters[1]", 1210, 0);
+  const eventSelection = addBooleanSwitchFixture(
+    nodes,
+    null,
+    "script",
+    1245,
+    "Temp_bool_Variable",
+    "Temp_byte_Variable_3",
+    "Temp_byte_Variable_2",
+  );
+  eventSelection.edge = `script[${nodes.filter((node) => node.parentNodeIndex === null).length - 1}]`;
+  addMapCallFixture(nodes, root, 1357, "Map_Add", "ExampleScheduleArea Map", 3, "Temp_int_Variable");
+
+  const dayIncrement = root(1859, "EX_CallMath", "call");
+  dayIncrement.call = call("final", "Add_IntInt", 2, []);
+  addNode(nodes, dayIncrement, "Parameters[0]", 1868, "EX_LocalVariable", "variable", "Temp_int_Variable");
+  addIntegerLiteral(nodes, dayIncrement, "Parameters[1]", 1877, 1);
+  addJumpFixture(root, 1910, 291);
+
+  const counterIncrement = root(1933, "EX_CallMath", "call");
+  counterIncrement.call = call("final", "Add_IntInt", 2, []);
+  addNode(nodes, counterIncrement, "Parameters[0]", 1942, "EX_InstanceVariable", "variable", movieCounter);
+  addIntegerLiteral(nodes, counterIncrement, "Parameters[1]", 1951, 1);
+  addVariableAssignmentFixture(
+    nodes,
+    root,
+    1957,
+    1966,
+    1975,
+    movieCounter,
+    "ExampleSymbol_984af5b2d439",
+  );
+  addJumpFixture(root, 2053, 691);
+
+  addLiteralAssignmentFixture(
+    nodes,
+    root,
+    2127,
+    2136,
+    2145,
+    "Temp_byte_Variable_4",
+    0,
+    "EX_ByteConst",
+  );
+  addArrayFindFixture(
+    nodes,
+    root,
+    2187,
+    2196,
+    2214,
+    "Temp_byte_Variable_4",
+    "ExampleSymbol_c49af706dd70",
+  );
+  addNotEqualMinusOneFixture(nodes, root, 2234, "ExampleSymbol_0b481d5b7326");
+  addBranchFixture(nodes, root, 2258, "conditional-false", 2300);
+  addLiteralAssignmentFixture(nodes, root, 2272, 2281, 2290, movieCounter, 2);
+  addJumpFixture(root, 2295, 691);
+
+  addRandomThresholdFixture(nodes, root, 2318, 2327, 2332, 2348, 2357, 2366, 2376, 691);
+  addLiteralAssignmentFixture(nodes, root, 2390, 2399, 2408, movieCounter, 0);
+  addMapCallFixture(nodes, root, 2901, "Map_Add", "ExampleScheduleArea Map", 3, "Temp_int_Variable");
+  addMapCallFixture(nodes, root, 3304, "Map_Add", "ExampleScheduleArea UI Map", 3, "Temp_int_Variable");
+
+  const calendarClassPath =
+    "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.ExampleScheduler_C";
+  const scheduleFunctionPath = `${calendarClassPath}:Generate Example Event`;
+  const signature = {
+    parameterCount: 1,
+    parameters: [
+      parameter(
+        0,
+        "ExampleForcedEvents",
+        "Map<Int, Struct<ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduleStruct.ExampleScheduleStruct>>",
+        "BlueprintVisible, BlueprintReadOnly, Parm",
+      ),
+    ],
+  };
+  return {
+    artifactType: "blueprint-call-target-trace",
+    build: createBuild(),
+    sourceTrace: {
+      ...newReleaseSources.scheduleCallerTrace,
+      targetPropertyName: "ExampleScheduleArea Map",
+    },
+    declarations: {
+      fileName: "blueprint-function-declarations.generate-month-event.json",
+      sizeBytes: 100,
+      sha256: "6".repeat(64),
+      artifactType: "blueprint-function-declarations",
+      targetFunctionName: "Generate Example Event",
+      declarationRule: "exact-raw-function-export-object-name",
+    },
+    recordedCall: {
+      callerFunctionPath: `${calendarClassPath}:ExecuteExampleGraph_ExampleScheduler`,
+      statementIndex: 1278,
+      opcode: "EX_LocalVirtualFunction",
+      call: {
+        callKind: "local-virtual",
+        functionName: "Generate Example Event",
+        argumentCount: 1,
+        integerArguments: [],
+      },
+    },
+    binding: {
+      bindingRule: "exact-local-virtual-caller-class-and-declaration",
+      relationship: "verified",
+      receiverClassMatchesDeclarationOwner: true,
+      argumentCountMatchesParameterCount: true,
+      receiver: {
+        classPath: calendarClassPath,
+        callStatementIndex: 1278,
+        callOpcode: "EX_LocalVirtualFunction",
+        callerFunctionPath: `${calendarClassPath}:ExecuteExampleGraph_ExampleScheduler`,
+      },
+      declaration: {
+        packagePath:
+          "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.uasset",
+        packageExportIndex: 15,
+        objectPath: scheduleFunctionPath,
+        ownerPath: calendarClassPath,
+        signature,
+      },
+      function: {
+        packagePath:
+          "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.uasset",
+        className: "ExampleScheduler_C",
+        classPath: calendarClassPath,
+        functionName: "Generate Example Event",
+        functionPath: scheduleFunctionPath,
+        flags: "FUNC_Public, FUNC_HasDefaults, FUNC_BlueprintCallable, FUNC_BlueprintEvent",
+        bytecodeExpressionCount: 101,
+        nodes,
+      },
+    },
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: extractor(),
+  };
+}
+
+function addIntegerLiteral(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  parent: Mutable<BlueprintTraceNodeInput>,
+  edge: string,
+  statementIndex: number,
+  value: number,
+  opcode = "EX_IntConst",
+): Mutable<BlueprintTraceNodeInput> {
+  const literal = addNode(nodes, parent, edge, statementIndex, opcode, "literal");
+  literal.literal = { literalType: "integer", value: String(value) };
+  return literal;
+}
+
+function addEventArrayFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  assignmentStatement: number,
+  memberStatement: number,
+  structStatement: number,
+  sourceStatement: number,
+  structSymbol: string,
+  arraySymbol: string,
+): void {
+  const assignment = root(assignmentStatement, "EX_Let", "assignment");
+  const member = addNode(
+    nodes,
+    assignment,
+    "Variable",
+    memberStatement,
+    "EX_StructMemberContext",
+    "context",
+    "ExampleField07_0_00000000000000000000000000000000",
+  );
+  addNode(
+    nodes,
+    member,
+    "StructExpression",
+    structStatement,
+    "EX_LocalVariable",
+    "variable",
+    structSymbol,
+  );
+  addNode(
+    nodes,
+    assignment,
+    "Assignment",
+    sourceStatement,
+    "EX_LocalVariable",
+    "variable",
+    arraySymbol,
+  );
+}
+
+function addBooleanSwitchFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  parent: Mutable<BlueprintTraceNodeInput> | null,
+  edge: string,
+  statementIndex: number,
+  indexSymbol: string,
+  falseSymbol: string,
+  trueSymbol?: string,
+): Mutable<BlueprintTraceNodeInput> {
+  const actualEdge = parent === null
+    ? `script[${nodes.filter((node) => node.parentNodeIndex === null).length}]`
+    : edge;
+  const switchNode = addNode(
+    nodes,
+    parent,
+    actualEdge,
+    statementIndex,
+    "EX_SwitchValue",
+    "branch",
+  );
+  addNode(
+    nodes,
+    switchNode,
+    "IndexTerm",
+    statementIndex + 1,
+    "EX_LocalVariable",
+    "variable",
+    indexSymbol,
+  );
+  for (const [index, value, symbol] of [
+    [0, false, falseSymbol],
+    [1, true, trueSymbol],
+  ] as const) {
+    const indexValue = addNode(
+      nodes,
+      switchNode,
+      `Cases[${index}].CaseIndexValueTerm`,
+      statementIndex + 2 + index * 2,
+      value ? "EX_True" : "EX_False",
+      "literal",
+    );
+    indexValue.literal = { literalType: "boolean", value: String(value) };
+    if (symbol !== undefined) {
+      addNode(
+        nodes,
+        switchNode,
+        `Cases[${index}].CaseTerm`,
+        statementIndex + 3 + index * 2,
+        "EX_LocalVariable",
+        "variable",
+        symbol,
+      );
+    }
+  }
+  return switchNode;
+}
+
+function addMapCallFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  functionName: string,
+  mapSymbol: string,
+  argumentCount: number,
+  daySymbol?: string,
+): void {
+  const mapCall = root(statementIndex, "EX_FinalFunction", "call");
+  mapCall.call = call("final", functionName, argumentCount, []);
+  addNode(
+    nodes,
+    mapCall,
+    "Parameters[0]",
+    statementIndex + 1,
+    "EX_InstanceVariable",
+    "variable",
+    mapSymbol,
+  );
+  if (daySymbol !== undefined) {
+    addNode(
+      nodes,
+      mapCall,
+      "Parameters[1]",
+      statementIndex + 2,
+      "EX_LocalVariable",
+      "variable",
+      daySymbol,
+    );
+  }
+}
+
+function addLiteralAssignmentFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  variableStatement: number,
+  literalStatement: number,
+  variable: string,
+  value: number,
+  literalOpcode = "EX_IntConst",
+): void {
+  const assignment = root(statementIndex, "EX_Let", "assignment", variable);
+  addNode(
+    nodes,
+    assignment,
+    "Variable",
+    variableStatement,
+    variable === "ExampleLastReleasePeriod" ? "EX_InstanceVariable" : "EX_LocalVariable",
+    "variable",
+    variable,
+  );
+  addIntegerLiteral(nodes, assignment, "Assignment", literalStatement, value, literalOpcode);
+}
+
+function addVariableAssignmentFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  variableStatement: number,
+  sourceStatement: number,
+  variable: string,
+  source: string,
+  opcode = "EX_Let",
+): void {
+  const assignment = root(statementIndex, opcode, "assignment", variable);
+  addNode(
+    nodes,
+    assignment,
+    "Variable",
+    variableStatement,
+    variable === "ExampleLastReleasePeriod" ? "EX_InstanceVariable" : "EX_LocalVariable",
+    "variable",
+    variable,
+  );
+  addNode(
+    nodes,
+    assignment,
+    "Assignment",
+    sourceStatement,
+    "EX_LocalVariable",
+    "variable",
+    source,
+  );
+}
+
+function addBranchFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  jumpKind: "conditional-false",
+  targetOffset: number,
+): void {
+  const branchNode = root(statementIndex, "EX_JumpIfNot", "branch");
+  branchNode.jump = {
+    jumpKind,
+    targets: [{ edge: "codeOffset", offset: targetOffset }],
+  };
+}
+
+function addArrayFindFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  arrayStatement: number,
+  valueStatement: number,
+  valueSymbol: string,
+  structSymbol: string,
+): void {
+  const find = root(statementIndex, "EX_FinalFunction", "call");
+  find.call = call("final", "Array_Find", 2, []);
+  const arrayContext = addNode(
+    nodes,
+    find,
+    "Parameters[0]",
+    arrayStatement,
+    "EX_StructMemberContext",
+    "context",
+    "ExampleField07_0_00000000000000000000000000000000",
+  );
+  addNode(
+    nodes,
+    arrayContext,
+    "StructExpression",
+    arrayStatement + 1,
+    "EX_LocalVariable",
+    "variable",
+    structSymbol,
+  );
+  addNode(
+    nodes,
+    find,
+    "Parameters[1]",
+    valueStatement,
+    "EX_LocalVariable",
+    "variable",
+    valueSymbol,
+  );
+}
+
+function addNotEqualMinusOneFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  resultSymbol: string,
+): void {
+  const comparison = root(statementIndex, "EX_CallMath", "call");
+  comparison.call = call("final", "NotEqual_IntInt", 2, []);
+  addNode(
+    nodes,
+    comparison,
+    "Parameters[0]",
+    statementIndex + 1,
+    "EX_LocalVariable",
+    "variable",
+    resultSymbol,
+  );
+  addIntegerLiteral(nodes, comparison, "Parameters[1]", statementIndex + 2, -1);
+}
+
+function addRandomThresholdFixture(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  randomStatement: number,
+  minimumStatement: number,
+  maximumStatement: number,
+  comparisonStatement: number,
+  counterStatement: number,
+  thresholdStatement: number,
+  branchStatement: number,
+  falseTarget: number,
+): void {
+  const random = root(randomStatement, "EX_CallMath", "call");
+  random.call = call("final", "RandomIntegerInRange", 2, []);
+  addIntegerLiteral(nodes, random, "Parameters[0]", minimumStatement, 4);
+  addIntegerLiteral(nodes, random, "Parameters[1]", maximumStatement, 5);
+
+  const comparison = root(comparisonStatement, "EX_CallMath", "call");
+  comparison.call = call("final", "GreaterEqual_IntInt", 2, []);
+  addNode(
+    nodes,
+    comparison,
+    "Parameters[0]",
+    counterStatement,
+    "EX_InstanceVariable",
+    "variable",
+    "ExampleLastReleasePeriod",
+  );
+  addNode(
+    nodes,
+    comparison,
+    "Parameters[1]",
+    thresholdStatement,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_16b34cdcbe73",
+  );
+  addBranchFixture(nodes, root, branchStatement, "conditional-false", falseTarget);
+}
+
+function addJumpFixture(
+  root: ReturnType<typeof fixtureRoot>,
+  statementIndex: number,
+  targetOffset: number,
+): void {
+  const jumpNode = root(statementIndex, "EX_Jump", "branch");
+  jumpNode.jump = {
+    jumpKind: "unconditional",
+    targets: [{ edge: "codeOffset", offset: targetOffset }],
   };
 }
 

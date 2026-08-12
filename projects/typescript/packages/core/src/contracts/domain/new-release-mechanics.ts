@@ -58,6 +58,129 @@ const $definitionSources = type({
       "artifactType?": type.unit("blueprint-call-target-trace"),
     }).readonly(),
   ),
+  scheduleCallerTrace: type.and(
+    $definitionSourceIdentity,
+    type({
+      "artifactType?": type.unit("blueprint-property-reference-trace"),
+    }).readonly(),
+  ),
+  scheduleCallTargetTrace: type.and(
+    $definitionSourceIdentity,
+    type({
+      "artifactType?": type.unit("blueprint-call-target-trace"),
+    }).readonly(),
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyExampleScheduleArea = type({
+  firstDay: type.unit(1),
+  lastDay: type.unit(28),
+  calendarMapClearedBeforeGeneration: type.unit(true),
+  calendarUiMapClearedBeforeGeneration: type.unit(true),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyCounterInitialValues = type({
+  firstSaveDay: type.unit(0),
+  laterMonth: type.unit(2),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyCounterIncrement = type({
+  amount: type.unit(1),
+  when: type.unit("day-not-present-in-force-map"),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyRandomThreshold = type({
+  function: type.unit("RandomIntegerInRange"),
+  minimum: type.unit(4),
+  maximum: type.unit(5),
+  bounds: type.unit("inclusive"),
+  draw: type.unit("each-nonseasonal-evaluation"),
+  comparison: type.unit("counter-greater-than-or-equal"),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyCounter = type({
+  field: type.unit("ExampleLastReleasePeriod"),
+  initialValues: $definitionMonthlyCounterInitialValues,
+  increment: $definitionMonthlyCounterIncrement,
+  randomThreshold: $definitionMonthlyRandomThreshold,
+  resetOnRelease: type.unit(0),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyEventCodes = type({
+  noEvent: type.unit(0),
+  newReleaseMovie: type.unit(1),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyForcedInputs = type({
+  nonFirstSaveMatchingDayCount: type.unit(0),
+  firstSaveFullGameMovieReleaseDay: type.unit(3),
+  firstSaveDemoMovieReleaseDayOne: type.unit(3),
+  firstSaveDemoMovieReleaseDayTwo: type.unit(6),
+  firstSaveDemoNoEventDay: type.unit(7),
+  movieReleaseEntryCounterValue: type.unit(0),
+  noEventEntryCounterValue: type.unit(2),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlySeasonalPrecedence = type({
+  selection: type.unit("weather-season-return-event"),
+  noEventCode: type.unit(0),
+  nonzeroEventBlocksNewRelease: type.unit(true),
+  counterContinuesAcrossBlockedDay: type.unit(true),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyStatementIndexes = type({
+  callerFirstSaveCheck: type.unit(877),
+  callerNonFirstSaveMap: type.unit(900),
+  callerMovieEventArray: type.unit(948),
+  callerFullGameMap: type.unit(997),
+  callerNoEventArray: type.unit(1045),
+  callerDemoMap: type.unit(1180),
+  callerDemoCheck: type.unit(1237),
+  callerScheduleCall: type.unit(1278),
+  clearExampleScheduleAreaMap: type.unit(27),
+  clearExampleScheduleAreaUiMap: type.unit(68),
+  targetFirstSaveCheck: type.unit(109),
+  initialCounterSelection: type.unit(215),
+  loopStart: type.unit(286),
+  loopCondition: type.unit(301),
+  forcedMapFind: type.unit(403),
+  forcedMovieFind: type.unit(583),
+  resetFromForcedMovie: type.unit(668),
+  randomThreshold: type.unit(1047),
+  compareThreshold: type.unit(1077),
+  resetFromThreshold: type.unit(1119),
+  seasonalSelection: type.unit(912),
+  seasonalBranch: type.unit(1015),
+  selectMovieEvent: type.unit(1245),
+  addExampleScheduleAreaDay: type.unit(1357),
+  incrementLoopDay: type.unit(1859),
+  incrementCounter: type.unit(1933),
+  forcedNoEventFind: type.unit(2187),
+  setFromForcedNoEvent: type.unit(2272),
+  addSeasonalDay: type.unit(2901),
+  addExampleScheduleAreaUiDay: type.unit(3304),
+  "+": "reject",
+}).readonly();
+const $definitionMonthlyEvidence = type({
+  kind: type.unit("kismet-analysis"),
+  confidence: type.unit("direct"),
+  classPath: type.unit(
+    "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.ExampleScheduler_C",
+  ),
+  callerFunction: type.unit("ExecuteExampleGraph_ExampleScheduler"),
+  scheduleFunction: type.unit("Generate Example Event"),
+  bindingRule: type.unit("exact-local-virtual-caller-class-and-declaration"),
+  relationship: type.unit("verified"),
+  statementIndexes: $definitionMonthlyStatementIndexes,
+  "+": "reject",
+}).readonly();
+const $definitionMonthlySchedule = type({
+  calendar: $definitionMonthlyExampleScheduleArea,
+  eventCodes: $definitionMonthlyEventCodes,
+  movieReleaseCounter: $definitionMonthlyCounter,
+  forcedInputs: $definitionMonthlyForcedInputs,
+  seasonalPrecedence: $definitionMonthlySeasonalPrecedence,
+  evidence: $definitionMonthlyEvidence,
   "+": "reject",
 }).readonly();
 const $definitionSourceMapRestore = type({
@@ -486,6 +609,7 @@ export const NewReleaseMechanicsSchema = type({
   unlock: $definitionUnlock,
   requestSelection: $definitionRequestSelection,
   requestGeneration: $definitionRequestGeneration,
+  monthlySchedule: $definitionMonthlySchedule,
   sourceMapLifecycle: $definitionSourceMapLifecycle,
   candidateEligibility: $definitionCandidateEligibility,
   "+": "reject",

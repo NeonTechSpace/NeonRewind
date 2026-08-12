@@ -197,19 +197,26 @@ function assertCallTargetBinding(
   }
 
   const { binding } = trace;
+  if (
+    binding.bindingRule !== "exact-context-object-class-and-declaration" ||
+    !("contextStatementIndex" in binding.receiver)
+  ) {
+    throw new Error("Candidate predicate target identity changed.");
+  }
+
+  const { receiver } = binding;
   const parameterNames = binding.declaration.signature.parameters.map(
     (parameter) => parameter.name,
   );
   if (
-    binding.bindingRule !== "exact-context-object-class-and-declaration" ||
     binding.relationship !== "verified" ||
     !binding.receiverClassMatchesDeclarationOwner ||
     !binding.argumentCountMatchesParameterCount ||
-    binding.receiver.contextStatementIndex !== 130 ||
-    binding.receiver.receiverStatementIndex !== 131 ||
-    binding.receiver.objectName !== "Default__ExampleRecord_C" ||
-    binding.receiver.classPath !== predicateClassPath ||
-    binding.receiver.exportType !== "ExampleRecord_C" ||
+    receiver.contextStatementIndex !== 130 ||
+    receiver.receiverStatementIndex !== 131 ||
+    receiver.objectName !== "Default__ExampleRecord_C" ||
+    receiver.classPath !== predicateClassPath ||
+    receiver.exportType !== "ExampleRecord_C" ||
     binding.declaration.packageExportIndex !== 14 ||
     binding.declaration.objectPath !== predicateFunctionPath ||
     binding.declaration.ownerPath !== predicateClassPath ||

@@ -22,6 +22,7 @@ import type {
   UnlockableManagerTraceArtifact,
 } from "./blueprint-trace-inputs.ts";
 import { compileNewReleaseCandidateEligibility } from "./new-release-candidate-eligibility.ts";
+import { compileNewReleaseMonthlySchedule } from "./new-release-monthly-schedule.ts";
 import { compileNewReleaseSourceMapLifecycle } from "./new-release-source-map.ts";
 
 const classPath =
@@ -56,6 +57,8 @@ export interface NewReleaseSources {
   readonly sourceMapTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
   readonly candidateMapTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
   readonly callTargetTrace: NewReleaseArtifactIdentity<"blueprint-call-target-trace">;
+  readonly scheduleCallerTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
+  readonly scheduleCallTargetTrace: NewReleaseArtifactIdentity<"blueprint-call-target-trace">;
 }
 
 export function compileNewReleaseMechanics(
@@ -67,6 +70,8 @@ export function compileNewReleaseMechanics(
   sourceMapTrace: BlueprintPropertyReferenceTraceArtifact,
   candidateMapTrace: BlueprintPropertyReferenceTraceArtifact,
   callTargetTrace: BlueprintCallTargetTraceArtifact,
+  scheduleCallerTrace: BlueprintPropertyReferenceTraceArtifact,
+  scheduleCallTargetTrace: BlueprintCallTargetTraceArtifact,
   sources: NewReleaseSources,
 ): NewReleaseMechanics {
   assertInputContracts(
@@ -78,6 +83,8 @@ export function compileNewReleaseMechanics(
     sourceMapTrace,
     candidateMapTrace,
     callTargetTrace,
+    scheduleCallerTrace,
+    scheduleCallTargetTrace,
   );
   assertWrapperEntry(wrapperTrace, resetFunctionName, 3364);
   assertWrapperEntry(wrapperTrace, checkFunctionName, 3379);
@@ -338,6 +345,11 @@ export function compileNewReleaseMechanics(
         },
       },
     },
+    monthlySchedule: compileNewReleaseMonthlySchedule(
+      scheduleCallerTrace,
+      scheduleCallTargetTrace,
+      sources.scheduleCallerTrace,
+    ),
     sourceMapLifecycle: compileNewReleaseSourceMapLifecycle(
       marketEntryTrace,
       sourceMapTrace,
@@ -359,6 +371,8 @@ function assertInputContracts(
   sourceMapTrace: BlueprintPropertyReferenceTraceArtifact,
   candidateMapTrace: BlueprintPropertyReferenceTraceArtifact,
   callTargetTrace: BlueprintCallTargetTraceArtifact,
+  scheduleCallerTrace: BlueprintPropertyReferenceTraceArtifact,
+  scheduleCallTargetTrace: BlueprintCallTargetTraceArtifact,
 ): void {
   if (managerTrace.artifactType !== "unlockable-manager-trace") {
     throw new Error("Expected an unlockable-manager-trace input.");
@@ -384,6 +398,12 @@ function assertInputContracts(
   if (callTargetTrace.artifactType !== "blueprint-call-target-trace") {
     throw new Error("Expected a Blueprint call-target trace input.");
   }
+  if (scheduleCallerTrace.artifactType !== "blueprint-property-reference-trace") {
+    throw new Error("Expected a monthly-schedule caller trace input.");
+  }
+  if (scheduleCallTargetTrace.artifactType !== "blueprint-call-target-trace") {
+    throw new Error("Expected a monthly-schedule call-target trace input.");
+  }
   const otherInputs = [
     wrapperTrace,
     propertyReaderTrace,
@@ -392,6 +412,8 @@ function assertInputContracts(
     sourceMapTrace,
     candidateMapTrace,
     callTargetTrace,
+    scheduleCallerTrace,
+    scheduleCallTargetTrace,
   ];
   if (otherInputs.some((input) => !sameBuild(managerTrace.build, input.build))) {
     throw new Error("New-release inputs refer to different game builds.");

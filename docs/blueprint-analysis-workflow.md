@@ -320,9 +320,12 @@ The output contains game-specific declaration evidence and must remain in the ig
 ## 18. Verify and trace an exact call target
 
 This step binds one exact call node to one exact cooked declaration and traces the bound function body.
-It requires the call to be the `ContextExpression` of `EX_Context`, the context's `ObjectExpression` to be `EX_ObjectConst`, the receiver's class path to equal the declaration owner, and the call's argument count to equal the declaration's parameter count.
+It accepts an `EX_Context` call with an `EX_ObjectConst` receiver or an implicit-receiver `EX_LocalVirtualFunction` call whose caller class is the declaration owner.
+The resolved receiver class path must equal the declaration owner, and the call's argument count must equal the declaration's parameter count.
 The command also verifies the declaration against the loaded class function map, package export, signature, flags, and bytecode-expression count.
 It fails closed instead of emitting an unproven relationship.
+
+### Verify the new-release eligibility target
 
 ```powershell
 $marketClass = "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C:"
@@ -370,6 +373,104 @@ The function itself has no lower-bound check on the elapsed value, while its `Ex
 Reads of release-date fields and a constructed string feed debug printing rather than the output calculation.
 This is static cooked-bytecode evidence, not a runtime observation.
 The output contains game-specific receiver, declaration, signature, and bytecode evidence and must remain in the ignored local acquisition directory.
+
+### Verify the monthly schedule target
+
+First scan for exact `ExampleScheduleArea Map` references and trace the calendar event graph that supplies the forced-day map.
+
+```powershell
+$calendarClass = "ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.ExampleScheduler_C:"
+
+dotnet run --project $extractor -- blueprint-property-references `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --target-property "ExampleScheduleArea Map" `
+  --output (Join-Path $buildDirectory "blueprint-property-references.calendar-map.json")
+
+dotnet run --project $extractor -- blueprint-property-reference-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --property-references (Join-Path $buildDirectory "blueprint-property-references.calendar-map.json") `
+  --function-path ($calendarClass + "ExecuteExampleGraph_ExampleScheduler") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-property-reference-trace.calendar-map.json")
+```
+
+```bash
+calendarClass="ExampleGame/Content/ExampleProject/asset/prop/ExampleScheduleArea/ExampleScheduler.ExampleScheduler_C:"
+
+dotnet run --project "$extractor" -- blueprint-property-references \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --target-property "ExampleScheduleArea Map" \
+  --output "$buildDirectory/blueprint-property-references.calendar-map.json"
+
+dotnet run --project "$extractor" -- blueprint-property-reference-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --property-references "$buildDirectory/blueprint-property-references.calendar-map.json" \
+  --function-path "${calendarClass}ExecuteExampleGraph_ExampleScheduler" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-property-reference-trace.calendar-map.json"
+```
+
+Then locate the exact declaration and bind the local virtual call at statement `1278` to that same-class target.
+
+```powershell
+dotnet run --project $extractor -- blueprint-function-declarations `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --target-function "Generate Example Event" `
+  --output (Join-Path $buildDirectory "blueprint-function-declarations.generate-month-event.json")
+
+dotnet run --project $extractor -- blueprint-call-target-trace `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --source-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.calendar-map.json") `
+  --declarations (Join-Path $buildDirectory "blueprint-function-declarations.generate-month-event.json") `
+  --caller-function-path ($calendarClass + "ExecuteExampleGraph_ExampleScheduler") `
+  --statement-index 1278 `
+  --expected-call-kind "local-virtual" `
+  --expected-call-function "Generate Example Event" `
+  --expected-argument-count 1 `
+  --target-function-path ($calendarClass + "Generate Example Event") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-call-target-trace.generate-month-event.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-function-declarations \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --target-function "Generate Example Event" \
+  --output "$buildDirectory/blueprint-function-declarations.generate-month-event.json"
+
+dotnet run --project "$extractor" -- blueprint-call-target-trace \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --source-trace "$buildDirectory/blueprint-property-reference-trace.calendar-map.json" \
+  --declarations "$buildDirectory/blueprint-function-declarations.generate-month-event.json" \
+  --caller-function-path "${calendarClass}ExecuteExampleGraph_ExampleScheduler" \
+  --statement-index 1278 \
+  --expected-call-kind "local-virtual" \
+  --expected-call-function "Generate Example Event" \
+  --expected-argument-count 1 \
+  --target-function-path "${calendarClass}Generate Example Event" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-call-target-trace.generate-month-event.json"
+```
+
+For build `23896268`, the caller and target are both owned by `ExampleScheduler_C` and the relationship is verified.
+The target body contains the 28-day loop, forced first-month entries, seasonal precedence, and new-release counter logic consumed by the domain compiler.
+Both outputs contain game-specific bytecode evidence and must remain in the ignored local acquisition directory.
 
 ## 19. Create the typed rental function trace
 

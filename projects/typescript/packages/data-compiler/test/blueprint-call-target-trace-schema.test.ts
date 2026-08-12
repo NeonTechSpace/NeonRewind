@@ -30,6 +30,47 @@ test("rejects a receiver that does not match the declaration owner", () => {
   assert.throws(() => BlueprintCallTargetTraceSchema.assert(artifact));
 });
 
+test("accepts a same-class local-virtual call-target trace", () => {
+  const objectArtifact = createArtifact();
+  const artifact = {
+    ...objectArtifact,
+    binding: {
+      ...objectArtifact.binding,
+      bindingRule: "exact-local-virtual-caller-class-and-declaration" as const,
+      receiver: {
+        classPath: marketClassPath,
+        callStatementIndex: 1278,
+        callOpcode: "EX_LocalVirtualFunction" as const,
+        callerFunctionPath: `${marketClassPath}:ExecuteExampleGraph_ExampleScheduler`,
+      },
+      declaration: {
+        ...objectArtifact.binding.declaration,
+        ownerPath: marketClassPath,
+      },
+    },
+  };
+
+  assert.deepEqual(BlueprintCallTargetTraceSchema.assert(artifact), artifact);
+});
+
+test("rejects a caller-class receiver under the object-constant binding rule", () => {
+  const objectArtifact = createArtifact();
+  const artifact = {
+    ...objectArtifact,
+    binding: {
+      ...objectArtifact.binding,
+      receiver: {
+        classPath: marketClassPath,
+        callStatementIndex: 1278,
+        callOpcode: "EX_LocalVirtualFunction" as const,
+        callerFunctionPath: `${marketClassPath}:ExecuteExampleGraph_ExampleScheduler`,
+      },
+    },
+  };
+
+  assert.throws(() => BlueprintCallTargetTraceSchema.assert(artifact));
+});
+
 function createArtifact() {
   const callerPath = `${marketClassPath}:Filter Example Schedule`;
   const targetPath = `${filmDataClassPath}:Evaluate Example Record`;

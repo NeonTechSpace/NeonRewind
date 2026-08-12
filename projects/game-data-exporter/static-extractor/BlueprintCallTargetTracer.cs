@@ -12,6 +12,11 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal static class BlueprintCallTargetTracer
 {
+    public const string ObjectConstantBindingRule =
+        "exact-context-object-class-and-declaration";
+    public const string CallerClassBindingRule =
+        "exact-local-virtual-caller-class-and-declaration";
+
     private const string KismetNamespacePrefix = "CUE4Parse.UE4.Kismet";
 
     public static BlueprintResolvedCallTarget Trace(
@@ -44,10 +49,10 @@ internal static class BlueprintCallTargetTracer
                 declaration.ObjectName,
                 declaration.ObjectPath));
         VerifyTarget(target, declaration);
-        return new BlueprintResolvedCallTarget(receiver, target);
+        return new BlueprintResolvedCallTarget(receiver.BindingRule, receiver.Value, target);
     }
 
-    private static BlueprintCallReceiver ResolveReceiver(
+    private static ResolvedReceiver ResolveReceiver(
         string mappingsPath,
         string packageDirectory,
         BlueprintFunctionTraceSelection caller,
@@ -108,35 +113,64 @@ internal static class BlueprintCallTargetTracer
             FindCall(expression, null, "script", recordedCall, matches, visited);
         }
 
-        if (matches.Count != 1 ||
-            matches[0].Parent is not EX_Context context ||
-            matches[0].Edge != nameof(EX_Context.ContextExpression) ||
-            !ReferenceEquals(context.ContextExpression, matches[0].Expression) ||
-            context.ObjectExpression is not EX_ObjectConst objectConstant)
+        if (matches.Count != 1)
         {
             throw new InvalidDataException(
-                "The recorded call is not a unique EX_Context call with an EX_ObjectConst receiver.");
+                "The recorded call is absent or not unique in the loaded caller function.");
         }
 
+        VerifyRawDeclaration(provider, declaration);
+        var match = matches[0];
+        if (match.Parent is EX_Context context &&
+            match.Edge == nameof(EX_Context.ContextExpression) &&
+            ReferenceEquals(context.ContextExpression, match.Expression) &&
+            context.ObjectExpression is EX_ObjectConst objectConstant)
+        {
+            return ResolveObjectConstantReceiver(context, objectConstant);
+        }
+
+        if (match.Parent is not EX_Context &&
+            match.Expression is EX_LocalVirtualFunction &&
+            recordedCall.Call.CallKind == "local-virtual" &&
+            caller.ClassPath == declaration.OwnerPath)
+        {
+            return new ResolvedReceiver(
+                CallerClassBindingRule,
+                new BlueprintCallReceiver(
+                    ClassPath: caller.ClassPath,
+                    CallStatementIndex: match.Expression.StatementIndex,
+                    CallOpcode: nameof(EX_LocalVirtualFunction),
+                    CallerFunctionPath: caller.FunctionPath));
+        }
+
+        throw new InvalidDataException(
+            "The recorded call has neither a verified object-constant receiver nor a same-class local-virtual receiver.");
+    }
+
+    private static ResolvedReceiver ResolveObjectConstantReceiver(
+        EX_Context context,
+        EX_ObjectConst objectConstant)
+    {
         var resolvedObject = objectConstant.Value.ResolvedObject ??
             throw new InvalidDataException("The call receiver object constant did not resolve.");
         var receiverClass = resolvedObject.Class ??
             throw new InvalidDataException("The call receiver has no resolved class.");
         var loadedObject = objectConstant.Value.Load() ??
             throw new InvalidDataException("The call receiver object did not load.");
-        VerifyRawDeclaration(provider, declaration);
 
-        return new BlueprintCallReceiver(
-            ContextStatementIndex: context.StatementIndex,
-            ContextOpcode: nameof(EX_Context),
-            CallEdge: nameof(EX_Context.ContextExpression),
-            ReceiverStatementIndex: objectConstant.StatementIndex,
-            ReceiverOpcode: nameof(EX_ObjectConst),
-            ReceiverEdge: nameof(EX_Context.ObjectExpression),
-            ObjectName: resolvedObject.Name.Text,
-            ObjectPath: resolvedObject.GetPathName(),
-            ClassPath: receiverClass.GetPathName(),
-            ExportType: loadedObject.ExportType);
+        return new ResolvedReceiver(
+            ObjectConstantBindingRule,
+            new BlueprintCallReceiver(
+                ClassPath: receiverClass.GetPathName(),
+                ContextStatementIndex: context.StatementIndex,
+                ContextOpcode: nameof(EX_Context),
+                CallEdge: nameof(EX_Context.ContextExpression),
+                ReceiverStatementIndex: objectConstant.StatementIndex,
+                ReceiverOpcode: nameof(EX_ObjectConst),
+                ReceiverEdge: nameof(EX_Context.ObjectExpression),
+                ObjectName: resolvedObject.Name.Text,
+                ObjectPath: resolvedObject.GetPathName(),
+                ExportType: loadedObject.ExportType));
     }
 
     private static void VerifyRawDeclaration(
@@ -287,4 +321,11 @@ internal static class BlueprintCallTargetTracer
         string Edge);
 
     private sealed record RawChild(string Edge, KismetExpression Expression);
+
+    private sealed record ResolvedReceiver(
+        string BindingRule,
+        BlueprintCallReceiver Value)
+    {
+        public string ClassPath => Value.ClassPath;
+    }
 }

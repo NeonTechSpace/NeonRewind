@@ -30,6 +30,8 @@ interface Options {
   readonly sourceMapTracePath: string;
   readonly candidateMapTracePath: string;
   readonly callTargetTracePath: string;
+  readonly scheduleCallerTracePath: string;
+  readonly scheduleCallTargetTracePath: string;
   readonly outputPath: string;
 }
 
@@ -54,6 +56,8 @@ export async function runNewReleaseMechanics(
       sourceMap,
       candidateMap,
       callTarget,
+      scheduleCaller,
+      scheduleCallTarget,
     ] = await Promise.all([
       readInput(options.managerTracePath, "Unlock manager trace"),
       readInput(options.wrapperTracePath, "Unlock wrapper trace"),
@@ -63,6 +67,8 @@ export async function runNewReleaseMechanics(
       readInput(options.sourceMapTracePath, "Source-map trace"),
       readInput(options.candidateMapTracePath, "Candidate-map trace"),
       readInput(options.callTargetTracePath, "Call-target trace"),
+      readInput(options.scheduleCallerTracePath, "Monthly-schedule caller trace"),
+      readInput(options.scheduleCallTargetTracePath, "Monthly-schedule call-target trace"),
     ]);
     const sources: NewReleaseSources = {
       managerTrace: createIdentity(manager, "unlockable-manager-trace"),
@@ -85,6 +91,14 @@ export async function runNewReleaseMechanics(
         "blueprint-property-reference-trace",
       ),
       callTargetTrace: createIdentity(callTarget, "blueprint-call-target-trace"),
+      scheduleCallerTrace: createIdentity(
+        scheduleCaller,
+        "blueprint-property-reference-trace",
+      ),
+      scheduleCallTargetTrace: createIdentity(
+        scheduleCallTarget,
+        "blueprint-call-target-trace",
+      ),
     };
     const mechanics = compileNewReleaseMechanics(
       assertArtifactContract(
@@ -127,6 +141,16 @@ export async function runNewReleaseMechanics(
         callTarget.value,
         "Call-target trace input",
       ),
+      assertArtifactContract(
+        BlueprintPropertyReferenceTraceSchema,
+        scheduleCaller.value,
+        "Monthly-schedule caller trace input",
+      ),
+      assertArtifactContract(
+        BlueprintCallTargetTraceSchema,
+        scheduleCallTarget.value,
+        "Monthly-schedule call-target trace input",
+      ),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
@@ -141,6 +165,8 @@ export async function runNewReleaseMechanics(
         sourceMap,
         candidateMap,
         callTarget,
+        scheduleCaller,
+        scheduleCallTarget,
       ].map((input) => assertFileUnchanged(input)),
     );
     const status = await writeImmutableArtifact(options.outputPath, output);
@@ -163,7 +189,7 @@ export async function runNewReleaseMechanics(
 
 export function writeNewReleaseUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-data-compiler new-release-mechanics --manager-trace <path> --wrapper-trace <path> --property-reader-trace <path> --request-generator-trace <path> --market-entry-trace <path> --source-map-trace <path> --candidate-map-trace <path> --call-target-trace <path> --output <path>\n",
+    "  neonretrorewind-data-compiler new-release-mechanics --manager-trace <path> --wrapper-trace <path> --property-reader-trace <path> --request-generator-trace <path> --market-entry-trace <path> --source-map-trace <path> --candidate-map-trace <path> --call-target-trace <path> --schedule-caller-trace <path> --schedule-call-target-trace <path> --output <path>\n",
   );
 }
 
@@ -193,6 +219,8 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     "--source-map-trace",
     "--candidate-map-trace",
     "--call-target-trace",
+    "--schedule-caller-trace",
+    "--schedule-call-target-trace",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -213,7 +241,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
   }
   const missing = names.filter((name) => !values.has(name));
   if (missing.length > 0) {
-    return `Expected manager, wrapper, property-reader, request-generator, Market entry, source-map, candidate-map, and call-target traces and --output, missing ${missing.join(", ")}.`;
+    return `Expected manager, wrapper, property-reader, request-generator, Market entry, source-map, candidate-map, predicate call-target, monthly-schedule caller, and monthly-schedule call-target traces and --output, missing ${missing.join(", ")}.`;
   }
   return {
     managerTracePath: values.get("--manager-trace")!,
@@ -224,6 +252,8 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     sourceMapTracePath: values.get("--source-map-trace")!,
     candidateMapTracePath: values.get("--candidate-map-trace")!,
     callTargetTracePath: values.get("--call-target-trace")!,
+    scheduleCallerTracePath: values.get("--schedule-caller-trace")!,
+    scheduleCallTargetTracePath: values.get("--schedule-call-target-trace")!,
     outputPath: values.get("--output")!,
   };
 }
