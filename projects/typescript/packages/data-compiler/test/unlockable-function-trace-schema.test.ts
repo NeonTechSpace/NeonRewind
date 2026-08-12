@@ -1,15 +1,7 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { UnlockableFunctionTraceSchema } from "@neonretrorewind/core";
-
-import { validateJsonSchema } from "../src/schema-validation.ts";
-
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/unlockable-function-trace.schema.json",
-  import.meta.url,
-);
 
 const itemBaseClass =
   "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.BP_ExampleItem_C";
@@ -22,39 +14,24 @@ const functionPaths = [
   `${systemClass}:TryApplyExample`,
 ];
 
-test("accepts the bounded unlockable function trace contract", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
-
-  assert.doesNotThrow(() =>
-    validateJsonSchema(createArtifact(), schema, "Unlockable function trace"),
-  );
+test("accepts the bounded unlockable function trace contract", () => {
   assert.doesNotThrow(() => UnlockableFunctionTraceSchema.assert(createArtifact()));
 });
 
-test("rejects a changed unlockable trace target", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a changed unlockable trace target", () => {
   const artifact = createArtifact();
   artifact.functions[3]!.functionPath = `${systemClass}:IsExampleApplied`;
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Unlockable function trace"),
-    /does not match its schema/u,
-  );
   assert.throws(() => UnlockableFunctionTraceSchema.assert(artifact));
 });
 
-test("rejects reordered unlockable trace requests", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects reordered unlockable trace requests", () => {
   const artifact = createArtifact();
   [artifact.requestedFunctionPaths[0], artifact.requestedFunctionPaths[1]] = [
     artifact.requestedFunctionPaths[1]!,
     artifact.requestedFunctionPaths[0]!,
   ];
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Unlockable function trace"),
-    /does not match its schema/u,
-  );
   assert.throws(() => UnlockableFunctionTraceSchema.assert(artifact));
 });
 

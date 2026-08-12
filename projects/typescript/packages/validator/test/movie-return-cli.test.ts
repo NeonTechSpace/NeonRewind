@@ -30,14 +30,6 @@ import {
   movie,
 } from "./movie-return-fixture.ts";
 
-const observationSchemaPath = new URL(
-  "../../../../game-data-exporter/schemas/runtime/movie-return-observation.schema.json",
-  import.meta.url,
-);
-const mechanicsSchemaSourcePath = new URL(
-  "../../core/schemas/movie-return-mechanics.schema.json",
-  import.meta.url,
-);
 const cliPath = fileURLToPath(new URL("../src/cli.ts", import.meta.url));
 const execFileAsync = promisify(execFile);
 
@@ -79,17 +71,16 @@ test("rejects observation and mechanics artifacts from different builds", async 
   );
 });
 
-test("rejects private fields through the observation schema", async (context) => {
+test("rejects private fields through the observation contract", async (context) => {
   const fixture = await createFiles(context, {
     mutateObservation: (observation) => {
       (observation.events[0] as unknown as Record<string, unknown>).playerName = "private";
     },
   });
 
-  await assert.rejects(
-    validateMovieReturnFiles(fixture.options),
-    /does not match its schema/u,
-  );
+  await assert.rejects(validateMovieReturnFiles(fixture.options), {
+    message: "Movie-return observation does not match its contract.",
+  });
 });
 
 test("writes a mismatch report without rewriting the observation", async (context) => {
@@ -192,24 +183,9 @@ test("rejects more than 256 captured movie references", async (context) => {
     },
   });
 
-  await assert.rejects(
-    validateMovieReturnFiles(fixture.options),
-    /does not match its schema/u,
-  );
-});
-
-test("rejects a schema with the wrong identity", async (context) => {
-  const fixture = await createFiles(context);
-  const schema = JSON.parse(
-    await readFile(fixture.options.mechanicsSchemaPath, "utf8"),
-  );
-  schema.$id = "urn:wrong";
-  await writeJson(fixture.options.mechanicsSchemaPath, schema);
-
-  await assert.rejects(
-    validateMovieReturnFiles(fixture.options),
-    /does not have the expected \$id/u,
-  );
+  await assert.rejects(validateMovieReturnFiles(fixture.options), {
+    message: "Movie-return observation does not match its contract.",
+  });
 });
 
 test("command exits zero after writing a passed report", async (context) => {
@@ -272,7 +248,6 @@ async function createFiles(
   context.after(() => rm(directory, { recursive: true, force: true }));
 
   const mechanicsPath = join(directory, "movie-return-mechanics.json");
-  const mechanicsSchemaPath = join(directory, "movie-return-mechanics.schema.json");
   const observationPath = join(directory, "movie-return-observation.json");
   const outputPath = join(directory, "movie-return-validation.json");
   const compiledMechanics = compileMovieReturnMechanics(
@@ -295,7 +270,6 @@ async function createFiles(
       };
   const mechanicsContent = json(mechanics);
   await writeFile(mechanicsPath, mechanicsContent, "utf8");
-  await writeFile(mechanicsSchemaPath, await readFile(mechanicsSchemaSourcePath));
 
   const observation = createObservation();
   observation.targetMechanics.sizeBytes = Buffer.byteLength(mechanicsContent);
@@ -306,9 +280,7 @@ async function createFiles(
   return {
     options: {
       observationPath,
-      observationSchemaPath: fileURLToPath(observationSchemaPath),
       mechanicsPath,
-      mechanicsSchemaPath,
       outputPath,
     },
   };
@@ -318,12 +290,8 @@ function commandArguments(options: MovieReturnValidationOptions): readonly strin
   return [
     "--observation",
     options.observationPath,
-    "--observation-schema",
-    options.observationSchemaPath,
     "--mechanics",
     options.mechanicsPath,
-    "--mechanics-schema",
-    options.mechanicsSchemaPath,
     "--output",
     options.outputPath,
   ];

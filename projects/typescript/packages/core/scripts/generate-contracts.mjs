@@ -9,39 +9,66 @@ const repositoryDirectory = resolve(packageDirectory, "../../../..");
 const checkOnly = process.argv.includes("--check");
 
 const contracts = [
-  ["acquisition", "blueprint-call-sites", "BlueprintCallSites", "game-data-exporter"],
-  ["acquisition", "blueprint-call-candidate-trace", "BlueprintCallCandidateTrace", "game-data-exporter"],
-  ["acquisition", "blueprint-call-target-trace", "BlueprintCallTargetTrace", "game-data-exporter"],
-  ["acquisition", "blueprint-caller-bodies", "BlueprintCallerBodies", "game-data-exporter"],
-  ["acquisition", "blueprint-function-trace", "BlueprintFunctionTrace", "game-data-exporter"],
-  ["acquisition", "blueprint-function-declarations", "BlueprintFunctionDeclarations", "game-data-exporter"],
-  ["acquisition", "blueprint-property-reference-trace", "BlueprintPropertyReferenceTrace", "game-data-exporter"],
-  ["acquisition", "blueprint-property-references", "BlueprintPropertyReferences", "game-data-exporter"],
-  ["acquisition", "build-manifest", "BuildManifest", "game-data-exporter"],
-  ["acquisition", "rental-blueprint-bodies", "RentalBlueprintBodies", "game-data-exporter"],
-  ["acquisition", "rental-evidence", "RentalEvidence", "game-data-exporter"],
-  ["acquisition", "rental-function-trace", "RentalFunctionTrace", "game-data-exporter"],
-  ["acquisition", "static-census", "StaticCensus", "game-data-exporter"],
-  ["acquisition", "structured-asset-index", "StructuredAssetIndex", "game-data-exporter"],
-  ["acquisition", "structured-values", "StructuredValues", "game-data-exporter"],
-  ["acquisition", "unlockable-evidence", "UnlockableEvidence", "game-data-exporter"],
-  ["acquisition", "unlockable-function-trace", "UnlockableFunctionTrace", "game-data-exporter"],
-  ["acquisition", "unlockable-implementation-sites", "UnlockableImplementationSites", "game-data-exporter"],
-  ["acquisition", "unlockable-manager-trace", "UnlockableManagerTrace", "game-data-exporter"],
-  ["runtime", "movie-return-observation", "MovieReturnObservation", "game-data-exporter"],
-  ["runtime", "movie-return-runtime-collector-config", "MovieReturnRuntimeCollectorConfig", "game-data-exporter"],
-  ["runtime", "runtime-host-installation", "RuntimeHostInstallation", "game-data-exporter"],
-  ["runtime", "runtime-host-staging", "RuntimeHostStaging", "game-data-exporter"],
-  ["validation", "movie-return-validation", "MovieReturnValidation", null],
-  ["domain", "console-return-mechanics", "ConsoleReturnMechanics", null],
-  ["domain", "film-catalog", "FilmCatalog", null],
-  ["domain", "membership-fee-mechanics", "MembershipFeeMechanics", null],
-  ["domain", "movie-return-mechanics", "MovieReturnMechanics", "core"],
-  ["domain", "new-release-mechanics", "NewReleaseMechanics", null],
+  ["acquisition", "blueprint-call-sites", "BlueprintCallSites"],
+  ["acquisition", "blueprint-call-candidate-trace", "BlueprintCallCandidateTrace"],
+  ["acquisition", "blueprint-call-target-trace", "BlueprintCallTargetTrace"],
+  ["acquisition", "blueprint-caller-bodies", "BlueprintCallerBodies"],
+  ["acquisition", "blueprint-function-trace", "BlueprintFunctionTrace"],
+  ["acquisition", "blueprint-function-declarations", "BlueprintFunctionDeclarations"],
+  ["acquisition", "blueprint-property-reference-trace", "BlueprintPropertyReferenceTrace"],
+  ["acquisition", "blueprint-property-references", "BlueprintPropertyReferences"],
+  ["acquisition", "build-manifest", "BuildManifest"],
+  ["acquisition", "rental-blueprint-bodies", "RentalBlueprintBodies"],
+  ["acquisition", "rental-evidence", "RentalEvidence"],
+  ["acquisition", "rental-function-trace", "RentalFunctionTrace"],
+  ["acquisition", "static-census", "StaticCensus"],
+  ["acquisition", "structured-asset-index", "StructuredAssetIndex"],
+  ["acquisition", "structured-values", "StructuredValues"],
+  ["acquisition", "unlockable-evidence", "UnlockableEvidence"],
+  ["acquisition", "unlockable-function-trace", "UnlockableFunctionTrace"],
+  ["acquisition", "unlockable-implementation-sites", "UnlockableImplementationSites"],
+  ["acquisition", "unlockable-manager-trace", "UnlockableManagerTrace"],
+  ["runtime", "movie-return-observation", "MovieReturnObservation"],
+  ["runtime", "movie-return-runtime-collector-config", "MovieReturnRuntimeCollectorConfig"],
+  ["runtime", "runtime-host-installation", "RuntimeHostInstallation"],
+  ["runtime", "runtime-host-staging", "RuntimeHostStaging"],
+  ["validation", "movie-return-validation", "MovieReturnValidation"],
+  ["domain", "console-return-mechanics", "ConsoleReturnMechanics"],
+  ["domain", "film-catalog", "FilmCatalog"],
+  ["domain", "membership-fee-mechanics", "MembershipFeeMechanics"],
+  ["domain", "movie-return-mechanics", "MovieReturnMechanics"],
+  ["domain", "new-release-mechanics", "NewReleaseMechanics"],
 ];
+
+const standaloneSchemas = new Map([
+  [
+    "runtime/movie-return-observation",
+    resolve(repositoryDirectory, "projects/game-data-exporter/schemas/runtime/movie-return-observation.schema.json"),
+  ],
+  [
+    "runtime/movie-return-runtime-collector-config",
+    resolve(repositoryDirectory, "projects/game-data-exporter/schemas/runtime/movie-return-runtime-collector-config.schema.json"),
+  ],
+  [
+    "domain/movie-return-mechanics",
+    resolve(packageDirectory, "schemas/movie-return-mechanics.schema.json"),
+  ],
+]);
 
 const staleStandaloneSchemas = [
   resolve(repositoryDirectory, "projects/game-data-exporter/schemas/validation/movie-return-validation.schema.json"),
+  ...contracts
+    .filter(([category]) => category === "acquisition")
+    .map(([, fileName]) => resolve(
+      repositoryDirectory,
+      "projects/game-data-exporter/schemas/acquisition",
+      `${fileName}.schema.json`,
+    )),
+  ...["runtime-host-installation", "runtime-host-staging"].map((name) => resolve(
+    repositoryDirectory,
+    "projects/game-data-exporter/schemas/runtime",
+    `${name}.schema.json`,
+  )),
   ...[
     "console-return-mechanics",
     "film-catalog",
@@ -51,7 +78,7 @@ const staleStandaloneSchemas = [
 ];
 
 const errors = [];
-for (const [category, fileName, symbol, standaloneOwner] of contracts) {
+for (const [category, fileName, symbol] of contracts) {
   const source = resolve(packageDirectory, "src/contracts", category, `${fileName}.ts`);
   const module = await import(pathToFileURL(source));
   const definition = module[`${symbol}JsonSchema`];
@@ -74,15 +101,8 @@ for (const [category, fileName, symbol, standaloneOwner] of contracts) {
   );
   await synchronize(typeDestination, generatedType);
 
-  if (standaloneOwner !== null) {
-    const schemaDestination = standaloneOwner === "core"
-      ? resolve(packageDirectory, "schemas", `${fileName}.schema.json`)
-      : resolve(
-          repositoryDirectory,
-          "projects/game-data-exporter/schemas",
-          category,
-          `${fileName}.schema.json`,
-        );
+  const schemaDestination = standaloneSchemas.get(`${category}/${fileName}`);
+  if (schemaDestination !== undefined) {
     await synchronize(schemaDestination, `${JSON.stringify(definition, null, 2)}\n`);
   }
 }

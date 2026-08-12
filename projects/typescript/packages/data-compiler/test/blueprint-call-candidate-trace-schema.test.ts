@@ -1,50 +1,29 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BlueprintCallCandidateTraceSchema } from "@neonretrorewind/core";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
-
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/blueprint-call-candidate-trace.schema.json",
-  import.meta.url,
-);
 const classPath =
   "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C";
 
-test("accepts an explicitly unproven call-candidate trace", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("accepts an explicitly unproven call-candidate trace", () => {
   const artifact = createArtifact();
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(artifact, schema, "Blueprint call-candidate trace"),
-  );
-  assert.deepEqual(BlueprintCallCandidateTraceSchema(artifact), artifact);
+  assert.deepEqual(BlueprintCallCandidateTraceSchema.assert(artifact), artifact);
 });
 
-test("rejects a claimed candidate relationship", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a claimed candidate relationship", () => {
   const artifact = createArtifact();
   (artifact.candidate as { relationship: string }).relationship = "equivalent";
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint call-candidate trace"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintCallCandidateTraceSchema(artifact), artifact);
+  assert.throws(() => BlueprintCallCandidateTraceSchema.assert(artifact));
 });
 
-test("rejects an untyped candidate parameter", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects an untyped candidate parameter", () => {
   const artifact = createArtifact();
   artifact.candidate.signature.parameters[0]!.type = "";
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint call-candidate trace"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintCallCandidateTraceSchema(artifact), artifact);
+  assert.throws(() => BlueprintCallCandidateTraceSchema.assert(artifact));
 });
 
 function createArtifact() {

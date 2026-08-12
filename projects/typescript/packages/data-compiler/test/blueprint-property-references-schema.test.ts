@@ -1,28 +1,15 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BlueprintPropertyReferencesSchema } from "@neonretrorewind/core";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
-
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/blueprint-property-references.schema.json",
-  import.meta.url,
-);
-
-test("accepts the bounded Blueprint property-reference contract", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("accepts the bounded Blueprint property-reference contract", () => {
   const artifact = createArtifact();
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(artifact, schema, "Blueprint property references"),
-  );
-  assert.deepEqual(BlueprintPropertyReferencesSchema(artifact), artifact);
+  assert.deepEqual(BlueprintPropertyReferencesSchema.assert(artifact), artifact);
 });
 
-test("rejects complete coverage with a package failure", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects complete coverage with a package failure", () => {
   const artifact = createArtifact();
   artifact.totals.failedPackageCount = 1;
   artifact.failures.push({
@@ -30,23 +17,14 @@ test("rejects complete coverage with a package failure", async () => {
     errorType: "ParserException",
   });
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint property references"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintPropertyReferencesSchema(artifact), artifact);
+  assert.throws(() => BlueprintPropertyReferencesSchema.assert(artifact));
 });
 
-test("rejects an unsupported access classification", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects an unsupported access classification", () => {
   const artifact = createArtifact();
   artifact.references[0]!.access = "execute";
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint property references"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintPropertyReferencesSchema(artifact), artifact);
+  assert.throws(() => BlueprintPropertyReferencesSchema.assert(artifact));
 });
 
 function createArtifact() {

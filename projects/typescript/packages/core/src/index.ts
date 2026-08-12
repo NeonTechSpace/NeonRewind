@@ -1,3 +1,5 @@
+export { assertArtifactContract } from "./assert-artifact-contract.ts";
+
 export {
   BlueprintCallCandidateTraceJsonSchema,
   BlueprintCallCandidateTraceSchema,

@@ -1,27 +1,16 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
-
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/unlockable-implementation-sites.schema.json",
-  import.meta.url,
-);
+import { UnlockableImplementationSitesSchema } from "@neonretrorewind/core";
 
 const managerClass =
   "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C";
 
-test("accepts a complete unlockable implementation-site discovery", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
-
-  assert.doesNotThrow(() =>
-    validateJsonSchema(createArtifact(), schema, "Unlockable implementation sites"),
-  );
+test("accepts a complete unlockable implementation-site discovery", () => {
+  assert.doesNotThrow(() => UnlockableImplementationSitesSchema.assert(createArtifact()));
 });
 
-test("accepts an empty override as a discovered implementation site", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("accepts an empty override as a discovered implementation site", () => {
   const artifact = createArtifact();
   const baseClass = artifact.baseClassPath;
   const classPath = "ExampleGame/Content/Fixture.Fixture_C";
@@ -44,29 +33,17 @@ test("accepts an empty override as a discovered implementation site", async () =
     bytecodeExpressionCount: 0,
   });
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(artifact, schema, "Unlockable implementation sites"),
-  );
+  assert.doesNotThrow(() => UnlockableImplementationSitesSchema.assert(artifact));
 });
 
-test("rejects a changed manager event-graph target", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a changed manager event-graph target", () => {
   const artifact = createArtifact();
   artifact.managerEventGraphs[0]!.functionName = "ExecuteExampleGraph_Other";
 
-  assert.throws(
-    () =>
-      validateJsonSchema(
-        artifact,
-        schema,
-        "Unlockable implementation sites",
-      ),
-    /does not match its schema/u,
-  );
+  assert.throws(() => UnlockableImplementationSitesSchema.assert(artifact));
 });
 
-test("rejects complete coverage with a package failure", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects complete coverage with a package failure", () => {
   const artifact = createArtifact();
   artifact.totals.failedPackageCount = 1;
   artifact.failures.push({
@@ -74,34 +51,17 @@ test("rejects complete coverage with a package failure", async () => {
     errorType: "ParserException",
   });
 
-  assert.throws(
-    () =>
-      validateJsonSchema(
-        artifact,
-        schema,
-        "Unlockable implementation sites",
-      ),
-    /does not match its schema/u,
-  );
+  assert.throws(() => UnlockableImplementationSitesSchema.assert(artifact));
 });
 
-test("rejects reordered unlock hook targets", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects reordered unlock hook targets", () => {
   const artifact = createArtifact();
   [artifact.targetFunctionNames[0], artifact.targetFunctionNames[1]] = [
     artifact.targetFunctionNames[1]!,
     artifact.targetFunctionNames[0]!,
   ];
 
-  assert.throws(
-    () =>
-      validateJsonSchema(
-        artifact,
-        schema,
-        "Unlockable implementation sites",
-      ),
-    /does not match its schema/u,
-  );
+  assert.throws(() => UnlockableImplementationSitesSchema.assert(artifact));
 });
 
 function createArtifact() {

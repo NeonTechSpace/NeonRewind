@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
 import {
+  assertArtifactContract,
   BlueprintCallerBodiesSchema,
   BlueprintCallSitesSchema,
   BlueprintFunctionTraceSchema,
@@ -30,7 +31,6 @@ import type {
   RentalBlueprintBodiesArtifact,
   RentalEvidenceArtifact,
 } from "./rental-inputs.ts";
-import { validateJsonSchema } from "./schema-validation.ts";
 
 const invalidArgumentsExitCode = 2;
 const inputFailureExitCode = 6;
@@ -38,17 +38,11 @@ const outputConflictExitCode = 7;
 
 interface MovieReturnOptions {
   readonly rentalEvidencePath: string;
-  readonly rentalEvidenceSchemaPath: string;
   readonly blueprintBodiesPath: string;
-  readonly blueprintBodiesSchemaPath: string;
   readonly callSitesPath: string;
-  readonly callSitesSchemaPath: string;
   readonly callerBodiesPath: string;
-  readonly callerBodiesSchemaPath: string;
   readonly functionTracePath: string;
-  readonly functionTraceSchemaPath: string;
   readonly rentalFunctionTracePath: string;
-  readonly rentalFunctionTraceSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -65,15 +59,38 @@ export async function runMovieReturnMechanic(
 
   try {
     const inputs = await readInputs(options);
-    await validateInputs(inputs, options);
     const sources = createSources(inputs);
     const mechanics = compileMovieReturnMechanics(
-      RentalEvidenceSchema.assert(inputs.rental.value),
-      RentalBlueprintBodiesSchema.assert(inputs.bodies.value),
-      BlueprintCallSitesSchema.assert(inputs.callSites.value),
-      BlueprintCallerBodiesSchema.assert(inputs.callerBodies.value),
-      BlueprintFunctionTraceSchema.assert(inputs.functionTrace.value),
-      RentalFunctionTraceSchema.assert(inputs.rentalFunctionTrace.value),
+      assertArtifactContract(
+        RentalEvidenceSchema,
+        inputs.rental.value,
+        "Rental-evidence input",
+      ),
+      assertArtifactContract(
+        RentalBlueprintBodiesSchema,
+        inputs.bodies.value,
+        "Rental Blueprint-body input",
+      ),
+      assertArtifactContract(
+        BlueprintCallSitesSchema,
+        inputs.callSites.value,
+        "Blueprint call-site input",
+      ),
+      assertArtifactContract(
+        BlueprintCallerBodiesSchema,
+        inputs.callerBodies.value,
+        "Blueprint caller-body input",
+      ),
+      assertArtifactContract(
+        BlueprintFunctionTraceSchema,
+        inputs.functionTrace.value,
+        "Blueprint function trace input",
+      ),
+      assertArtifactContract(
+        RentalFunctionTraceSchema,
+        inputs.rentalFunctionTrace.value,
+        "Rental function trace input",
+      ),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
@@ -99,7 +116,7 @@ export async function runMovieReturnMechanic(
 
 export function writeMovieReturnUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-data-compiler movie-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --call-sites <path> --call-sites-schema <schema> --caller-bodies <path> --caller-bodies-schema <schema> --function-trace <path> --function-trace-schema <schema> --rental-function-trace <path> --rental-function-trace-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler movie-return-mechanics --rental-evidence <path> --blueprint-bodies <path> --call-sites <path> --caller-bodies <path> --function-trace <path> --rental-function-trace <path> --output <path>\n",
   );
 }
 
@@ -122,29 +139,6 @@ async function readInputs(options: MovieReturnOptions) {
     readInput(options.rentalFunctionTracePath, "Rental function trace"),
   ]);
   return { rental, bodies, callSites, callerBodies, functionTrace, rentalFunctionTrace };
-}
-
-async function validateInputs(
-  inputs: Awaited<ReturnType<typeof readInputs>>,
-  options: MovieReturnOptions,
-): Promise<void> {
-  const schemas = [
-    [inputs.rental, options.rentalEvidenceSchemaPath, "Rental-evidence"],
-    [inputs.bodies, options.blueprintBodiesSchemaPath, "Rental Blueprint-body"],
-    [inputs.callSites, options.callSitesSchemaPath, "Blueprint call-site"],
-    [inputs.callerBodies, options.callerBodiesSchemaPath, "Blueprint caller-body"],
-    [inputs.functionTrace, options.functionTraceSchemaPath, "Blueprint function trace"],
-    [
-      inputs.rentalFunctionTrace,
-      options.rentalFunctionTraceSchemaPath,
-      "Rental function trace",
-    ],
-  ] as const;
-  for (const [input, schemaPath, label] of schemas) {
-    const schema = parseJson(await readFile(schemaPath), `${label} schema`);
-    assertObject(schema, `${label} schema`);
-    validateJsonSchema(input.value, schema, `${label} input`);
-  }
 }
 
 function createSources(
@@ -197,17 +191,11 @@ function createMovieIdentity<
 function parseOptions(arguments_: readonly string[]): MovieReturnOptions | string {
   const names = [
     "--rental-evidence",
-    "--rental-evidence-schema",
     "--blueprint-bodies",
-    "--blueprint-bodies-schema",
     "--call-sites",
-    "--call-sites-schema",
     "--caller-bodies",
-    "--caller-bodies-schema",
     "--function-trace",
-    "--function-trace-schema",
     "--rental-function-trace",
-    "--rental-function-trace-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -228,21 +216,15 @@ function parseOptions(arguments_: readonly string[]): MovieReturnOptions | strin
   }
   const missing = names.filter((name) => !values.has(name));
   if (missing.length > 0) {
-    return `Expected all movie-return inputs and schemas, missing ${missing.join(", ")}.`;
+    return `Expected all movie-return inputs, missing ${missing.join(", ")}.`;
   }
   return {
     rentalEvidencePath: values.get("--rental-evidence")!,
-    rentalEvidenceSchemaPath: values.get("--rental-evidence-schema")!,
     blueprintBodiesPath: values.get("--blueprint-bodies")!,
-    blueprintBodiesSchemaPath: values.get("--blueprint-bodies-schema")!,
     callSitesPath: values.get("--call-sites")!,
-    callSitesSchemaPath: values.get("--call-sites-schema")!,
     callerBodiesPath: values.get("--caller-bodies")!,
-    callerBodiesSchemaPath: values.get("--caller-bodies-schema")!,
     functionTracePath: values.get("--function-trace")!,
-    functionTraceSchemaPath: values.get("--function-trace-schema")!,
     rentalFunctionTracePath: values.get("--rental-function-trace")!,
-    rentalFunctionTraceSchemaPath: values.get("--rental-function-trace-schema")!,
     outputPath: values.get("--output")!,
   };
 }
@@ -263,12 +245,6 @@ function parseJson(bytes: Uint8Array, label: string): unknown {
     return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
     throw new Error(`${label} is not valid JSON.`);
-  }
-}
-
-function assertObject(value: unknown, label: string): asserts value is object {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${label} must be a JSON object.`);
   }
 }
 

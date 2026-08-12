@@ -1,34 +1,20 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
+import { UnlockableEvidenceSchema } from "@neonretrorewind/core";
 
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/unlockable-evidence.schema.json",
-  import.meta.url,
-);
-
-test("accepts the bounded unlockable-system evidence contract", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
-
-  assert.doesNotThrow(() =>
-    validateJsonSchema(createArtifact(), schema, "Unlockable evidence"),
-  );
+test("accepts the bounded unlockable-system evidence contract", () => {
+  assert.doesNotThrow(() => UnlockableEvidenceSchema.assert(createArtifact()));
 });
 
-test("rejects reordered unlockable-system packages", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects reordered unlockable-system packages", () => {
   const artifact = createArtifact();
   [artifact.packages[0], artifact.packages[1]] = [
     artifact.packages[1]!,
     artifact.packages[0]!,
   ];
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Unlockable evidence"),
-    /does not match its schema/u,
-  );
+  assert.throws(() => UnlockableEvidenceSchema.assert(artifact));
 });
 
 function createArtifact() {

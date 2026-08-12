@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { compileMovieReturnMechanics } from "../src/movie-return-mechanics.ts";
-import { validateJsonSchema } from "../src/schema-validation.ts";
+import { validateJsonSchema } from "./json-schema-validation.ts";
 import {
   callerClassPath,
   callerFunction,

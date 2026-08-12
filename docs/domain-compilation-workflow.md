@@ -49,18 +49,14 @@ Compile the private mechanic artifact.
 ```powershell
 pnpm console-return-mechanics `
   --rental-evidence (Join-Path $buildDirectory "rental-evidence.json") `
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" `
   --blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.json") `
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" `
   --output (Join-Path $domainDirectory "console-return-mechanics.json")
 ```
 
 ```bash
 pnpm console-return-mechanics \
   --rental-evidence "$buildDirectory/rental-evidence.json" \
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" \
   --blueprint-bodies "$buildDirectory/rental-blueprint-bodies.json" \
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" \
   --output "$domainDirectory/console-return-mechanics.json"
 ```
 
@@ -101,18 +97,14 @@ Compile the private mechanic artifact.
 ```powershell
 pnpm membership-fee-mechanics `
   --rental-evidence (Join-Path $buildDirectory "rental-evidence.json") `
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" `
   --blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.json") `
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" `
   --output (Join-Path $domainDirectory "membership-fee-mechanics.json")
 ```
 
 ```bash
 pnpm membership-fee-mechanics \
   --rental-evidence "$buildDirectory/rental-evidence.json" \
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" \
   --blueprint-bodies "$buildDirectory/rental-blueprint-bodies.json" \
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" \
   --output "$domainDirectory/membership-fee-mechanics.json"
 ```
 
@@ -155,34 +147,22 @@ Compile the private mechanic artifact.
 ```powershell
 pnpm movie-return-mechanics `
   --rental-evidence (Join-Path $buildDirectory "rental-evidence.json") `
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" `
   --blueprint-bodies (Join-Path $buildDirectory "rental-blueprint-bodies.json") `
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" `
   --call-sites (Join-Path $buildDirectory "blueprint-call-sites.movie-return.json") `
-  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.schema.json" `
   --caller-bodies (Join-Path $buildDirectory "blueprint-caller-bodies.movie-return.json") `
-  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.schema.json" `
   --function-trace (Join-Path $buildDirectory "blueprint-function-trace.movie-customer.json") `
-  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
   --rental-function-trace (Join-Path $buildDirectory "rental-function-trace.movie-return.json") `
-  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.schema.json" `
   --output (Join-Path $domainDirectory "movie-return-mechanics.json")
 ```
 
 ```bash
 pnpm movie-return-mechanics \
   --rental-evidence "$buildDirectory/rental-evidence.json" \
-  --rental-evidence-schema "../game-data-exporter/schemas/acquisition/rental-evidence.schema.json" \
   --blueprint-bodies "$buildDirectory/rental-blueprint-bodies.json" \
-  --blueprint-bodies-schema "../game-data-exporter/schemas/acquisition/rental-blueprint-bodies.schema.json" \
   --call-sites "$buildDirectory/blueprint-call-sites.movie-return.json" \
-  --call-sites-schema "../game-data-exporter/schemas/acquisition/blueprint-call-sites.schema.json" \
   --caller-bodies "$buildDirectory/blueprint-caller-bodies.movie-return.json" \
-  --caller-bodies-schema "../game-data-exporter/schemas/acquisition/blueprint-caller-bodies.schema.json" \
   --function-trace "$buildDirectory/blueprint-function-trace.movie-customer.json" \
-  --function-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
   --rental-function-trace "$buildDirectory/rental-function-trace.movie-return.json" \
-  --rental-function-trace-schema "../game-data-exporter/schemas/acquisition/rental-function-trace.schema.json" \
   --output "$domainDirectory/movie-return-mechanics.json"
 ```
 
@@ -240,34 +220,22 @@ Compile the private mechanic artifact.
 ```powershell
 pnpm new-release-mechanics `
   --manager-trace (Join-Path $buildDirectory "unlockable-manager-trace.json") `
-  --manager-trace-schema "../game-data-exporter/schemas/acquisition/unlockable-manager-trace.schema.json" `
   --wrapper-trace (Join-Path $buildDirectory "blueprint-function-trace.unlock-manager-entry.json") `
-  --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
   --property-reader-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-unlock.json") `
-  --property-reader-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" `
   --request-generator-trace (Join-Path $buildDirectory "blueprint-function-trace.generate-movie-request.json") `
-  --request-generator-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" `
   --candidate-map-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-candidates.json") `
-  --candidate-map-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" `
   --call-target-trace (Join-Path $buildDirectory "blueprint-call-target-trace.return-if-film-is-new.json") `
-  --call-target-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-call-target-trace.schema.json" `
   --output (Join-Path $domainDirectory "new-release-mechanics.json")
 ```
 
 ```bash
 pnpm new-release-mechanics \
   --manager-trace "$buildDirectory/unlockable-manager-trace.json" \
-  --manager-trace-schema "../game-data-exporter/schemas/acquisition/unlockable-manager-trace.schema.json" \
   --wrapper-trace "$buildDirectory/blueprint-function-trace.unlock-manager-entry.json" \
-  --wrapper-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
   --property-reader-trace "$buildDirectory/blueprint-property-reference-trace.new-release-unlock.json" \
-  --property-reader-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" \
   --request-generator-trace "$buildDirectory/blueprint-function-trace.generate-movie-request.json" \
-  --request-generator-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-function-trace.schema.json" \
   --candidate-map-trace "$buildDirectory/blueprint-property-reference-trace.new-release-candidates.json" \
-  --candidate-map-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json" \
   --call-target-trace "$buildDirectory/blueprint-call-target-trace.return-if-film-is-new.json" \
-  --call-target-trace-schema "../game-data-exporter/schemas/acquisition/blueprint-call-target-trace.schema.json" \
   --output "$domainDirectory/new-release-mechanics.json"
 ```
 
@@ -286,7 +254,7 @@ The generated artifact remains private and is not committed.
 
 ## 24. Compile the normalized film catalog
 
-The TypeScript compiler validates the structured-values artifact with the canonical ArkType contract and independently checks the generated JSON Schema supplied on the command line.
+The TypeScript compiler validates the structured-values artifact with its canonical ArkType contract.
 It maps the 13 catalog DataTables into film records and retains the source table path and row key for each record.
 The game's numeric SKU is the unique film key, and records are written in ascending SKU order.
 Two auxiliary tables reuse the same Unreal row structure and are explicitly excluded from the film catalog.
@@ -308,14 +276,12 @@ Compile the catalog into the ignored local domain directory.
 ```powershell
 pnpm film-catalog `
   --input (Join-Path $buildDirectory "structured-values.json") `
-  --input-schema "../game-data-exporter/schemas/acquisition/structured-values.schema.json" `
   --output (Join-Path $domainDirectory "film-catalog.json")
 ```
 
 ```bash
 pnpm film-catalog \
   --input "$buildDirectory/structured-values.json" \
-  --input-schema "../game-data-exporter/schemas/acquisition/structured-values.schema.json" \
   --output "$domainDirectory/film-catalog.json"
 ```
 

@@ -75,7 +75,8 @@ It must not remove any file unless the game is closed and the file is proven to 
 ## Required observation record
 
 The observation uses [`movie-return-observation.schema.json`](../projects/game-data-exporter/schemas/runtime/movie-return-observation.schema.json).
-That JSON shape is owned by `projects/game-data-exporter/schemas/runtime`.
+Its canonical executable contract is `MovieReturnObservationSchema` in `@neonretrorewind/core`.
+The standalone file carries the same shape across the .NET staging and C++ collection boundary.
 The generated record belongs under `projects/game-data-exporter/.local/runtime/<Steam build ID>/<UTC run ID>/`.
 
 Each record must contain:
@@ -134,7 +135,7 @@ The first observation is complete only when all applicable checks can be evaluat
 
 The observation must remain marked incomplete when a required event was not reached or a required state could not be read.
 A runtime mismatch must be retained as evidence and must not be rewritten to match the static artifact.
-The `@neonretrorewind/validator` package checks event ordering, time bounds, capture completeness, queue transfer, selector count and uniqueness, found-result agreement, selector membership, and customer inventory and queue transitions after schema validation.
+The `@neonretrorewind/validator` package checks event ordering, time bounds, capture completeness, queue transfer, selector count and uniqueness, found-result agreement, selector membership, and customer inventory and queue transitions after ArkType contract validation.
 It returns `passed`, `incomplete`, or `mismatch` with bounded issue codes and does not write or alter the observation.
 
 ## Validate a completed observation
@@ -152,9 +153,7 @@ $report = ".local/validation/$buildId/$runId/movie-return-validation.json"
 
 pnpm movie-return-validation `
   --observation $observation `
-  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.schema.json" `
   --mechanics $mechanics `
-  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" `
   --output $report
 ```
 
@@ -168,13 +167,11 @@ report=".local/validation/$buildId/$runId/movie-return-validation.json"
 
 pnpm movie-return-validation \
   --observation "$observation" \
-  --observation-schema "../game-data-exporter/schemas/runtime/movie-return-observation.schema.json" \
   --mechanics "$mechanics" \
-  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" \
   --output "$report"
 ```
 
-The command validates both private inputs with their canonical ArkType contracts and independently checks their generated JSON Schemas, verifies the mechanics filename, byte length, SHA-256 hash, artifact type, and game build recorded by the observation, then rechecks every input before writing.
+The command validates both private inputs with their canonical ArkType contracts, verifies the mechanics filename, byte length, SHA-256 hash, artifact type, and game build recorded by the observation, then rechecks every input before writing.
 The TypeScript-only validation report is checked with its canonical ArkType contract and has no standalone JSON Schema.
 The report is deterministic and is created only when the output path is absent or already contains identical bytes.
 An `incomplete` or `mismatch` report is written and returns exit code `8` so automated checks do not treat it as passed.
@@ -191,7 +188,6 @@ $validatedMechanics = ".local/domain/runs/$validatedRunId/movie-return-mechanics
 
 pnpm movie-return-validated-mechanics `
   --mechanics $mechanics `
-  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" `
   --validation $report `
   --output $validatedMechanics
 ```
@@ -202,12 +198,11 @@ validatedMechanics=".local/domain/runs/$validatedRunId/movie-return-mechanics.js
 
 pnpm movie-return-validated-mechanics \
   --mechanics "$mechanics" \
-  --mechanics-schema "packages/core/schemas/movie-return-mechanics.schema.json" \
   --validation "$report" \
   --output "$validatedMechanics"
 ```
 
-The linker validates both artifacts with their canonical ArkType contracts, independently checks the generated mechanics JSON Schema, requires matching builds and the exact mechanics identity recorded by the report, and rechecks all three inputs before writing.
+The linker validates both artifacts with their canonical ArkType contracts, requires matching builds and the exact mechanics identity recorded by the report, and rechecks both inputs before writing.
 The output records the base mechanics, observation, and report identities under `runtimeValidation` while retaining `evidenceLevel: "decompiled-blueprint"`.
 The original mechanics remain the source of truth for static rules and the collector target.
 The linked artifact is derived evidence for downstream use.

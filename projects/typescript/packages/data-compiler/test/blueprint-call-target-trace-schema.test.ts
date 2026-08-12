@@ -1,54 +1,33 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BlueprintCallTargetTraceSchema } from "@neonretrorewind/core";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
-
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/blueprint-call-target-trace.schema.json",
-  import.meta.url,
-);
 const marketClassPath =
   "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C";
 const filmDataClassPath =
   "ExampleGame/Content/ExampleProject/core/data/ExampleRecord.ExampleRecord_C";
 
-test("accepts an exactly bound call-target trace", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("accepts an exactly bound call-target trace", () => {
   const artifact = createArtifact();
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(artifact, schema, "Blueprint call-target trace"),
-  );
-  assert.deepEqual(BlueprintCallTargetTraceSchema(artifact), artifact);
+  assert.deepEqual(BlueprintCallTargetTraceSchema.assert(artifact), artifact);
 });
 
-test("rejects an unproven target relationship", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects an unproven target relationship", () => {
   const artifact = createArtifact();
   (artifact.binding as { relationship: string }).relationship = "unproven";
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint call-target trace"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintCallTargetTraceSchema(artifact), artifact);
+  assert.throws(() => BlueprintCallTargetTraceSchema.assert(artifact));
 });
 
-test("rejects a receiver that does not match the declaration owner", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a receiver that does not match the declaration owner", () => {
   const artifact = createArtifact();
   (
     artifact.binding as { receiverClassMatchesDeclarationOwner: boolean }
   ).receiverClassMatchesDeclarationOwner = false;
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint call-target trace"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintCallTargetTraceSchema(artifact), artifact);
+  assert.throws(() => BlueprintCallTargetTraceSchema.assert(artifact));
 });
 
 function createArtifact() {

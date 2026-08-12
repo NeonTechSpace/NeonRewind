@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
 import {
+  assertArtifactContract,
   MovieReturnMechanicsSchema,
   MovieReturnValidationSchema,
   type MovieReturnValidationArtifact,
@@ -14,13 +15,8 @@ import {
   type ArtifactWriteStatus,
   writeImmutableArtifact,
 } from "./immutable-artifact.ts";
-import { validateJsonSchema } from "./schema-validation.ts";
-
-const mechanicsSchemaId = "urn:neonretrorewind:schema:domain:movie-return-mechanics";
-
 export interface MovieReturnValidatedMechanicsOptions {
   readonly mechanicsPath: string;
-  readonly mechanicsSchemaPath: string;
   readonly validationPath: string;
   readonly outputPath: string;
 }
@@ -42,22 +38,24 @@ export async function linkMovieReturnValidatedMechanics(
   );
   assertFileName(options.outputPath, "movie-return-mechanics.json", "Output");
 
-  const [mechanicsFile, mechanicsSchemaFile, validationFile] =
-    await Promise.all([
-      readInput(options.mechanicsPath),
-      readInput(options.mechanicsSchemaPath),
-      readInput(options.validationPath),
-    ]);
+  const [mechanicsFile, validationFile] = await Promise.all([
+    readInput(options.mechanicsPath),
+    readInput(options.validationPath),
+  ]);
 
   const mechanics = parseObject(mechanicsFile.bytes, "Mechanics input");
-  const mechanicsSchema = parseObject(mechanicsSchemaFile.bytes, "Mechanics schema");
   const validation = parseObject(validationFile.bytes, "Validation report");
 
-  assertSchemaId(mechanicsSchema, mechanicsSchemaId, "Mechanics schema");
-  validateJsonSchema(mechanics, mechanicsSchema, "Mechanics input");
-
-  const baseMechanics = MovieReturnMechanicsSchema.assert(mechanics);
-  const report = MovieReturnValidationSchema.assert(validation);
+  const baseMechanics = assertArtifactContract(
+    MovieReturnMechanicsSchema,
+    mechanics,
+    "Mechanics input",
+  );
+  const report = assertArtifactContract(
+    MovieReturnValidationSchema,
+    validation,
+    "Validation report",
+  );
   assertPassingReport(baseMechanics, report, mechanicsFile);
 
   const linkedMechanics: MovieReturnMechanics = MovieReturnMechanicsSchema.assert({
@@ -78,12 +76,10 @@ export async function linkMovieReturnValidatedMechanics(
       },
     },
   });
-  validateJsonSchema(linkedMechanics, mechanicsSchema, "Linked mechanics output");
   const output = `${JSON.stringify(linkedMechanics, undefined, 2)}\n`;
 
   await Promise.all([
     assertInputUnchanged(mechanicsFile),
-    assertInputUnchanged(mechanicsSchemaFile),
     assertInputUnchanged(validationFile),
   ]);
 
@@ -169,16 +165,6 @@ function parseObject(bytes: Uint8Array, label: string): Record<string, unknown> 
     throw new Error(`${label} must be a JSON object.`);
   }
   return value as Record<string, unknown>;
-}
-
-function assertSchemaId(
-  schema: Record<string, unknown>,
-  expected: string,
-  label: string,
-): void {
-  if (schema.$id !== expected) {
-    throw new Error(`${label} has an unexpected $id.`);
-  }
 }
 
 function assertFileName(path: string, expected: string, label: string): void {

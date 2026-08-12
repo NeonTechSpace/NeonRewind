@@ -48,7 +48,7 @@ The [research overview](research-overview.md) defines the specialist terms and e
 | `projects/game-data-exporter/static-extractor` | .NET 10 tools for build identity, focused data extraction, and selected Blueprint analysis |
 | `projects/game-data-exporter/runtime-exporter` | Offline staging, installation preview, and cleanup commands for runtime probes and collectors |
 | `projects/game-data-exporter/runtime-collector` | The bounded native movie-return collector and its local build tools |
-| `projects/game-data-exporter/schemas` | Generated JSON Schemas used at .NET, C++, and other language boundaries |
+| `projects/game-data-exporter/schemas` | Generated JSON Schemas retained for real .NET and C++ boundaries |
 | `projects/typescript/packages/core` | Canonical artifact contracts and generated public types |
 | `projects/typescript/packages/data-compiler` | Validation and compilation of private evidence into normalized records |
 | `projects/typescript/packages/validator` | Comparison of runtime observations with normalized mechanics |
@@ -122,7 +122,8 @@ The [runtime-host design](movie-return-runtime-host.md) records its installation
 - `projects/typescript/.local` contains private compiled records and validation reports
 - `projects/typescript/node_modules` contains installed workspace dependencies
 - `projects/typescript/packages/core/src/contracts/generated` contains generated TypeScript contract output
-- `projects/game-data-exporter/schemas` contains generated cross-language boundary schemas
+- `projects/game-data-exporter/schemas` contains the generated observation and collector-config cross-language schemas
+- `projects/typescript/packages/core/schemas` contains the generated movie-return mechanics cross-language schema
 
 The `.local` directories and build outputs are ignored by Git.
 Generated contract files are tracked and must match their canonical definitions.
@@ -132,8 +133,8 @@ Generated contract files are tracked and must match their canonical definitions.
 `@neonretrorewind/core` owns one executable ArkType contract for every acquisition, domain, runtime, and validation artifact.
 Public TypeScript types are inferred from those contracts rather than maintained as separate handwritten interfaces.
 
-Standalone JSON Schema is generated only when .NET, C++, or another language-neutral workflow consumes the artifact.
-TypeScript-only domain records and the movie-return validation report do not need separate schema files.
+Standalone JSON Schema is generated only for the movie-return observation, runtime collector config, and movie-return mechanics artifacts that cross .NET, C++, and TypeScript boundaries.
+TypeScript validates every artifact through the contract imported from `@neonretrorewind/core` and does not accept schema paths on its command lines.
 
 After changing a canonical contract, run:
 

@@ -9,7 +9,9 @@
     "test": "node --test test/*.test.ts"
   },
   "dependencies": {
-    "@neonretrorewind/core": "workspace:*",
+    "@neonretrorewind/core": "workspace:*"
+  },
+  "devDependencies": {
     "ajv": "8.20.0"
   }
 }

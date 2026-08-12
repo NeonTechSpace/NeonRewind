@@ -3,14 +3,15 @@ import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import test, { type TestContext } from "node:test";
 
-import type { MovieReturnMechanics } from "@neonretrorewind/core";
+import {
+  MovieReturnMechanicsSchema,
+  type MovieReturnMechanics,
+} from "@neonretrorewind/core";
 
 import { compileMovieReturnMechanics } from "../src/movie-return-mechanics.ts";
 import { linkMovieReturnValidatedMechanics } from "../src/movie-return-validated-mechanics.ts";
-import { validateJsonSchema } from "../src/schema-validation.ts";
 import {
   createCallerBodies,
   createCallSites,
@@ -19,10 +20,6 @@ import {
 } from "./movie-return-fixtures.ts";
 import { createRentalFunctionTrace } from "./movie-rental-trace-fixture.ts";
 import { createBlueprintBodies, createRentalEvidence } from "./rental-fixtures.ts";
-
-const mechanicsSchemaPath = fileURLToPath(
-  new URL("../../core/schemas/movie-return-mechanics.schema.json", import.meta.url),
-);
 
 test("links one clean passing report without changing the base evidence level", async (context) => {
   const fixture = await createFixture(context);
@@ -52,8 +49,7 @@ test("links one clean passing report without changing the base evidence level", 
     },
   });
 
-  const schema = JSON.parse(await readFile(mechanicsSchemaPath, "utf8")) as object;
-  assert.doesNotThrow(() => validateJsonSchema(output, schema, "Linked mechanics"));
+  assert.doesNotThrow(() => MovieReturnMechanicsSchema.assert(output));
 });
 
 test("rejects a report whose result did not pass", async (context) => {
@@ -213,7 +209,6 @@ async function createFixture(
     report,
     options: {
       mechanicsPath,
-      mechanicsSchemaPath,
       validationPath,
       outputPath,
     },

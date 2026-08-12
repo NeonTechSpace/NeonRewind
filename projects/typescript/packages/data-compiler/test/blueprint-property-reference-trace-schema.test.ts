@@ -1,51 +1,30 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BlueprintPropertyReferenceTraceSchema } from "@neonretrorewind/core";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
-
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/blueprint-property-reference-trace.schema.json",
-  import.meta.url,
-);
 const classPath =
   "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C";
 const functionPath = `${classPath}:Return Example Request`;
 
-test("accepts the bounded Blueprint property-reference trace contract", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("accepts the bounded Blueprint property-reference trace contract", () => {
   const artifact = createArtifact();
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(artifact, schema, "Blueprint property-reference trace"),
-  );
-  assert.deepEqual(BlueprintPropertyReferenceTraceSchema(artifact), artifact);
+  assert.deepEqual(BlueprintPropertyReferenceTraceSchema.assert(artifact), artifact);
 });
 
-test("rejects an unsupported property-reader selection rule", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects an unsupported property-reader selection rule", () => {
   const artifact = createArtifact();
   (artifact as { selectionRule: string }).selectionRule = "all-property-references";
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint property-reference trace"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintPropertyReferenceTraceSchema(artifact), artifact);
+  assert.throws(() => BlueprintPropertyReferenceTraceSchema.assert(artifact));
 });
 
-test("rejects an empty source target property", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects an empty source target property", () => {
   const artifact = createArtifact();
   artifact.blueprintPropertyReferences.targetPropertyName = "";
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint property-reference trace"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintPropertyReferenceTraceSchema(artifact), artifact);
+  assert.throws(() => BlueprintPropertyReferenceTraceSchema.assert(artifact));
 });
 
 function createArtifact() {

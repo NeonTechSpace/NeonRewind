@@ -111,7 +111,7 @@ The game must be closed before staging or installation checks begin.
 The tooling must verify the exact supported executable and build identity.
 The tooling must refuse installation if `dwmapi.dll`, `override.txt`, or any proposed target already exists.
 The tooling must generate a manifest containing every proposed relative path, byte length, and SHA-256 hash.
-The offline `stage-probe` and `stage-collector` commands write that record using [`runtime-host-staging.schema.json`](../projects/game-data-exporter/schemas/runtime/runtime-host-staging.schema.json) without copying either proposed file.
+The offline `stage-probe` and `stage-collector` commands write that record after applying the runtime exporter's internal contract checks without copying either proposed file.
 Collector staging copies the supplied `main.dll`, generated collector config, observation schema, and target movie-return mechanics artifact into ignored local staging.
 The collector payload records each file's byte length and SHA-256 hash, the exact game build, the UE4SS version, and the absolute ignored output root.
 The generated config follows [`movie-return-runtime-collector-config.schema.json`](../projects/game-data-exporter/schemas/runtime/movie-return-runtime-collector-config.schema.json).

@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
+import { RuntimeHostStagingSchema } from "@neonretrorewind/core";
+
+import { validateJsonSchema } from "./json-schema-validation.ts";
 
 const runtimeSchemaRoot = new URL(
   "../../../../game-data-exporter/schemas/runtime/",
@@ -10,7 +12,6 @@ const runtimeSchemaRoot = new URL(
 );
 
 test("accepts the current probe staging identity", async () => {
-  const schema = await readSchema("runtime-host-staging.schema.json");
   const manifest = createStagingManifest();
   manifest.probe = {
     name: "NeonRetroRewindMovieReturnProbe",
@@ -23,19 +24,14 @@ test("accepts the current probe staging identity", async () => {
     diagnosticRelativePath: "diagnostics/movie-return-compatibility-probe.json",
   };
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(manifest, schema, "Runtime-host staging manifest"),
-  );
+  assert.doesNotThrow(() => RuntimeHostStagingSchema.assert(manifest));
 });
 
 test("accepts a collector staging identity and rejects mixed payloads", async () => {
-  const schema = await readSchema("runtime-host-staging.schema.json");
   const manifest = createStagingManifest();
   manifest.collector = createCollectorIdentity();
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(manifest, schema, "Runtime-host staging manifest"),
-  );
+  assert.doesNotThrow(() => RuntimeHostStagingSchema.assert(manifest));
 
   manifest.probe = {
     name: "NeonRetroRewindMovieReturnProbe",
@@ -47,10 +43,7 @@ test("accepts a collector staging identity and rejects mixed payloads", async ()
     ),
     diagnosticRelativePath: "diagnostics/movie-return-compatibility-probe.json",
   };
-  assert.throws(
-    () => validateJsonSchema(manifest, schema, "Runtime-host staging manifest"),
-    /does not match its schema/u,
-  );
+  assert.throws(() => RuntimeHostStagingSchema.assert(manifest));
 });
 
 test("accepts the generated collector config contract", async () => {

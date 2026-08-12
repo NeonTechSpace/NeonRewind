@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
 import {
+  assertArtifactContract,
   BlueprintCallTargetTraceSchema,
   BlueprintFunctionTraceSchema,
   BlueprintPropertyReferenceTraceSchema,
@@ -15,7 +16,6 @@ import {
   compileNewReleaseMechanics,
   type NewReleaseSources,
 } from "./new-release-mechanics.ts";
-import { validateJsonSchema } from "./schema-validation.ts";
 
 const invalidArgumentsExitCode = 2;
 const inputFailureExitCode = 6;
@@ -23,17 +23,11 @@ const outputConflictExitCode = 7;
 
 interface Options {
   readonly managerTracePath: string;
-  readonly managerTraceSchemaPath: string;
   readonly wrapperTracePath: string;
-  readonly wrapperTraceSchemaPath: string;
   readonly propertyReaderTracePath: string;
-  readonly propertyReaderTraceSchemaPath: string;
   readonly requestGeneratorTracePath: string;
-  readonly requestGeneratorTraceSchemaPath: string;
   readonly candidateMapTracePath: string;
-  readonly candidateMapTraceSchemaPath: string;
   readonly callTargetTracePath: string;
-  readonly callTargetTraceSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -64,31 +58,6 @@ export async function runNewReleaseMechanics(
       readInput(options.candidateMapTracePath, "Candidate-map trace"),
       readInput(options.callTargetTracePath, "Call-target trace"),
     ]);
-    await Promise.all([
-      validateInput(manager, options.managerTraceSchemaPath, "Unlock manager trace"),
-      validateInput(wrapper, options.wrapperTraceSchemaPath, "Unlock wrapper trace"),
-      validateInput(
-        propertyReader,
-        options.propertyReaderTraceSchemaPath,
-        "Property-reader trace",
-      ),
-      validateInput(
-        requestGenerator,
-        options.requestGeneratorTraceSchemaPath,
-        "Request-generator trace",
-      ),
-      validateInput(
-        candidateMap,
-        options.candidateMapTraceSchemaPath,
-        "Candidate-map trace",
-      ),
-      validateInput(
-        callTarget,
-        options.callTargetTraceSchemaPath,
-        "Call-target trace",
-      ),
-    ]);
-
     const sources: NewReleaseSources = {
       managerTrace: createIdentity(manager, "unlockable-manager-trace"),
       wrapperTrace: createIdentity(wrapper, "blueprint-function-trace"),
@@ -107,12 +76,36 @@ export async function runNewReleaseMechanics(
       callTargetTrace: createIdentity(callTarget, "blueprint-call-target-trace"),
     };
     const mechanics = compileNewReleaseMechanics(
-      UnlockableManagerTraceSchema.assert(manager.value),
-      BlueprintFunctionTraceSchema.assert(wrapper.value),
-      BlueprintPropertyReferenceTraceSchema.assert(propertyReader.value),
-      BlueprintFunctionTraceSchema.assert(requestGenerator.value),
-      BlueprintPropertyReferenceTraceSchema.assert(candidateMap.value),
-      BlueprintCallTargetTraceSchema.assert(callTarget.value),
+      assertArtifactContract(
+        UnlockableManagerTraceSchema,
+        manager.value,
+        "Unlock manager trace input",
+      ),
+      assertArtifactContract(
+        BlueprintFunctionTraceSchema,
+        wrapper.value,
+        "Unlock wrapper trace input",
+      ),
+      assertArtifactContract(
+        BlueprintPropertyReferenceTraceSchema,
+        propertyReader.value,
+        "Property-reader trace input",
+      ),
+      assertArtifactContract(
+        BlueprintFunctionTraceSchema,
+        requestGenerator.value,
+        "Request-generator trace input",
+      ),
+      assertArtifactContract(
+        BlueprintPropertyReferenceTraceSchema,
+        candidateMap.value,
+        "Candidate-map trace input",
+      ),
+      assertArtifactContract(
+        BlueprintCallTargetTraceSchema,
+        callTarget.value,
+        "Call-target trace input",
+      ),
       sources,
     );
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
@@ -142,23 +135,13 @@ export async function runNewReleaseMechanics(
 
 export function writeNewReleaseUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-data-compiler new-release-mechanics --manager-trace <path> --manager-trace-schema <schema> --wrapper-trace <path> --wrapper-trace-schema <schema> --property-reader-trace <path> --property-reader-trace-schema <schema> --request-generator-trace <path> --request-generator-trace-schema <schema> --candidate-map-trace <path> --candidate-map-trace-schema <schema> --call-target-trace <path> --call-target-trace-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler new-release-mechanics --manager-trace <path> --wrapper-trace <path> --property-reader-trace <path> --request-generator-trace <path> --candidate-map-trace <path> --call-target-trace <path> --output <path>\n",
   );
 }
 
 async function readInput(path: string, label: string): Promise<InputFile> {
   const bytes = await readFile(path);
   return { path, bytes, sha256: sha256(bytes), value: parseJson(bytes, `${label} input`) };
-}
-
-async function validateInput(
-  input: InputFile,
-  schemaPath: string,
-  label: string,
-): Promise<void> {
-  const schema = parseJson(await readFile(schemaPath), `${label} schema`);
-  assertObject(schema, `${label} schema`);
-  validateJsonSchema(input.value, schema, `${label} input`);
 }
 
 function createIdentity<
@@ -175,17 +158,11 @@ function createIdentity<
 function parseOptions(arguments_: readonly string[]): Options | string {
   const names = [
     "--manager-trace",
-    "--manager-trace-schema",
     "--wrapper-trace",
-    "--wrapper-trace-schema",
     "--property-reader-trace",
-    "--property-reader-trace-schema",
     "--request-generator-trace",
-    "--request-generator-trace-schema",
     "--candidate-map-trace",
-    "--candidate-map-trace-schema",
     "--call-target-trace",
-    "--call-target-trace-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -206,21 +183,15 @@ function parseOptions(arguments_: readonly string[]): Options | string {
   }
   const missing = names.filter((name) => !values.has(name));
   if (missing.length > 0) {
-    return `Expected manager, wrapper, property-reader, request-generator, candidate-map, and call-target traces, their schemas, and --output; missing ${missing.join(", ")}.`;
+    return `Expected manager, wrapper, property-reader, request-generator, candidate-map, and call-target traces and --output, missing ${missing.join(", ")}.`;
   }
   return {
     managerTracePath: values.get("--manager-trace")!,
-    managerTraceSchemaPath: values.get("--manager-trace-schema")!,
     wrapperTracePath: values.get("--wrapper-trace")!,
-    wrapperTraceSchemaPath: values.get("--wrapper-trace-schema")!,
     propertyReaderTracePath: values.get("--property-reader-trace")!,
-    propertyReaderTraceSchemaPath: values.get("--property-reader-trace-schema")!,
     requestGeneratorTracePath: values.get("--request-generator-trace")!,
-    requestGeneratorTraceSchemaPath: values.get("--request-generator-trace-schema")!,
     candidateMapTracePath: values.get("--candidate-map-trace")!,
-    candidateMapTraceSchemaPath: values.get("--candidate-map-trace-schema")!,
     callTargetTracePath: values.get("--call-target-trace")!,
-    callTargetTraceSchemaPath: values.get("--call-target-trace-schema")!,
     outputPath: values.get("--output")!,
   };
 }
@@ -237,12 +208,6 @@ function parseJson(bytes: Uint8Array, label: string): unknown {
     return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
     throw new Error(`${label} is not valid JSON.`);
-  }
-}
-
-function assertObject(value: unknown, label: string): asserts value is object {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${label} must be a JSON object.`);
   }
 }
 

@@ -238,6 +238,7 @@ importers:
       '@neonretrorewind/core':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
       ajv:
         specifier: 8.20.0
         version: 8.20.0
@@ -247,9 +248,6 @@ importers:
       '@neonretrorewind/core':
         specifier: workspace:*
         version: link:../core
-      ajv:
-        specifier: 8.20.0
-        version: 8.20.0
 
 packages:
 

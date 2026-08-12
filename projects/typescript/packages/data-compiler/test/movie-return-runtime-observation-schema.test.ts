@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
+import { validateJsonSchema } from "./json-schema-validation.ts";
 
 const schemaUrl = new URL(
   "../../../../game-data-exporter/schemas/runtime/movie-return-observation.schema.json",

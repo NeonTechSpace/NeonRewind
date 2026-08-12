@@ -1,45 +1,29 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
+import { UnlockableManagerTraceSchema } from "@neonretrorewind/core";
 
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/unlockable-manager-trace.schema.json",
-  import.meta.url,
-);
 const classPath =
   "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C";
 const functionPath = `${classPath}:ExecuteExampleGraph_ExampleUnlockSystem`;
 
-test("accepts the bounded unlockable manager trace contract", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
-  assert.doesNotThrow(() =>
-    validateJsonSchema(createArtifact(), schema, "Unlockable manager trace"),
-  );
+test("accepts the bounded unlockable manager trace contract", () => {
+  assert.doesNotThrow(() => UnlockableManagerTraceSchema.assert(createArtifact()));
 });
 
-test("rejects a changed manager trace target", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a changed manager trace target", () => {
   const artifact = createArtifact();
   artifact.requestedFunctionPaths[0] = `${classPath}:TryApplyExample`;
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Unlockable manager trace"),
-    /does not match its schema/u,
-  );
+  assert.throws(() => UnlockableManagerTraceSchema.assert(artifact));
 });
 
-test("rejects a manager function that does not match the request", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a manager function that does not match the request", () => {
   const artifact = createArtifact();
   artifact.functions[0]!.functionName = "TryApplyExample";
   artifact.functions[0]!.functionPath = `${classPath}:TryApplyExample`;
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Unlockable manager trace"),
-    /does not match its schema/u,
-  );
+  assert.throws(() => UnlockableManagerTraceSchema.assert(artifact));
 });
 
 function createArtifact() {

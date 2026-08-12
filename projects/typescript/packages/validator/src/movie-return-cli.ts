@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
 import {
+  assertArtifactContract,
   MovieReturnMechanicsSchema,
   MovieReturnObservationSchema,
   MovieReturnValidationSchema,
@@ -18,18 +19,9 @@ import type {
   MovieReturnValidationArtifact,
   ValidationSourceIdentity,
 } from "./movie-return-validation-report.ts";
-import { validateJsonSchema } from "./schema-validation.ts";
-
-const schemaIds = {
-  observation: "urn:neonretrorewind:schema:runtime:movie-return-observation",
-  mechanics: "urn:neonretrorewind:schema:domain:movie-return-mechanics",
-} as const;
-
 export interface MovieReturnValidationOptions {
   readonly observationPath: string;
-  readonly observationSchemaPath: string;
   readonly mechanicsPath: string;
-  readonly mechanicsSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -42,25 +34,16 @@ export async function validateMovieReturnFiles(
   options: MovieReturnValidationOptions,
 ): Promise<MovieReturnValidationRun> {
   const files = await readFiles(options);
-  const observationSchema = requireSchema(
-    files.observationSchema.value,
-    schemaIds.observation,
-    "Movie-return observation schema",
-  );
-  const mechanicsSchema = requireSchema(
-    files.mechanicsSchema.value,
-    schemaIds.mechanics,
-    "Movie-return mechanics schema",
-  );
-  validateJsonSchema(
+  const observation = assertArtifactContract(
+    MovieReturnObservationSchema,
     files.observation.value,
-    observationSchema,
     "Movie-return observation",
   );
-  validateJsonSchema(files.mechanics.value, mechanicsSchema, "Movie-return mechanics");
-
-  const observation = MovieReturnObservationSchema.assert(files.observation.value);
-  const mechanics = MovieReturnMechanicsSchema.assert(files.mechanics.value);
+  const mechanics = assertArtifactContract(
+    MovieReturnMechanicsSchema,
+    files.mechanics.value,
+    "Movie-return mechanics",
+  );
   assertLinkedInputs(observation, mechanics, files.mechanics);
 
   const artifact: MovieReturnValidationArtifact = MovieReturnValidationSchema.assert({
@@ -93,14 +76,11 @@ export async function validateMovieReturnFiles(
 }
 
 async function readFiles(options: MovieReturnValidationOptions) {
-  const [observation, observationSchema, mechanics, mechanicsSchema] =
-    await Promise.all([
-      readInput(options.observationPath, "Movie-return observation"),
-      readInput(options.observationSchemaPath, "Movie-return observation schema"),
-      readInput(options.mechanicsPath, "Movie-return mechanics"),
-      readInput(options.mechanicsSchemaPath, "Movie-return mechanics schema"),
-    ]);
-  return { observation, observationSchema, mechanics, mechanicsSchema };
+  const [observation, mechanics] = await Promise.all([
+    readInput(options.observationPath, "Movie-return observation"),
+    readInput(options.mechanicsPath, "Movie-return mechanics"),
+  ]);
+  return { observation, mechanics };
 }
 
 async function readInput(path: string, label: string): Promise<InputFile> {
@@ -111,14 +91,6 @@ async function readInput(path: string, label: string): Promise<InputFile> {
     sha256: sha256(bytes),
     value: parseJson(bytes, label),
   };
-}
-
-function requireSchema(value: unknown, expectedId: string, label: string): object {
-  assertObject(value, label);
-  if (!("$id" in value) || value.$id !== expectedId) {
-    throw new Error(`${label} does not have the expected $id ${expectedId}.`);
-  }
-  return value;
 }
 
 function assertLinkedInputs(
@@ -173,12 +145,6 @@ function parseJson(bytes: Uint8Array, label: string): unknown {
     return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
   } catch {
     throw new Error(`${label} is not valid JSON.`);
-  }
-}
-
-function assertObject(value: unknown, label: string): asserts value is object {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${label} must be a JSON object.`);
   }
 }
 

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 
 import {
+  assertArtifactContract,
   RentalBlueprintBodiesSchema,
   RentalEvidenceSchema,
   StructuredValuesSchema,
@@ -23,7 +24,6 @@ import {
   runMovieReturnValidatedMechanics,
   writeMovieReturnValidatedMechanicsUsage,
 } from "./movie-return-validated-mechanics-cli.ts";
-import { validateJsonSchema } from "./schema-validation.ts";
 import type {
   RentalBlueprintBodiesArtifact,
   RentalEvidenceArtifact,
@@ -37,15 +37,12 @@ const outputConflictExitCode = 7;
 
 interface FilmCatalogOptions {
   readonly inputPath: string;
-  readonly inputSchemaPath: string;
   readonly outputPath: string;
 }
 
 interface ConsoleReturnOptions {
   readonly rentalEvidencePath: string;
-  readonly rentalEvidenceSchemaPath: string;
   readonly blueprintBodiesPath: string;
-  readonly blueprintBodiesSchemaPath: string;
   readonly outputPath: string;
 }
 
@@ -124,15 +121,11 @@ async function main(arguments_: readonly string[]): Promise<void> {
     const inputBytes = await readFile(options.inputPath);
     const inputHash = sha256(inputBytes);
     const input = parseJson(inputBytes, "Structured-values input");
-    const inputSchema = parseJson(
-      await readFile(options.inputSchemaPath),
-      "Structured-values schema",
+    const structuredValues: StructuredValuesArtifact = assertArtifactContract(
+      StructuredValuesSchema,
+      input,
+      "Structured-values input",
     );
-    assertObject(inputSchema, "Structured-values schema");
-    validateJsonSchema(input, inputSchema, "Structured-values input");
-
-    const structuredValues: StructuredValuesArtifact =
-      StructuredValuesSchema.assert(input);
     const source: AcquisitionArtifactIdentity = {
       fileName: basename(options.inputPath),
       sha256: inputHash,
@@ -182,21 +175,16 @@ async function runRentalMechanic(
     const bodyHash = sha256(bodyBytes);
     const rentalInput = parseJson(rentalBytes, "Rental-evidence input");
     const bodyInput = parseJson(bodyBytes, "Rental Blueprint-body input");
-    const rentalSchema = parseJson(
-      await readFile(options.rentalEvidenceSchemaPath),
-      "Rental-evidence schema",
+    const rentalArtifact: RentalEvidenceArtifact = assertArtifactContract(
+      RentalEvidenceSchema,
+      rentalInput,
+      "Rental-evidence input",
     );
-    const bodySchema = parseJson(
-      await readFile(options.blueprintBodiesSchemaPath),
-      "Rental Blueprint-body schema",
+    const bodyArtifact: RentalBlueprintBodiesArtifact = assertArtifactContract(
+      RentalBlueprintBodiesSchema,
+      bodyInput,
+      "Rental Blueprint-body input",
     );
-    assertObject(rentalSchema, "Rental-evidence schema");
-    assertObject(bodySchema, "Rental Blueprint-body schema");
-    validateJsonSchema(rentalInput, rentalSchema, "Rental-evidence input");
-    validateJsonSchema(bodyInput, bodySchema, "Rental Blueprint-body input");
-    const rentalArtifact: RentalEvidenceArtifact = RentalEvidenceSchema.assert(rentalInput);
-    const bodyArtifact: RentalBlueprintBodiesArtifact =
-      RentalBlueprintBodiesSchema.assert(bodyInput);
 
     const sources = {
       rentalEvidence: createRentalIdentity(
@@ -242,7 +230,7 @@ function parseFilmCatalogOptions(
   arguments_: readonly string[],
 ): FilmCatalogOptions | string {
   const values = new Map<string, string>();
-  const allowed = new Set(["--input", "--input-schema", "--output"]);
+  const allowed = new Set(["--input", "--output"]);
 
   for (let index = 0; index < arguments_.length; index += 2) {
     const name = arguments_[index];
@@ -261,13 +249,12 @@ function parseFilmCatalogOptions(
   }
 
   const inputPath = values.get("--input");
-  const inputSchemaPath = values.get("--input-schema");
   const outputPath = values.get("--output");
-  if (inputPath === undefined || inputSchemaPath === undefined || outputPath === undefined) {
-    return "Expected --input, --input-schema, and --output.";
+  if (inputPath === undefined || outputPath === undefined) {
+    return "Expected --input and --output.";
   }
 
-  return { inputPath, inputSchemaPath, outputPath };
+  return { inputPath, outputPath };
 }
 
 function parseRentalMechanicOptions(
@@ -277,9 +264,7 @@ function parseRentalMechanicOptions(
   const values = new Map<string, string>();
   const allowed = new Set([
     "--rental-evidence",
-    "--rental-evidence-schema",
     "--blueprint-bodies",
-    "--blueprint-bodies-schema",
     "--output",
   ]);
 
@@ -299,25 +284,19 @@ function parseRentalMechanicOptions(
   }
 
   const rentalEvidencePath = values.get("--rental-evidence");
-  const rentalEvidenceSchemaPath = values.get("--rental-evidence-schema");
   const blueprintBodiesPath = values.get("--blueprint-bodies");
-  const blueprintBodiesSchemaPath = values.get("--blueprint-bodies-schema");
   const outputPath = values.get("--output");
   if (
     rentalEvidencePath === undefined ||
-    rentalEvidenceSchemaPath === undefined ||
     blueprintBodiesPath === undefined ||
-    blueprintBodiesSchemaPath === undefined ||
     outputPath === undefined
   ) {
-    return "Expected both rental inputs, both schemas, and --output.";
+    return "Expected both rental inputs and --output.";
   }
 
   const rentalOptions: ConsoleReturnOptions = {
     rentalEvidencePath,
-    rentalEvidenceSchemaPath,
     blueprintBodiesPath,
-    blueprintBodiesSchemaPath,
     outputPath,
   };
   return rentalOptions;
@@ -358,12 +337,6 @@ function parseJson(bytes: Uint8Array, label: string): unknown {
   }
 }
 
-function assertObject(value: unknown, label: string): asserts value is object {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${label} must be a JSON object.`);
-  }
-}
-
 function sha256(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
@@ -371,13 +344,13 @@ function sha256(bytes: Uint8Array): string {
 function writeUsage(stream: NodeJS.WritableStream): void {
   stream.write("Usage:\n");
   stream.write(
-    "  neonretrorewind-data-compiler film-catalog --input <structured-values> --input-schema <schema> --output <film-catalog>\n",
+    "  neonretrorewind-data-compiler film-catalog --input <structured-values> --output <film-catalog>\n",
   );
   stream.write(
-    "  neonretrorewind-data-compiler console-return-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler console-return-mechanics --rental-evidence <path> --blueprint-bodies <path> --output <path>\n",
   );
   stream.write(
-    "  neonretrorewind-data-compiler membership-fee-mechanics --rental-evidence <path> --rental-evidence-schema <schema> --blueprint-bodies <path> --blueprint-bodies-schema <schema> --output <path>\n",
+    "  neonretrorewind-data-compiler membership-fee-mechanics --rental-evidence <path> --blueprint-bodies <path> --output <path>\n",
   );
   writeMovieReturnUsage(stream);
   writeMovieReturnValidatedMechanicsUsage(stream);

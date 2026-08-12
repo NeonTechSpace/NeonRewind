@@ -60,9 +60,7 @@ async function main(arguments_: readonly string[]): Promise<void> {
 function parseOptions(arguments_: readonly string[]): MovieReturnValidationOptions | string {
   const names = [
     "--observation",
-    "--observation-schema",
     "--mechanics",
-    "--mechanics-schema",
     "--output",
   ] as const;
   const allowed = new Set<string>(names);
@@ -88,15 +86,13 @@ function parseOptions(arguments_: readonly string[]): MovieReturnValidationOptio
   }
   return {
     observationPath: values.get("--observation")!,
-    observationSchemaPath: values.get("--observation-schema")!,
     mechanicsPath: values.get("--mechanics")!,
-    mechanicsSchemaPath: values.get("--mechanics-schema")!,
     outputPath: values.get("--output")!,
   };
 }
 
 function writeUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-validator movie-return --observation <path> --observation-schema <schema> --mechanics <path> --mechanics-schema <schema> --output <path>\n",
+    "  neonretrorewind-validator movie-return --observation <path> --mechanics <path> --output <path>\n",
   );
 }

@@ -39,7 +39,7 @@ export function writeMovieReturnValidatedMechanicsUsage(
   stream: NodeJS.WritableStream,
 ): void {
   stream.write(
-    "  neonretrorewind-data-compiler movie-return-validated-mechanics --mechanics <path> --mechanics-schema <schema> --validation <path> --output <path>\n",
+    "  neonretrorewind-data-compiler movie-return-validated-mechanics --mechanics <path> --validation <path> --output <path>\n",
   );
 }
 
@@ -49,7 +49,6 @@ function parseOptions(
   const values = new Map<string, string>();
   const allowed = new Set([
     "--mechanics",
-    "--mechanics-schema",
     "--validation",
     "--output",
   ]);
@@ -70,21 +69,18 @@ function parseOptions(
   }
 
   const mechanicsPath = values.get("--mechanics");
-  const mechanicsSchemaPath = values.get("--mechanics-schema");
   const validationPath = values.get("--validation");
   const outputPath = values.get("--output");
   if (
     mechanicsPath === undefined ||
-    mechanicsSchemaPath === undefined ||
     validationPath === undefined ||
     outputPath === undefined
   ) {
-    return "Expected mechanics, its schema, validation report, and --output.";
+    return "Expected mechanics, validation report, and --output.";
   }
 
   return {
     mechanicsPath,
-    mechanicsSchemaPath,
     validationPath,
     outputPath,
   };

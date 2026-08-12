@@ -1,62 +1,36 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { BlueprintFunctionDeclarationsSchema } from "@neonretrorewind/core";
 
-import { validateJsonSchema } from "../src/schema-validation.ts";
-
-const schemaPath = new URL(
-  "../../../../game-data-exporter/schemas/acquisition/blueprint-function-declarations.schema.json",
-  import.meta.url,
-);
-
-test("accepts a complete exact-name scan with no declaration", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("accepts a complete exact-name scan with no declaration", () => {
   const artifact = createArtifact();
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(artifact, schema, "Blueprint function declarations"),
-  );
-  assert.deepEqual(BlueprintFunctionDeclarationsSchema(artifact), artifact);
+  assert.deepEqual(BlueprintFunctionDeclarationsSchema.assert(artifact), artifact);
 });
 
-test("accepts a complete scan whose census has no function candidates", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("accepts a complete scan whose census has no function candidates", () => {
   const artifact = createArtifact();
   artifact.totals.candidatePackageCount = 0;
   artifact.totals.scannedPackageCount = 0;
   artifact.totals.rawFunctionExportCount = 0;
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(artifact, schema, "Blueprint function declarations"),
-  );
-  assert.deepEqual(BlueprintFunctionDeclarationsSchema(artifact), artifact);
+  assert.deepEqual(BlueprintFunctionDeclarationsSchema.assert(artifact), artifact);
 });
 
-test("rejects a partial scan without a recorded failure", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a partial scan without a recorded failure", () => {
   const artifact = createArtifact();
   (artifact as { coverage: string }).coverage = "partial";
   artifact.totals.failedPackageCount = 1;
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint function declarations"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintFunctionDeclarationsSchema(artifact), artifact);
+  assert.throws(() => BlueprintFunctionDeclarationsSchema.assert(artifact));
 });
 
-test("rejects a nonexact declaration rule", async () => {
-  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+test("rejects a nonexact declaration rule", () => {
   const artifact = createArtifact();
   (artifact as { declarationRule: string }).declarationRule = "case-insensitive-name";
 
-  assert.throws(
-    () => validateJsonSchema(artifact, schema, "Blueprint function declarations"),
-    /does not match its schema/u,
-  );
-  assert.notDeepEqual(BlueprintFunctionDeclarationsSchema(artifact), artifact);
+  assert.throws(() => BlueprintFunctionDeclarationsSchema.assert(artifact));
 });
 
 function createArtifact() {
