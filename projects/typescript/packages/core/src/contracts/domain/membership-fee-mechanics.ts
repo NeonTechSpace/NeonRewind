@@ -1,352 +1,104 @@
-import type { MembershipFeeMechanicsContract } from "../generated/domain/membership-fee-mechanics.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
 
-export const MembershipFeeMechanicsJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:domain:membership-fee-mechanics",
-  "title": "NeonRetroRewind membership fee mechanics",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "sources",
-    "scope",
-    "evidenceLevel",
-    "runtimeValidation",
-    "storage",
-    "feeRecord",
-    "addition",
-    "removal"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "membership-fee-mechanics"
-    },
-    "build": {
-      "$ref": "#/$defs/build"
-    },
-    "sources": {
-      "$ref": "#/$defs/sources"
-    },
-    "scope": {
-      "const": "membership-fee-record"
-    },
-    "evidenceLevel": {
-      "const": "decompiled-blueprint"
-    },
-    "runtimeValidation": {
-      "const": "not-run"
-    },
-    "storage": {
-      "$ref": "#/$defs/storage"
-    },
-    "feeRecord": {
-      "$ref": "#/$defs/feeRecord"
-    },
-    "addition": {
-      "$ref": "#/$defs/addition"
-    },
-    "removal": {
-      "$ref": "#/$defs/removal"
-    }
-  },
-  "$defs": {
-    "build": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "steamAppId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "sources": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "rentalEvidence",
-        "rentalBlueprintBodies"
-      ],
-      "properties": {
-        "rentalEvidence": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "rental-evidence"
-                }
-              }
-            }
-          ]
-        },
-        "rentalBlueprintBodies": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "rental-blueprint-bodies"
-                }
-              }
-            }
-          ]
-        }
-      }
-    },
-    "sourceIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sha256",
-        "sizeBytes",
-        "artifactType"
-      ],
-      "properties": {
-        "fileName": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[^/\\\\]+\\.json$"
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "artifactType": {
-          "enum": [
-            "rental-evidence",
-            "rental-blueprint-bodies"
-          ]
-        }
-      }
-    },
-    "storage": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "container",
-        "key",
-        "value",
-        "evidence"
-      ],
-      "properties": {
-        "container": {
-          "const": "map"
-        },
-        "key": {
-          "const": "membership-id"
-        },
-        "value": {
-          "const": "fee-record"
-        },
-        "evidence": {
-          "$ref": "#/$defs/classFieldEvidence"
-        }
-      }
-    },
-    "feeRecord": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "late",
-        "broken",
-        "rewind",
-        "consoleLate",
-        "consoleBroken"
-      ],
-      "properties": {
-        "late": {
-          "$ref": "#/$defs/feeField"
-        },
-        "broken": {
-          "$ref": "#/$defs/feeField"
-        },
-        "rewind": {
-          "$ref": "#/$defs/feeField"
-        },
-        "consoleLate": {
-          "$ref": "#/$defs/feeField"
-        },
-        "consoleBroken": {
-          "$ref": "#/$defs/feeField"
-        }
-      }
-    },
-    "feeField": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "defaultValue",
-        "evidence"
-      ],
-      "properties": {
-        "defaultValue": {
-          "const": 0
-        },
-        "evidence": {
-          "$ref": "#/$defs/structFieldEvidence"
-        }
-      }
-    },
-    "addition": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "zeroMembershipId",
-        "mapWrite",
-        "fieldUpdates",
-        "evidence"
-      ],
-      "properties": {
-        "zeroMembershipId": {
-          "const": "no-op"
-        },
-        "mapWrite": {
-          "const": "add-or-replace"
-        },
-        "fieldUpdates": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "late",
-            "broken",
-            "rewind",
-            "consoleLate",
-            "consoleBroken"
-          ],
-          "properties": {
-            "late": {
-              "const": "stored-plus-incoming"
-            },
-            "broken": {
-              "const": "stored-plus-incoming"
-            },
-            "rewind": {
-              "const": "stored-plus-incoming"
-            },
-            "consoleLate": {
-              "const": "set-zero"
-            },
-            "consoleBroken": {
-              "const": "set-zero"
-            }
-          }
-        },
-        "evidence": {
-          "$ref": "#/$defs/functionEvidence"
-        }
-      }
-    },
-    "removal": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "zeroMembershipId",
-        "operation",
-        "evidence"
-      ],
-      "properties": {
-        "zeroMembershipId": {
-          "const": "no-op"
-        },
-        "operation": {
-          "const": "remove-entry"
-        },
-        "evidence": {
-          "$ref": "#/$defs/functionEvidence"
-        }
-      }
-    },
-    "classFieldEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "artifactType",
-        "classPath",
-        "fieldName"
-      ],
-      "properties": {
-        "artifactType": {
-          "const": "rental-evidence"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "fieldName": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "structFieldEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "artifactType",
-        "structPath",
-        "fieldName"
-      ],
-      "properties": {
-        "artifactType": {
-          "const": "rental-evidence"
-        },
-        "structPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "fieldName": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "functionEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "artifactType",
-        "classPath",
-        "functionName"
-      ],
-      "properties": {
-        "artifactType": {
-          "const": "rental-blueprint-bodies"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "nonEmptyString": {
-      "type": "string",
-      "minLength": 1
-    }
-  }
-} as const;
+const $definitionBuild = type({
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionSourceIdentity = type({
+  fileName: type("string")
+    .matching(new RegExp("^[^/\\\\]+\\.json$"))
+    .atLeastLength(1),
+  sha256: $definitionSha256,
+  sizeBytes: type("number.integer").atLeast(1),
+  artifactType: type.enumerated("rental-evidence", "rental-blueprint-bodies"),
+  "+": "reject",
+}).readonly();
+const $definitionSources = type({
+  rentalEvidence: type.and(
+    $definitionSourceIdentity,
+    type({ "artifactType?": type.unit("rental-evidence") }).readonly(),
+  ),
+  rentalBlueprintBodies: type.and(
+    $definitionSourceIdentity,
+    type({ "artifactType?": type.unit("rental-blueprint-bodies") }).readonly(),
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionNonEmptyString = type("string").atLeastLength(1);
+const $definitionClassFieldEvidence = type({
+  artifactType: type.unit("rental-evidence"),
+  classPath: $definitionNonEmptyString,
+  fieldName: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionStorage = type({
+  container: type.unit("map"),
+  key: type.unit("membership-id"),
+  value: type.unit("fee-record"),
+  evidence: $definitionClassFieldEvidence,
+  "+": "reject",
+}).readonly();
+const $definitionStructFieldEvidence = type({
+  artifactType: type.unit("rental-evidence"),
+  structPath: $definitionNonEmptyString,
+  fieldName: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionFeeField = type({
+  defaultValue: type.unit(0),
+  evidence: $definitionStructFieldEvidence,
+  "+": "reject",
+}).readonly();
+const $definitionFeeRecord = type({
+  late: $definitionFeeField,
+  broken: $definitionFeeField,
+  rewind: $definitionFeeField,
+  consoleLate: $definitionFeeField,
+  consoleBroken: $definitionFeeField,
+  "+": "reject",
+}).readonly();
+const $definitionFunctionEvidence = type({
+  artifactType: type.unit("rental-blueprint-bodies"),
+  classPath: $definitionNonEmptyString,
+  functionName: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionAddition = type({
+  zeroMembershipId: type.unit("no-op"),
+  mapWrite: type.unit("add-or-replace"),
+  fieldUpdates: type({
+    late: type.unit("stored-plus-incoming"),
+    broken: type.unit("stored-plus-incoming"),
+    rewind: type.unit("stored-plus-incoming"),
+    consoleLate: type.unit("set-zero"),
+    consoleBroken: type.unit("set-zero"),
+    "+": "reject",
+  }).readonly(),
+  evidence: $definitionFunctionEvidence,
+  "+": "reject",
+}).readonly();
+const $definitionRemoval = type({
+  zeroMembershipId: type.unit("no-op"),
+  operation: type.unit("remove-entry"),
+  evidence: $definitionFunctionEvidence,
+  "+": "reject",
+}).readonly();
 
-export const MembershipFeeMechanicsSchema = defineArtifactSchema<MembershipFeeMechanicsContract>(MembershipFeeMechanicsJsonSchema);
+export const MembershipFeeMechanicsSchema = type({
+  artifactType: type.unit("membership-fee-mechanics"),
+  build: $definitionBuild,
+  sources: $definitionSources,
+  scope: type.unit("membership-fee-record"),
+  evidenceLevel: type.unit("decompiled-blueprint"),
+  runtimeValidation: type.unit("not-run"),
+  storage: $definitionStorage,
+  feeRecord: $definitionFeeRecord,
+  addition: $definitionAddition,
+  removal: $definitionRemoval,
+  "+": "reject",
+}).readonly();
 export type MembershipFeeMechanics = typeof MembershipFeeMechanicsSchema.infer;
 
 export type ClassFieldEvidence = MembershipFeeMechanics["storage"]["evidence"];

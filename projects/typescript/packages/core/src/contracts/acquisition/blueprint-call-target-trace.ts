@@ -1,216 +1,251 @@
-import type { BlueprintCallTargetTraceContract } from "../generated/acquisition/blueprint-call-target-trace.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
-import { BlueprintCallCandidateTraceJsonSchema } from "./blueprint-call-candidate-trace.ts";
+import { type } from "arktype";
+import { withExactlyOneOf, withUniqueItems } from "../contract-constraints.ts";
 
-const traceDefinitions = BlueprintCallCandidateTraceJsonSchema.$defs;
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionBuildReference = type({
+  manifestSha256: $definitionSha256,
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionFileName = type("string")
+  .matching(new RegExp("^[^/\\\\]+$"))
+  .atLeastLength(1);
+const $definitionNonEmptyString = type("string")
+  .matching(new RegExp("^[^\\u0000-\\u001f\\u007f-\\u009f]+$"))
+  .atLeastLength(1)
+  .atMostLength(1024);
+const $definitionCallerBodyInput = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.json$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  targetFunctionName: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionMappingIdentity = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.usmap$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(16),
+  sha256: $definitionSha256,
+  formatVersion: type.unit(4),
+  "+": "reject",
+}).readonly();
+const $definitionEngineIdentity = type({
+  version: type.unit("5.4"),
+  cue4ParseProfile: type.unit("GAME_UE5_4"),
+  source: type.unit("configured"),
+  confidence: type.unit("probable"),
+  "+": "reject",
+}).readonly();
+const $definitionExtractorIdentity = type({
+  name: type.unit("NeonRetroRewind.StaticExtractor"),
+  version: $definitionNonEmptyString,
+  cue4ParseVersion: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionTotals = type({
+  packageCount: type("number.integer").atLeast(1),
+  classCount: type("number.integer").atLeast(1),
+  functionCount: type("number.integer").atLeast(1),
+  nodeCount: type("number.integer").atLeast(1),
+  callCount: type("number.integer").atLeast(1),
+  branchCount: type("number.integer").atLeast(0),
+  entrypointCount: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionIntegerArgument = type({
+  position: type("number.integer").atLeast(0),
+  value: type("string").matching(new RegExp("^-?(0|[1-9][0-9]*)$")),
+  "+": "reject",
+}).readonly();
+const $definitionCall = type({
+  callKind: type.enumerated("virtual", "local-virtual", "final", "local-final"),
+  functionName: $definitionNonEmptyString,
+  argumentCount: type("number.integer").atLeast(0),
+  integerArguments: withUniqueItems(
+    $definitionIntegerArgument.array().readonly(),
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionJumpTarget = type({
+  edge: type("string").atLeastLength(1),
+  offset: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionJump = type({
+  jumpKind: type.enumerated(
+    "unconditional",
+    "conditional-false",
+    "computed",
+    "push-flow",
+    "pop-flow",
+    "pop-flow-if-false",
+    "switch",
+  ),
+  targets: $definitionJumpTarget.array().readonly(),
+  "+": "reject",
+}).readonly();
+const $definitionLiteral = type({
+  literalType: type.enumerated(
+    "integer",
+    "number",
+    "string",
+    "name",
+    "boolean",
+    "null",
+  ),
+  value: type("string"),
+  "+": "reject",
+}).readonly();
+const $definitionNode = type({
+  nodeIndex: type("number.integer").atLeast(0),
+  parentNodeIndex: type.or(type("number.integer").atLeast(0), type("null")),
+  edge: type("string").atLeastLength(1),
+  depth: type("number.integer").atLeast(0),
+  statementIndex: type("number.integer").atLeast(-1),
+  opcode: type("string").matching(new RegExp("^EX_")),
+  kind: type.enumerated(
+    "call",
+    "branch",
+    "literal",
+    "return",
+    "assignment",
+    "variable",
+    "context",
+    "operation",
+  ),
+  symbol: type.or(
+    type("string").atLeastLength(1).atMostLength(1024),
+    type("null"),
+  ),
+  call: withExactlyOneOf(type.or($definitionCall, type("null")), [
+    $definitionCall,
+    type("null"),
+  ]),
+  jump: withExactlyOneOf(type.or($definitionJump, type("null")), [
+    $definitionJump,
+    type("null"),
+  ]),
+  literal: withExactlyOneOf(type.or($definitionLiteral, type("null")), [
+    $definitionLiteral,
+    type("null"),
+  ]),
+  "+": "reject",
+}).readonly();
+const $definitionFunction = type({
+  packagePath: type("string")
+    .matching(new RegExp("\\.uasset$"))
+    .atLeastLength(1),
+  className: $definitionNonEmptyString,
+  classPath: $definitionNonEmptyString,
+  functionName: $definitionNonEmptyString,
+  functionPath: $definitionNonEmptyString,
+  flags: $definitionNonEmptyString,
+  bytecodeExpressionCount: type("number.integer").atLeast(1),
+  nodes: type([$definitionNode, "...", $definitionNode.array()]).readonly(),
+  "+": "reject",
+}).readonly();
+const $definitionSourceTrace = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.json$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  artifactType: type.unit("blueprint-property-reference-trace"),
+  targetPropertyName: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionRecordedCall = type({
+  callerFunctionPath: $definitionNonEmptyString,
+  statementIndex: type("number.integer").atLeast(0),
+  opcode: type("string").matching(new RegExp("^EX_")),
+  call: $definitionCall,
+  "+": "reject",
+}).readonly();
+const $definitionParameter = type({
+  position: type("number.integer").atLeast(0),
+  name: $definitionNonEmptyString,
+  type: $definitionNonEmptyString,
+  arrayDimension: type("number.integer").atLeast(1),
+  flags: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionSignature = type({
+  parameterCount: type("number.integer").atLeast(0),
+  parameters: withUniqueItems($definitionParameter.array().readonly()),
+  "+": "reject",
+}).readonly();
+const $definitionCandidate = type({
+  selectionRule: type.unit("explicit-same-class-function-path"),
+  relationship: type.unit("unproven"),
+  argumentCountMatchesParameterCount: type("boolean"),
+  signature: $definitionSignature,
+  function: $definitionFunction,
+  "+": "reject",
+}).readonly();
+const $definitionDeclarationsInput = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.json$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  artifactType: type.unit("blueprint-function-declarations"),
+  targetFunctionName: $definitionNonEmptyString,
+  declarationRule: type.unit("exact-raw-function-export-object-name"),
+  "+": "reject",
+}).readonly();
+const $definitionReceiver = type({
+  contextStatementIndex: type("number.integer").atLeast(0),
+  contextOpcode: type.unit("EX_Context"),
+  callEdge: type.unit("ContextExpression"),
+  receiverStatementIndex: type("number.integer").atLeast(0),
+  receiverOpcode: type.unit("EX_ObjectConst"),
+  receiverEdge: type.unit("ObjectExpression"),
+  objectName: $definitionNonEmptyString,
+  objectPath: $definitionNonEmptyString,
+  classPath: $definitionNonEmptyString,
+  exportType: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionTargetDeclaration = type({
+  packagePath: type("string")
+    .matching(new RegExp("\\.uasset$"))
+    .atLeastLength(1),
+  packageExportIndex: type("number.integer").atLeast(1),
+  objectPath: $definitionNonEmptyString,
+  ownerPath: $definitionNonEmptyString,
+  signature: $definitionSignature,
+  "+": "reject",
+}).readonly();
+const $definitionBinding = type({
+  bindingRule: type.unit("exact-context-object-class-and-declaration"),
+  relationship: type.unit("verified"),
+  receiverClassMatchesDeclarationOwner: type.unit(true),
+  argumentCountMatchesParameterCount: type.unit(true),
+  receiver: $definitionReceiver,
+  declaration: $definitionTargetDeclaration,
+  function: $definitionFunction,
+  "+": "reject",
+}).readonly();
 
-export const BlueprintCallTargetTraceJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:blueprint-call-target-trace",
-  "title": "NeonRetroRewind Blueprint call-target trace",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "sourceTrace",
-    "declarations",
-    "recordedCall",
-    "binding",
-    "mappings",
-    "engine",
-    "extractor"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "blueprint-call-target-trace"
-    },
-    "build": {
-      "$ref": "#/$defs/buildReference"
-    },
-    "sourceTrace": {
-      "$ref": "#/$defs/sourceTrace"
-    },
-    "declarations": {
-      "$ref": "#/$defs/declarationsInput"
-    },
-    "recordedCall": {
-      "$ref": "#/$defs/recordedCall"
-    },
-    "binding": {
-      "$ref": "#/$defs/binding"
-    },
-    "mappings": {
-      "$ref": "#/$defs/mappingIdentity"
-    },
-    "engine": {
-      "$ref": "#/$defs/engineIdentity"
-    },
-    "extractor": {
-      "$ref": "#/$defs/extractorIdentity"
-    }
-  },
-  "$defs": {
-    ...traceDefinitions,
-    "declarationsInput": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "artifactType",
-        "targetFunctionName",
-        "declarationRule"
-      ],
-      "properties": {
-        "fileName": {
-          "allOf": [
-            { "$ref": "#/$defs/fileName" },
-            { "pattern": "\\.json$" }
-          ]
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "artifactType": {
-          "const": "blueprint-function-declarations"
-        },
-        "targetFunctionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "declarationRule": {
-          "const": "exact-raw-function-export-object-name"
-        }
-      }
-    },
-    "binding": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "bindingRule",
-        "relationship",
-        "receiverClassMatchesDeclarationOwner",
-        "argumentCountMatchesParameterCount",
-        "receiver",
-        "declaration",
-        "function"
-      ],
-      "properties": {
-        "bindingRule": {
-          "const": "exact-context-object-class-and-declaration"
-        },
-        "relationship": {
-          "const": "verified"
-        },
-        "receiverClassMatchesDeclarationOwner": {
-          "const": true
-        },
-        "argumentCountMatchesParameterCount": {
-          "const": true
-        },
-        "receiver": {
-          "$ref": "#/$defs/receiver"
-        },
-        "declaration": {
-          "$ref": "#/$defs/targetDeclaration"
-        },
-        "function": {
-          "$ref": "#/$defs/function"
-        }
-      }
-    },
-    "receiver": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "contextStatementIndex",
-        "contextOpcode",
-        "callEdge",
-        "receiverStatementIndex",
-        "receiverOpcode",
-        "receiverEdge",
-        "objectName",
-        "objectPath",
-        "classPath",
-        "exportType"
-      ],
-      "properties": {
-        "contextStatementIndex": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "contextOpcode": {
-          "const": "EX_Context"
-        },
-        "callEdge": {
-          "const": "ContextExpression"
-        },
-        "receiverStatementIndex": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "receiverOpcode": {
-          "const": "EX_ObjectConst"
-        },
-        "receiverEdge": {
-          "const": "ObjectExpression"
-        },
-        "objectName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "objectPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "exportType": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "targetDeclaration": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packagePath",
-        "packageExportIndex",
-        "objectPath",
-        "ownerPath",
-        "signature"
-      ],
-      "properties": {
-        "packagePath": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\.uasset$"
-        },
-        "packageExportIndex": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "objectPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "ownerPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "signature": {
-          "$ref": "#/$defs/signature"
-        }
-      }
-    }
-  }
-} as const;
-
-export const BlueprintCallTargetTraceSchema =
-  defineArtifactSchema<BlueprintCallTargetTraceContract>(
-    BlueprintCallTargetTraceJsonSchema,
-  );
+export const BlueprintCallTargetTraceSchema = type({
+  artifactType: type.unit("blueprint-call-target-trace"),
+  build: $definitionBuildReference,
+  sourceTrace: $definitionSourceTrace,
+  declarations: $definitionDeclarationsInput,
+  recordedCall: $definitionRecordedCall,
+  binding: $definitionBinding,
+  mappings: $definitionMappingIdentity,
+  engine: $definitionEngineIdentity,
+  extractor: $definitionExtractorIdentity,
+  "+": "reject",
+}).readonly();
 export type BlueprintCallTargetTrace =
   typeof BlueprintCallTargetTraceSchema.infer;

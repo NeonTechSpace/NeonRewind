@@ -1,151 +1,47 @@
-import type { MovieReturnRuntimeCollectorConfigContract } from "../generated/runtime/movie-return-runtime-collector-config.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
 
-export const MovieReturnRuntimeCollectorConfigJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:runtime:movie-return-runtime-collector-config",
-  "title": "NeonRetroRewind movie-return runtime collector config",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "targetMechanics",
-    "collector",
-    "runtimeHost",
-    "observationSchema",
-    "observationOutputRootAbsolutePath"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "movie-return-runtime-collector-config"
-    },
-    "build": {
-      "$ref": "#/$defs/build"
-    },
-    "targetMechanics": {
-      "$ref": "#/$defs/targetMechanics"
-    },
-    "collector": {
-      "$ref": "#/$defs/collector"
-    },
-    "runtimeHost": {
-      "$ref": "#/$defs/runtimeHost"
-    },
-    "observationSchema": {
-      "$ref": "#/$defs/observationSchema"
-    },
-    "observationOutputRootAbsolutePath": {
-      "type": "string",
-      "minLength": 1
-    }
-  },
-  "$defs": {
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "build": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "steamAppId": {
-          "const": "3552140"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "targetMechanics": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "artifactType"
-      ],
-      "properties": {
-        "fileName": {
-          "const": "movie-return-mechanics.json"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "artifactType": {
-          "const": "movie-return-mechanics"
-        }
-      }
-    },
-    "collector": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version"
-      ],
-      "properties": {
-        "name": {
-          "const": "NeonRetroRewind.MovieReturnRuntimeCollector"
-        },
-        "version": {
-          "const": "0.1.7"
-        }
-      }
-    },
-    "runtimeHost": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version"
-      ],
-      "properties": {
-        "name": {
-          "const": "UE4SS"
-        },
-        "version": {
-          "const": "3.0.1-1018-g662df915"
-        }
-      }
-    },
-    "observationSchema": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "stagedRelativePath"
-      ],
-      "properties": {
-        "fileName": {
-          "const": "movie-return-observation.schema.json"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "stagedRelativePath": {
-          "const": "mods/NeonRetroRewindMovieReturnCollector/movie-return-observation.schema.json"
-        }
-      }
-    }
-  }
-} as const;
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionBuild = type({
+  steamAppId: type.unit("3552140"),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionTargetMechanics = type({
+  fileName: type.unit("movie-return-mechanics.json"),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  artifactType: type.unit("movie-return-mechanics"),
+  "+": "reject",
+}).readonly();
+const $definitionCollector = type({
+  name: type.unit("NeonRetroRewind.MovieReturnRuntimeCollector"),
+  version: type.unit("0.1.7"),
+  "+": "reject",
+}).readonly();
+const $definitionRuntimeHost = type({
+  name: type.unit("UE4SS"),
+  version: type.unit("3.0.1-1018-g662df915"),
+  "+": "reject",
+}).readonly();
+const $definitionObservationSchema = type({
+  fileName: type.unit("movie-return-observation.schema.json"),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  stagedRelativePath: type.unit(
+    "mods/NeonRetroRewindMovieReturnCollector/movie-return-observation.schema.json",
+  ),
+  "+": "reject",
+}).readonly();
 
-export const MovieReturnRuntimeCollectorConfigSchema = defineArtifactSchema<MovieReturnRuntimeCollectorConfigContract>(MovieReturnRuntimeCollectorConfigJsonSchema);
-export type MovieReturnRuntimeCollectorConfig = typeof MovieReturnRuntimeCollectorConfigSchema.infer;
+export const MovieReturnRuntimeCollectorConfigSchema = type({
+  artifactType: type.unit("movie-return-runtime-collector-config"),
+  build: $definitionBuild,
+  targetMechanics: $definitionTargetMechanics,
+  collector: $definitionCollector,
+  runtimeHost: $definitionRuntimeHost,
+  observationSchema: $definitionObservationSchema,
+  observationOutputRootAbsolutePath: type("string").atLeastLength(1),
+  "+": "reject",
+}).readonly();
+export type MovieReturnRuntimeCollectorConfig =
+  typeof MovieReturnRuntimeCollectorConfigSchema.infer;

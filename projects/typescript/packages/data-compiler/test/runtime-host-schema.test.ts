@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { RuntimeHostStagingSchema } from "@neonretrorewind/core";
+import {
+  MovieReturnRuntimeCollectorConfigSchema,
+  RuntimeHostStagingSchema,
+} from "@neonretrorewind/core";
 
 import { validateJsonSchema } from "./json-schema-validation.ts";
 
@@ -71,9 +74,10 @@ test("accepts the generated collector config contract", async () => {
     observationOutputRootAbsolutePath: "M:/NeonRetroRewind/.local/runtime",
   };
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(config, schema, "Runtime collector config"),
-  );
+  assert.doesNotThrow(() => {
+    MovieReturnRuntimeCollectorConfigSchema.assert(config);
+    validateJsonSchema(config, schema, "Runtime collector config");
+  });
 });
 
 async function readSchema(fileName: string): Promise<object> {

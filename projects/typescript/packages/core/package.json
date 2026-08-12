@@ -8,16 +8,9 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "check": "pnpm contracts:check && tsc -p tsconfig.json --noEmit",
-    "contracts:check": "node scripts/generate-contracts.mjs --check",
-    "contracts:generate": "node scripts/generate-contracts.mjs"
+    "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@ark/json-schema": "0.0.7",
-    "ajv": "8.20.0",
     "arktype": "2.2.3"
-  },
-  "devDependencies": {
-    "json-schema-to-typescript": "15.0.4"
   }
 }

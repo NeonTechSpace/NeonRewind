@@ -1,543 +1,226 @@
-import type { UnlockableImplementationSitesContract } from "../generated/acquisition/unlockable-implementation-sites.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
+import {
+  withContains,
+  withUniqueItems,
+  without,
+} from "../contract-constraints.ts";
 
-export const UnlockableImplementationSitesJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:unlockable-implementation-sites",
-  "title": "NeonRetroRewind unlockable implementation sites",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "staticCensus",
-    "unlockableEvidence",
-    "unlockableFunctionTrace",
-    "mappings",
-    "engine",
-    "extractor",
-    "baseClassPath",
-    "targetFunctionNames",
-    "candidateRule",
-    "coverage",
-    "totals",
-    "derivedClasses",
-    "overrides",
-    "managerEventGraphs",
-    "callSites",
-    "failures"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "unlockable-implementation-sites"
-    },
-    "build": {
-      "$ref": "#/$defs/buildReference"
-    },
-    "staticCensus": {
-      "$ref": "#/$defs/inputIdentity"
-    },
-    "unlockableEvidence": {
-      "$ref": "#/$defs/inputIdentity"
-    },
-    "unlockableFunctionTrace": {
-      "$ref": "#/$defs/inputIdentity"
-    },
-    "mappings": {
-      "$ref": "#/$defs/mappingIdentity"
-    },
-    "engine": {
-      "$ref": "#/$defs/engineIdentity"
-    },
-    "extractor": {
-      "$ref": "#/$defs/extractorIdentity"
-    },
-    "baseClassPath": {
-      "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.BP_ExampleItem_C"
-    },
-    "targetFunctionNames": {
-      "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
-      "uniqueItems": true,
-      "prefixItems": [
-        {
-          "const": "CanApplyExample"
-        },
-        {
-          "const": "IsExampleEligible"
-        },
-        {
-          "const": "ApplyExample"
-        },
-        {
-          "const": "TryApplyExample"
-        }
-      ],
-      "items": false
-    },
-    "candidateRule": {
-      "const": "parsed-packages-with-generated-blueprint-class-exports"
-    },
-    "coverage": {
-      "enum": [
-        "complete",
-        "partial"
-      ]
-    },
-    "totals": {
-      "$ref": "#/$defs/totals"
-    },
-    "derivedClasses": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/derivedClass"
-      }
-    },
-    "overrides": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/functionSite"
-          },
-          {
-            "properties": {
-              "functionName": {
-                "enum": [
-                  "IsExampleEligible",
-                  "ApplyExample"
-                ]
-              }
-            }
-          }
-        ]
-      }
-    },
-    "managerEventGraphs": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 1,
-      "items": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/functionSite"
-          },
-          {
-            "properties": {
-              "packagePath": {
-                "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset"
-              },
-              "className": {
-                "const": "ExampleUnlockSystem_C"
-              },
-              "classPath": {
-                "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C"
-              },
-              "functionName": {
-                "const": "ExecuteExampleGraph_ExampleUnlockSystem"
-              },
-              "functionPath": {
-                "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C:ExecuteExampleGraph_ExampleUnlockSystem"
-              },
-              "bytecodeExpressionCount": {
-                "minimum": 1
-              }
-            }
-          }
-        ]
-      }
-    },
-    "callSites": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/callSite"
-      }
-    },
-    "failures": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/failure"
-      }
-    }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "coverage": {
-            "const": "complete"
-          }
-        },
-        "required": [
-          "coverage"
-        ]
-      },
-      "then": {
-        "properties": {
-          "totals": {
-            "properties": {
-              "failedPackageCount": {
-                "const": 0
-              }
-            }
-          },
-          "failures": {
-            "maxItems": 0
-          }
-        }
-      },
-      "else": {
-        "properties": {
-          "totals": {
-            "properties": {
-              "failedPackageCount": {
-                "minimum": 1
-              }
-            }
-          },
-          "failures": {
-            "minItems": 1
-          }
-        }
-      }
-    }
-  ],
-  "$defs": {
-    "buildReference": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "manifestSha256",
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "manifestSha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "steamAppId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "inputIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256"
-      ],
-      "properties": {
-        "fileName": {
-          "type": "string",
-          "pattern": "^[^/\\\\]+\\.json$"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        }
-      }
-    },
-    "mappingIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "formatVersion"
-      ],
-      "properties": {
-        "fileName": {
-          "type": "string",
-          "pattern": "^[^/\\\\]+\\.usmap$"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 16
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "formatVersion": {
-          "const": 4
-        }
-      }
-    },
-    "engineIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "version",
-        "cue4ParseProfile",
-        "source",
-        "confidence"
-      ],
-      "properties": {
-        "version": {
-          "const": "5.4"
-        },
-        "cue4ParseProfile": {
-          "const": "GAME_UE5_4"
-        },
-        "source": {
-          "const": "configured"
-        },
-        "confidence": {
-          "const": "probable"
-        }
-      }
-    },
-    "extractorIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version",
-        "cue4ParseVersion"
-      ],
-      "properties": {
-        "name": {
-          "const": "NeonRetroRewind.StaticExtractor"
-        },
-        "version": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "cue4ParseVersion": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "totals": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "candidatePackageCount",
-        "scannedPackageCount",
-        "failedPackageCount",
-        "classCount",
-        "functionCount",
-        "blueprintInheritanceLinkCount",
-        "derivedClassCount",
-        "overrideCount",
-        "managerEventGraphCount",
-        "callSiteCount"
-      ],
-      "properties": {
-        "candidatePackageCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "scannedPackageCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "failedPackageCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "classCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "functionCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "blueprintInheritanceLinkCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "derivedClassCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "overrideCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "managerEventGraphCount": {
-          "const": 1
-        },
-        "callSiteCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "derivedClass": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packagePath",
-        "className",
-        "classPath",
-        "superclassPath",
-        "inheritancePath"
-      ],
-      "properties": {
-        "packagePath": {
-          "$ref": "#/$defs/packagePath"
-        },
-        "className": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "superclassPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "inheritancePath": {
-          "type": "array",
-          "minItems": 2,
-          "uniqueItems": true,
-          "contains": {
-            "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.BP_ExampleItem_C"
-          },
-          "minContains": 1,
-          "maxContains": 1,
-          "items": {
-            "$ref": "#/$defs/nonEmptyString"
-          }
-        }
-      }
-    },
-    "functionSite": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packagePath",
-        "className",
-        "classPath",
-        "functionName",
-        "functionPath",
-        "flags",
-        "bytecodeExpressionCount"
-      ],
-      "properties": {
-        "packagePath": {
-          "$ref": "#/$defs/packagePath"
-        },
-        "className": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "flags": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "bytecodeExpressionCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "callSite": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "targetFunctionName",
-        "packagePath",
-        "className",
-        "classPath",
-        "functionName",
-        "functionPath",
-        "callKind",
-        "statementIndex"
-      ],
-      "properties": {
-        "targetFunctionName": {
-          "enum": [
-            "CanApplyExample",
-            "IsExampleEligible",
-            "ApplyExample",
-            "TryApplyExample"
-          ]
-        },
-        "packagePath": {
-          "$ref": "#/$defs/packagePath"
-        },
-        "className": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "callKind": {
-          "enum": [
-            "virtual",
-            "local-virtual",
-            "final",
-            "local-final"
-          ]
-        },
-        "statementIndex": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "failure": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packagePath",
-        "errorType"
-      ],
-      "properties": {
-        "packagePath": {
-          "$ref": "#/$defs/packagePath"
-        },
-        "errorType": {
-          "type": "string",
-          "pattern": "^[A-Za-z][A-Za-z0-9._+`]*$"
-        }
-      }
-    },
-    "packagePath": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "\\.uasset$"
-    },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "nonEmptyString": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 4096
-    }
-  }
-} as const;
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionBuildReference = type({
+  manifestSha256: $definitionSha256,
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionInputIdentity = type({
+  fileName: type("string").matching(new RegExp("^[^/\\\\]+\\.json$")),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  "+": "reject",
+}).readonly();
+const $definitionMappingIdentity = type({
+  fileName: type("string").matching(new RegExp("^[^/\\\\]+\\.usmap$")),
+  sizeBytes: type("number.integer").atLeast(16),
+  sha256: $definitionSha256,
+  formatVersion: type.unit(4),
+  "+": "reject",
+}).readonly();
+const $definitionEngineIdentity = type({
+  version: type.unit("5.4"),
+  cue4ParseProfile: type.unit("GAME_UE5_4"),
+  source: type.unit("configured"),
+  confidence: type.unit("probable"),
+  "+": "reject",
+}).readonly();
+const $definitionNonEmptyString = type("string")
+  .atLeastLength(1)
+  .atMostLength(4096);
+const $definitionExtractorIdentity = type({
+  name: type.unit("NeonRetroRewind.StaticExtractor"),
+  version: $definitionNonEmptyString,
+  cue4ParseVersion: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionTotals = type({
+  candidatePackageCount: type("number.integer").atLeast(1),
+  scannedPackageCount: type("number.integer").atLeast(0),
+  failedPackageCount: type("number.integer").atLeast(0),
+  classCount: type("number.integer").atLeast(1),
+  functionCount: type("number.integer").atLeast(1),
+  blueprintInheritanceLinkCount: type("number.integer").atLeast(0),
+  derivedClassCount: type("number.integer").atLeast(0),
+  overrideCount: type("number.integer").atLeast(0),
+  managerEventGraphCount: type.unit(1),
+  callSiteCount: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionPackagePath = type("string")
+  .matching(new RegExp("\\.uasset$"))
+  .atLeastLength(1);
+const $definitionDerivedClass = type({
+  packagePath: $definitionPackagePath,
+  className: $definitionNonEmptyString,
+  classPath: $definitionNonEmptyString,
+  superclassPath: $definitionNonEmptyString,
+  inheritancePath: withContains(
+    withUniqueItems(
+      type([
+        $definitionNonEmptyString,
+        $definitionNonEmptyString,
+        "...",
+        $definitionNonEmptyString.array(),
+      ]).readonly(),
+    ),
+    type.unit(
+      "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.BP_ExampleItem_C",
+    ),
+    1,
+    1,
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionFunctionSite = type({
+  packagePath: $definitionPackagePath,
+  className: $definitionNonEmptyString,
+  classPath: $definitionNonEmptyString,
+  functionName: $definitionNonEmptyString,
+  functionPath: $definitionNonEmptyString,
+  flags: $definitionNonEmptyString,
+  bytecodeExpressionCount: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionCallSite = type({
+  targetFunctionName: type.enumerated(
+    "CanApplyExample",
+    "IsExampleEligible",
+    "ApplyExample",
+    "TryApplyExample",
+  ),
+  packagePath: $definitionPackagePath,
+  className: $definitionNonEmptyString,
+  classPath: $definitionNonEmptyString,
+  functionName: $definitionNonEmptyString,
+  functionPath: $definitionNonEmptyString,
+  callKind: type.enumerated("virtual", "local-virtual", "final", "local-final"),
+  statementIndex: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionFailure = type({
+  packagePath: $definitionPackagePath,
+  errorType: type("string").matching(new RegExp("^[A-Za-z][A-Za-z0-9._+`]*$")),
+  "+": "reject",
+}).readonly();
 
-export const UnlockableImplementationSitesSchema = defineArtifactSchema<UnlockableImplementationSitesContract>(UnlockableImplementationSitesJsonSchema);
-export type UnlockableImplementationSites = typeof UnlockableImplementationSitesSchema.infer;
+export const UnlockableImplementationSitesSchema = type.and(
+  type({
+    artifactType: type.unit("unlockable-implementation-sites"),
+    build: $definitionBuildReference,
+    staticCensus: $definitionInputIdentity,
+    unlockableEvidence: $definitionInputIdentity,
+    unlockableFunctionTrace: $definitionInputIdentity,
+    mappings: $definitionMappingIdentity,
+    engine: $definitionEngineIdentity,
+    extractor: $definitionExtractorIdentity,
+    baseClassPath: type.unit(
+      "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.BP_ExampleItem_C",
+    ),
+    targetFunctionNames: withUniqueItems(
+      type([
+        type.unit("CanApplyExample"),
+        type.unit("IsExampleEligible"),
+        type.unit("ApplyExample"),
+        type.unit("TryApplyExample"),
+      ])
+        .readonly()
+        .atMostLength(4),
+    ),
+    candidateRule: type.unit(
+      "parsed-packages-with-generated-blueprint-class-exports",
+    ),
+    coverage: type.enumerated("complete", "partial"),
+    totals: $definitionTotals,
+    derivedClasses: withUniqueItems($definitionDerivedClass.array().readonly()),
+    overrides: withUniqueItems(
+      type
+        .and(
+          $definitionFunctionSite,
+          type({
+            "functionName?": type.enumerated("IsExampleEligible", "ApplyExample"),
+          }).readonly(),
+        )
+        .array()
+        .readonly(),
+    ),
+    managerEventGraphs: type([
+      type.and(
+        $definitionFunctionSite,
+        type({
+          "packagePath?": type.unit(
+            "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset",
+          ),
+          "className?": type.unit("ExampleUnlockSystem_C"),
+          "classPath?": type.unit(
+            "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C",
+          ),
+          "functionName?": type.unit("ExecuteExampleGraph_ExampleUnlockSystem"),
+          "functionPath?": type.unit(
+            "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C:ExecuteExampleGraph_ExampleUnlockSystem",
+          ),
+          "bytecodeExpressionCount?": type("number").atLeast(1),
+        }).readonly(),
+      ),
+      "...",
+      type
+        .and(
+          $definitionFunctionSite,
+          type({
+            "packagePath?": type.unit(
+              "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset",
+            ),
+            "className?": type.unit("ExampleUnlockSystem_C"),
+            "classPath?": type.unit(
+              "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C",
+            ),
+            "functionName?": type.unit("ExecuteExampleGraph_ExampleUnlockSystem"),
+            "functionPath?": type.unit(
+              "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C:ExecuteExampleGraph_ExampleUnlockSystem",
+            ),
+            "bytecodeExpressionCount?": type("number").atLeast(1),
+          }).readonly(),
+        )
+        .array(),
+    ])
+      .readonly()
+      .atMostLength(1),
+    callSites: withUniqueItems($definitionCallSite.array().readonly()),
+    failures: withUniqueItems($definitionFailure.array().readonly()),
+    "+": "reject",
+  }).readonly(),
+  type.or(
+    type({ coverage: type.unit("complete") })
+      .readonly()
+      .and(
+        type({
+          "totals?": type({ "failedPackageCount?": type.unit(0) }).readonly(),
+          "failures?": type("unknown").array().readonly().atMostLength(0),
+        }).readonly(),
+      ),
+    without(
+      type("unknown"),
+      type({ coverage: type.unit("complete") }).readonly(),
+    ).and(
+      type({
+        "totals?": type({
+          "failedPackageCount?": type("number").atLeast(1),
+        }).readonly(),
+        "failures?": type([
+          type("unknown"),
+          "...",
+          type("unknown").array(),
+        ]).readonly(),
+      }).readonly(),
+    ),
+  ),
+);
+export type UnlockableImplementationSites =
+  typeof UnlockableImplementationSitesSchema.infer;

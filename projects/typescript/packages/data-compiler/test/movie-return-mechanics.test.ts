@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { MovieReturnMechanicsSchema } from "@neonretrorewind/core";
+
 import { compileMovieReturnMechanics } from "../src/movie-return-mechanics.ts";
 import { validateJsonSchema } from "./json-schema-validation.ts";
 import {
@@ -129,6 +131,7 @@ test("compiles movie readiness, weighted selection, and the confirmed customer f
     import.meta.url,
   );
   const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+  MovieReturnMechanicsSchema.assert(mechanics);
   validateJsonSchema(mechanics, schema, "Movie return mechanics");
 });
 

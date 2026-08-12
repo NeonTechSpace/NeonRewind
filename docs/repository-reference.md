@@ -48,8 +48,8 @@ The [research overview](research-overview.md) defines the specialist terms and e
 | `projects/game-data-exporter/static-extractor` | .NET 10 tools for build identity, focused data extraction, and selected Blueprint analysis |
 | `projects/game-data-exporter/runtime-exporter` | Offline staging, installation preview, and cleanup commands for runtime probes and collectors |
 | `projects/game-data-exporter/runtime-collector` | The bounded native movie-return collector and its local build tools |
-| `projects/game-data-exporter/schemas` | Generated JSON Schemas retained for real .NET and C++ boundaries |
-| `projects/typescript/packages/core` | Canonical artifact contracts and generated public types |
+| `projects/game-data-exporter/schemas` | JSON Schemas retained for real .NET and C++ boundaries |
+| `projects/typescript/packages/core` | Canonical ArkType artifact contracts and inferred public types |
 | `projects/typescript/packages/data-compiler` | Validation and compilation of private evidence into normalized records |
 | `projects/typescript/packages/validator` | Comparison of runtime observations with normalized mechanics |
 
@@ -80,7 +80,7 @@ Install the locked dependencies:
 pnpm install --frozen-lockfile
 ```
 
-Check generated-contract drift and TypeScript types:
+Check TypeScript types:
 
 ```text
 pnpm check
@@ -116,34 +116,26 @@ They are ordered by dependency:
 The [movie-return runtime observation](movie-return-runtime-observation.md) is the implemented validation case.
 The [runtime-host design](movie-return-runtime-host.md) records its installation and cleanup boundaries.
 
-## Local and generated files
+## Local and boundary files
 
 - `projects/game-data-exporter/.local` contains private acquisition, runtime, and native-build state
 - `projects/typescript/.local` contains private compiled records and validation reports
 - `projects/typescript/node_modules` contains installed workspace dependencies
-- `projects/typescript/packages/core/src/contracts/generated` contains generated TypeScript contract output
-- `projects/game-data-exporter/schemas` contains the generated observation and collector-config cross-language schemas
-- `projects/typescript/packages/core/schemas` contains the generated movie-return mechanics cross-language schema
+- `projects/game-data-exporter/schemas` contains the observation and collector-config cross-language schemas
+- `projects/typescript/packages/core/schemas` contains the movie-return mechanics cross-language schema
 
 The `.local` directories and build outputs are ignored by Git.
-Generated contract files are tracked and must match their canonical definitions.
+The three cross-language schemas are tracked because .NET or C++ reads them directly.
 
 ## Artifact contracts
 
 `@neonretrorewind/core` owns one executable ArkType contract for every acquisition, domain, runtime, and validation artifact.
 Public TypeScript types are inferred from those contracts rather than maintained as separate handwritten interfaces.
 
-Standalone JSON Schema is generated only for the movie-return observation, runtime collector config, and movie-return mechanics artifacts that cross .NET, C++, and TypeScript boundaries.
+Standalone JSON Schema exists only for the movie-return observation, runtime collector config, and movie-return mechanics artifacts that cross .NET, C++, and TypeScript boundaries.
 TypeScript validates every artifact through the contract imported from `@neonretrorewind/core` and does not accept schema paths on its command lines.
-
-After changing a canonical contract, run:
-
-```text
-pnpm contracts:generate
-pnpm contracts:check
-```
-
-The workspace `pnpm check` command already includes the drift check.
+Public TypeScript types are inferred directly from the same ArkType definitions.
+When one of the three cross-language artifacts changes, update its boundary schema and the shared behavior tests in the same change.
 
 ## Common problems
 

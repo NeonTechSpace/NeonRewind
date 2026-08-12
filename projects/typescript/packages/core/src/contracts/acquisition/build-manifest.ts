@@ -1,148 +1,46 @@
-import type { BuildManifestContract } from "../generated/acquisition/build-manifest.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
+import { withUniqueItems } from "../contract-constraints.ts";
 
-export const BuildManifestJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:build-manifest",
-  "title": "NeonRetroRewind build manifest",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "steam",
-    "reportedGameVersion",
-    "executable",
-    "packages",
-    "engine",
-    "extractor"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "build-manifest"
-    },
-    "steam": {
-      "$ref": "#/$defs/steamBuild"
-    },
-    "reportedGameVersion": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "executable": {
-      "$ref": "#/$defs/fileIdentity"
-    },
-    "packages": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/fileIdentity"
-      }
-    },
-    "engine": {
-      "$ref": "#/$defs/engineIdentity"
-    },
-    "extractor": {
-      "$ref": "#/$defs/extractorIdentity"
-    }
-  },
-  "$defs": {
-    "steamBuild": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "appId",
-        "buildId",
-        "name"
-      ],
-      "properties": {
-        "appId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "buildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
-    "fileIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256"
-      ],
-      "properties": {
-        "fileName": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[^/\\\\]+$"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        }
-      }
-    },
-    "engineIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "version",
-        "cue4ParseProfile",
-        "source",
-        "confidence"
-      ],
-      "properties": {
-        "version": {
-          "const": "5.4"
-        },
-        "cue4ParseProfile": {
-          "const": "GAME_UE5_4"
-        },
-        "source": {
-          "const": "configured"
-        },
-        "confidence": {
-          "const": "probable"
-        }
-      }
-    },
-    "extractorIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version",
-        "cue4ParseVersion"
-      ],
-      "properties": {
-        "name": {
-          "const": "NeonRetroRewind.StaticExtractor"
-        },
-        "version": {
-          "type": "string",
-          "minLength": 1
-        },
-        "cue4ParseVersion": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    }
-  }
-} as const;
+const $definitionSteamBuild = type({
+  appId: type("string").matching(new RegExp("^[0-9]+$")),
+  buildId: type("string").matching(new RegExp("^[0-9]+$")),
+  name: type("string").atLeastLength(1),
+  "+": "reject",
+}).readonly();
+const $definitionFileIdentity = type({
+  fileName: type("string").matching(new RegExp("^[^/\\\\]+$")).atLeastLength(1),
+  sizeBytes: type("number.integer").atLeast(0),
+  sha256: type("string").matching(new RegExp("^[0-9a-f]{64}$")),
+  "+": "reject",
+}).readonly();
+const $definitionEngineIdentity = type({
+  version: type.unit("5.4"),
+  cue4ParseProfile: type.unit("GAME_UE5_4"),
+  source: type.unit("configured"),
+  confidence: type.unit("probable"),
+  "+": "reject",
+}).readonly();
+const $definitionExtractorIdentity = type({
+  name: type.unit("NeonRetroRewind.StaticExtractor"),
+  version: type("string").atLeastLength(1),
+  cue4ParseVersion: type("string").atLeastLength(1),
+  "+": "reject",
+}).readonly();
 
-export const BuildManifestSchema = defineArtifactSchema<BuildManifestContract>(BuildManifestJsonSchema);
+export const BuildManifestSchema = type({
+  artifactType: type.unit("build-manifest"),
+  steam: $definitionSteamBuild,
+  reportedGameVersion: type.or(type("string"), type("null")),
+  executable: $definitionFileIdentity,
+  packages: withUniqueItems(
+    type([
+      $definitionFileIdentity,
+      "...",
+      $definitionFileIdentity.array(),
+    ]).readonly(),
+  ),
+  engine: $definitionEngineIdentity,
+  extractor: $definitionExtractorIdentity,
+  "+": "reject",
+}).readonly();
 export type BuildManifest = typeof BuildManifestSchema.infer;

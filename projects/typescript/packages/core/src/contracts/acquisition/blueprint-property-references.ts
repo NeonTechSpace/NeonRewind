@@ -1,402 +1,134 @@
-import type { BlueprintPropertyReferencesContract } from "../generated/acquisition/blueprint-property-references.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
+import { withUniqueItems, without } from "../contract-constraints.ts";
 
-export const BlueprintPropertyReferencesJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:blueprint-property-references",
-  "title": "NeonRetroRewind Blueprint property references",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "staticCensus",
-    "mappings",
-    "engine",
-    "extractor",
-    "target",
-    "candidateRule",
-    "referenceRule",
-    "coverage",
-    "totals",
-    "references",
-    "failures"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "blueprint-property-references"
-    },
-    "build": {
-      "$ref": "#/$defs/buildReference"
-    },
-    "staticCensus": {
-      "$ref": "#/$defs/inputIdentity"
-    },
-    "mappings": {
-      "$ref": "#/$defs/mappingIdentity"
-    },
-    "engine": {
-      "$ref": "#/$defs/engineIdentity"
-    },
-    "extractor": {
-      "$ref": "#/$defs/extractorIdentity"
-    },
-    "target": {
-      "$ref": "#/$defs/target"
-    },
-    "candidateRule": {
-      "const": "parsed-packages-with-function-exports"
-    },
-    "referenceRule": {
-      "const": "exact-kismet-property-pointer-name"
-    },
-    "coverage": {
-      "enum": [
-        "complete",
-        "partial"
-      ]
-    },
-    "totals": {
-      "$ref": "#/$defs/totals"
-    },
-    "references": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/reference"
-      }
-    },
-    "failures": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/failure"
-      }
-    }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "coverage": {
-            "const": "complete"
-          }
-        },
-        "required": [
-          "coverage"
-        ]
-      },
-      "then": {
-        "properties": {
-          "totals": {
-            "properties": {
-              "failedPackageCount": {
-                "const": 0
-              }
-            }
-          },
-          "failures": {
-            "maxItems": 0
-          }
-        }
-      },
-      "else": {
-        "properties": {
-          "totals": {
-            "properties": {
-              "failedPackageCount": {
-                "minimum": 1
-              }
-            }
-          },
-          "failures": {
-            "minItems": 1
-          }
-        }
-      }
-    }
-  ],
-  "$defs": {
-    "buildReference": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "manifestSha256",
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "manifestSha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "steamAppId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "inputIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256"
-      ],
-      "properties": {
-        "fileName": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/fileName"
-            },
-            {
-              "pattern": "\\.json$"
-            }
-          ]
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        }
-      }
-    },
-    "mappingIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "formatVersion"
-      ],
-      "properties": {
-        "fileName": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/fileName"
-            },
-            {
-              "pattern": "\\.usmap$"
-            }
-          ]
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 16
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "formatVersion": {
-          "const": 4
-        }
-      }
-    },
-    "engineIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "version",
-        "cue4ParseProfile",
-        "source",
-        "confidence"
-      ],
-      "properties": {
-        "version": {
-          "const": "5.4"
-        },
-        "cue4ParseProfile": {
-          "const": "GAME_UE5_4"
-        },
-        "source": {
-          "const": "configured"
-        },
-        "confidence": {
-          "const": "probable"
-        }
-      }
-    },
-    "extractorIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version",
-        "cue4ParseVersion"
-      ],
-      "properties": {
-        "name": {
-          "const": "NeonRetroRewind.StaticExtractor"
-        },
-        "version": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "cue4ParseVersion": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "target": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "propertyName"
-      ],
-      "properties": {
-        "propertyName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256,
-          "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
-        }
-      }
-    },
-    "totals": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "candidatePackageCount",
-        "scannedPackageCount",
-        "failedPackageCount",
-        "classCount",
-        "functionCount",
-        "referenceCount",
-        "readCount",
-        "writeCount",
-        "metadataCount"
-      ],
-      "properties": {
-        "candidatePackageCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "scannedPackageCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "failedPackageCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "classCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "functionCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "referenceCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "readCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "writeCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "metadataCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "reference": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packagePath",
-        "className",
-        "classPath",
-        "functionName",
-        "functionPath",
-        "access",
-        "opcode",
-        "pointerField",
-        "statementIndex"
-      ],
-      "properties": {
-        "packagePath": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\.uasset$"
-        },
-        "className": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "access": {
-          "enum": [
-            "read",
-            "write",
-            "metadata"
-          ]
-        },
-        "opcode": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "pointerField": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "statementIndex": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "failure": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packagePath",
-        "errorType"
-      ],
-      "properties": {
-        "packagePath": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\.uasset$"
-        },
-        "errorType": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z][A-Za-z0-9._+`]*$"
-        }
-      }
-    },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^[^/\\\\]+$"
-    },
-    "nonEmptyString": {
-      "type": "string",
-      "minLength": 1
-    }
-  }
-} as const;
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionBuildReference = type({
+  manifestSha256: $definitionSha256,
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionFileName = type("string")
+  .matching(new RegExp("^[^/\\\\]+$"))
+  .atLeastLength(1);
+const $definitionInputIdentity = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.json$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  "+": "reject",
+}).readonly();
+const $definitionMappingIdentity = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.usmap$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(16),
+  sha256: $definitionSha256,
+  formatVersion: type.unit(4),
+  "+": "reject",
+}).readonly();
+const $definitionEngineIdentity = type({
+  version: type.unit("5.4"),
+  cue4ParseProfile: type.unit("GAME_UE5_4"),
+  source: type.unit("configured"),
+  confidence: type.unit("probable"),
+  "+": "reject",
+}).readonly();
+const $definitionNonEmptyString = type("string").atLeastLength(1);
+const $definitionExtractorIdentity = type({
+  name: type.unit("NeonRetroRewind.StaticExtractor"),
+  version: $definitionNonEmptyString,
+  cue4ParseVersion: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionTarget = type({
+  propertyName: type("string")
+    .matching(new RegExp("^[^\\u0000-\\u001f\\u007f-\\u009f]+$"))
+    .atLeastLength(1)
+    .atMostLength(256),
+  "+": "reject",
+}).readonly();
+const $definitionTotals = type({
+  candidatePackageCount: type("number.integer").atLeast(1),
+  scannedPackageCount: type("number.integer").atLeast(0),
+  failedPackageCount: type("number.integer").atLeast(0),
+  classCount: type("number.integer").atLeast(0),
+  functionCount: type("number.integer").atLeast(0),
+  referenceCount: type("number.integer").atLeast(0),
+  readCount: type("number.integer").atLeast(0),
+  writeCount: type("number.integer").atLeast(0),
+  metadataCount: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionReference = type({
+  packagePath: type("string")
+    .matching(new RegExp("\\.uasset$"))
+    .atLeastLength(1),
+  className: $definitionNonEmptyString,
+  classPath: $definitionNonEmptyString,
+  functionName: $definitionNonEmptyString,
+  functionPath: $definitionNonEmptyString,
+  access: type.enumerated("read", "write", "metadata"),
+  opcode: $definitionNonEmptyString,
+  pointerField: $definitionNonEmptyString,
+  statementIndex: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionFailure = type({
+  packagePath: type("string")
+    .matching(new RegExp("\\.uasset$"))
+    .atLeastLength(1),
+  errorType: type("string")
+    .matching(new RegExp("^[A-Za-z][A-Za-z0-9._+`]*$"))
+    .atLeastLength(1),
+  "+": "reject",
+}).readonly();
 
-export const BlueprintPropertyReferencesSchema = defineArtifactSchema<BlueprintPropertyReferencesContract>(BlueprintPropertyReferencesJsonSchema);
-export type BlueprintPropertyReferences = typeof BlueprintPropertyReferencesSchema.infer;
+export const BlueprintPropertyReferencesSchema = type.and(
+  type({
+    artifactType: type.unit("blueprint-property-references"),
+    build: $definitionBuildReference,
+    staticCensus: $definitionInputIdentity,
+    mappings: $definitionMappingIdentity,
+    engine: $definitionEngineIdentity,
+    extractor: $definitionExtractorIdentity,
+    target: $definitionTarget,
+    candidateRule: type.unit("parsed-packages-with-function-exports"),
+    referenceRule: type.unit("exact-kismet-property-pointer-name"),
+    coverage: type.enumerated("complete", "partial"),
+    totals: $definitionTotals,
+    references: withUniqueItems($definitionReference.array().readonly()),
+    failures: withUniqueItems($definitionFailure.array().readonly()),
+    "+": "reject",
+  }).readonly(),
+  type.or(
+    type({ coverage: type.unit("complete") })
+      .readonly()
+      .and(
+        type({
+          "totals?": type({ "failedPackageCount?": type.unit(0) }).readonly(),
+          "failures?": type("unknown").array().readonly().atMostLength(0),
+        }).readonly(),
+      ),
+    without(
+      type("unknown"),
+      type({ coverage: type.unit("complete") }).readonly(),
+    ).and(
+      type({
+        "totals?": type({
+          "failedPackageCount?": type("number").atLeast(1),
+        }).readonly(),
+        "failures?": type([
+          type("unknown"),
+          "...",
+          type("unknown").array(),
+        ]).readonly(),
+      }).readonly(),
+    ),
+  ),
+);
+export type BlueprintPropertyReferences =
+  typeof BlueprintPropertyReferencesSchema.infer;

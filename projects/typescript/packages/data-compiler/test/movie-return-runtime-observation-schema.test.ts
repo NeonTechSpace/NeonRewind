@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { MovieReturnObservationSchema } from "@neonretrorewind/core";
+
 import { validateJsonSchema } from "./json-schema-validation.ts";
 
 const schemaUrl = new URL(
@@ -15,9 +17,7 @@ const schemaPromise = readFile(schemaUrl, "utf8").then(
 test("accepts a bounded complete movie-return observation", async () => {
   const schema = await schemaPromise;
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(createObservation(), schema, "Movie-return runtime observation"),
-  );
+  assert.doesNotThrow(() => validateBoth(createObservation(), schema));
 });
 
 test("rejects private top-level data outside the observation allowlist", async () => {
@@ -47,9 +47,7 @@ test("allows an aborted run to retain a partial event sequence", async () => {
   observation.run.statusReason = "user-stopped";
   observation.events = observation.events.slice(0, 1);
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
-  );
+  assert.doesNotThrow(() => validateBoth(observation, schema));
 });
 
 test("rejects a completed run with a failure reason", async () => {
@@ -67,9 +65,7 @@ test("accepts selected movies when the selector reports not found", async () => 
   }
   result.found = false;
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
-  );
+  assert.doesNotThrow(() => validateBoth(observation, schema));
 });
 
 test("accepts more than four selected movies as bounded runtime evidence", async () => {
@@ -87,9 +83,7 @@ test("accepts more than four selected movies as bounded runtime evidence", async
     movie("movie-0005"),
   );
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
-  );
+  assert.doesNotThrow(() => validateBoth(observation, schema));
 });
 
 test("accepts duplicate selected movies as bounded runtime evidence", async () => {
@@ -101,9 +95,7 @@ test("accepts duplicate selected movies as bounded runtime evidence", async () =
   }
   result.selectedMovies = captured(movie("movie-0001"), movie("movie-0001"));
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
-  );
+  assert.doesNotThrow(() => validateBoth(observation, schema));
 });
 
 test("accepts an explicitly truncated collection", async () => {
@@ -119,9 +111,7 @@ test("accepts an explicitly truncated collection", async () => {
     movies: [movie("movie-0001")],
   };
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
-  );
+  assert.doesNotThrow(() => validateBoth(observation, schema));
 });
 
 test("accepts exactly 256 captured movie references", async () => {
@@ -137,9 +127,7 @@ test("accepts exactly 256 captured movie references", async () => {
     ),
   );
 
-  assert.doesNotThrow(() =>
-    validateJsonSchema(observation, schema, "Movie-return runtime observation"),
-  );
+  assert.doesNotThrow(() => validateBoth(observation, schema));
 });
 
 test("rejects more than 256 captured movie references", async () => {
@@ -183,10 +171,16 @@ async function assertRejected(
   const observation = createObservation();
   mutate(observation);
 
+  assert.throws(() => MovieReturnObservationSchema.assert(observation));
   assert.throws(
     () => validateJsonSchema(observation, schema, "Movie-return runtime observation"),
     /does not match its schema/u,
   );
+}
+
+function validateBoth(observation: unknown, schema: object): void {
+  MovieReturnObservationSchema.assert(observation);
+  validateJsonSchema(observation, schema, "Movie-return runtime observation");
 }
 
 function createObservation() {

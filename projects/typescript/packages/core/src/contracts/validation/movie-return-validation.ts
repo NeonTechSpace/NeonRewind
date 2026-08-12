@@ -1,236 +1,89 @@
-import type { MovieReturnValidationContract } from "../generated/validation/movie-return-validation.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
 
-export const MovieReturnValidationJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:validation:movie-return-validation",
-  "title": "NeonRetroRewind movie-return runtime validation",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "validator",
-    "sources",
-    "validation"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "movie-return-runtime-validation"
-    },
-    "build": {
-      "$ref": "#/$defs/build"
-    },
-    "validator": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version"
-      ],
-      "properties": {
-        "name": {
-          "const": "@neonretrorewind/validator"
-        },
-        "version": {
-          "const": "0.0.0"
-        }
-      }
-    },
-    "sources": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "observation",
-        "mechanics"
-      ],
-      "properties": {
-        "observation": {
-          "$ref": "#/$defs/observationIdentity"
-        },
-        "mechanics": {
-          "$ref": "#/$defs/mechanicsIdentity"
-        }
-      }
-    },
-    "validation": {
-      "$ref": "#/$defs/validation"
-    }
-  },
-  "$defs": {
-    "build": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "steamAppId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "observationIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "artifactType"
-      ],
-      "properties": {
-        "fileName": {
-          "$ref": "#/$defs/fileName"
-        },
-        "sizeBytes": {
-          "$ref": "#/$defs/sizeBytes"
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "artifactType": {
-          "const": "movie-return-runtime-observation"
-        }
-      }
-    },
-    "mechanicsIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "artifactType"
-      ],
-      "properties": {
-        "fileName": {
-          "const": "movie-return-mechanics.json"
-        },
-        "sizeBytes": {
-          "$ref": "#/$defs/sizeBytes"
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "artifactType": {
-          "const": "movie-return-mechanics"
-        }
-      }
-    },
-    "validation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "outcome",
-        "checkedEventCount",
-        "issues"
-      ],
-      "properties": {
-        "outcome": {
-          "enum": [
-            "passed",
-            "incomplete",
-            "mismatch"
-          ]
-        },
-        "checkedEventCount": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 256
-        },
-        "issues": {
-          "type": "array",
-          "maxItems": 8192,
-          "items": {
-            "$ref": "#/$defs/issue"
-          }
-        }
-      }
-    },
-    "issue": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "code",
-        "sequence",
-        "message"
-      ],
-      "properties": {
-        "kind": {
-          "enum": [
-            "incomplete",
-            "mismatch"
-          ]
-        },
-        "code": {
-          "enum": [
-            "run-not-complete",
-            "complete-run-missing-event",
-            "invalid-run-time-range",
-            "event-sequence-changed",
-            "event-time-before-run",
-            "event-time-after-run",
-            "event-time-moved-backward",
-            "capture-truncated",
-            "capture-count-mismatch",
-            "readiness-source-empty",
-            "readiness-source-not-cleared",
-            "readiness-destination-mismatch",
-            "selection-result-count-exceeded",
-            "selection-result-duplicate",
-            "selection-found-result-mismatch",
-            "selection-outside-ready-queue",
-            "customer-selection-outside-ready-queue",
-            "customer-ready-queue-mismatch",
-            "customer-inventory-mismatch"
-          ]
-        },
-        "sequence": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 1,
-          "maximum": 256
-        },
-        "message": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 500
-        }
-      }
-    },
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 255,
-      "pattern": "^[^/\\\\]+$"
-    },
-    "sizeBytes": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    }
-  }
-} as const;
+const $definitionBuild = type({
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionFileName = type("string")
+  .matching(new RegExp("^[^/\\\\]+$"))
+  .atLeastLength(1)
+  .atMostLength(255);
+const $definitionSizeBytes = type("number.integer").atLeast(1);
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionObservationIdentity = type({
+  fileName: $definitionFileName,
+  sizeBytes: $definitionSizeBytes,
+  sha256: $definitionSha256,
+  artifactType: type.unit("movie-return-runtime-observation"),
+  "+": "reject",
+}).readonly();
+const $definitionMechanicsIdentity = type({
+  fileName: type.unit("movie-return-mechanics.json"),
+  sizeBytes: $definitionSizeBytes,
+  sha256: $definitionSha256,
+  artifactType: type.unit("movie-return-mechanics"),
+  "+": "reject",
+}).readonly();
+const $definitionIssue = type({
+  kind: type.enumerated("incomplete", "mismatch"),
+  code: type.enumerated(
+    "run-not-complete",
+    "complete-run-missing-event",
+    "invalid-run-time-range",
+    "event-sequence-changed",
+    "event-time-before-run",
+    "event-time-after-run",
+    "event-time-moved-backward",
+    "capture-truncated",
+    "capture-count-mismatch",
+    "readiness-source-empty",
+    "readiness-source-not-cleared",
+    "readiness-destination-mismatch",
+    "selection-result-count-exceeded",
+    "selection-result-duplicate",
+    "selection-found-result-mismatch",
+    "selection-outside-ready-queue",
+    "customer-selection-outside-ready-queue",
+    "customer-ready-queue-mismatch",
+    "customer-inventory-mismatch",
+  ),
+  sequence: type.or(
+    type("number.integer").atLeast(1).atMost(256),
+    type("null"),
+  ),
+  message: type("string").atLeastLength(1).atMostLength(500),
+  "+": "reject",
+}).readonly();
+const $definitionValidation = type({
+  outcome: type.enumerated("passed", "incomplete", "mismatch"),
+  checkedEventCount: type("number.integer").atLeast(0).atMost(256),
+  issues: $definitionIssue.array().readonly().atMostLength(8192),
+  "+": "reject",
+}).readonly();
 
-export const MovieReturnValidationSchema = defineArtifactSchema<MovieReturnValidationContract>(MovieReturnValidationJsonSchema);
+export const MovieReturnValidationSchema = type({
+  artifactType: type.unit("movie-return-runtime-validation"),
+  build: $definitionBuild,
+  validator: type({
+    name: type.unit("@neonretrorewind/validator"),
+    version: type.unit("0.0.0"),
+    "+": "reject",
+  }).readonly(),
+  sources: type({
+    observation: $definitionObservationIdentity,
+    mechanics: $definitionMechanicsIdentity,
+    "+": "reject",
+  }).readonly(),
+  validation: $definitionValidation,
+  "+": "reject",
+}).readonly();
 export type MovieReturnValidation = typeof MovieReturnValidationSchema.infer;
 
 export type MovieReturnValidationArtifact = MovieReturnValidation;
 export type MovieReturnValidationReport = MovieReturnValidation["validation"];
-export type MovieReturnValidationIssue = MovieReturnValidationReport["issues"][number];
+export type MovieReturnValidationIssue =
+  MovieReturnValidationReport["issues"][number];
 export type MovieReturnValidationIssueCode = MovieReturnValidationIssue["code"];
 type ValidationSource =
   MovieReturnValidation["sources"][keyof MovieReturnValidation["sources"]];

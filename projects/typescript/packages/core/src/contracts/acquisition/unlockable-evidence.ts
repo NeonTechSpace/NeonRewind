@@ -1,527 +1,212 @@
-import type { UnlockableEvidenceContract } from "../generated/acquisition/unlockable-evidence.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
 
-export const UnlockableEvidenceJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:unlockable-evidence",
-  "title": "NeonRetroRewind unlockable-system evidence",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "staticCensus",
-    "mappings",
-    "engine",
-    "extractor",
-    "totals",
-    "packages"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "unlockable-evidence"
-    },
-    "build": {
-      "$ref": "#/$defs/buildReference"
-    },
-    "staticCensus": {
-      "$ref": "#/$defs/staticCensusIdentity"
-    },
-    "mappings": {
-      "$ref": "#/$defs/mappingIdentity"
-    },
-    "engine": {
-      "$ref": "#/$defs/engineIdentity"
-    },
-    "extractor": {
-      "$ref": "#/$defs/extractorIdentity"
-    },
-    "totals": {
-      "$ref": "#/$defs/totals"
-    },
-    "packages": {
-      "type": "array",
-      "minItems": 4,
-      "maxItems": 4,
-      "prefixItems": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/package"
-            },
-            {
-              "properties": {
-                "path": {
-                  "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.uasset"
-                },
-                "blueprintClasses": {
-                  "minItems": 1
-                },
-                "userDefinedStructs": {
-                  "maxItems": 0
-                }
-              }
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/package"
-            },
-            {
-              "properties": {
-                "path": {
-                  "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockFunctions.uasset"
-                },
-                "blueprintClasses": {
-                  "minItems": 1
-                },
-                "userDefinedStructs": {
-                  "maxItems": 0
-                }
-              }
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/package"
-            },
-            {
-              "properties": {
-                "path": {
-                  "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset"
-                },
-                "blueprintClasses": {
-                  "minItems": 1
-                },
-                "userDefinedStructs": {
-                  "maxItems": 0
-                }
-              }
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/package"
-            },
-            {
-              "properties": {
-                "path": {
-                  "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockState.uasset"
-                },
-                "blueprintClasses": {
-                  "maxItems": 0
-                },
-                "userDefinedStructs": {
-                  "minItems": 1
-                }
-              }
-            }
-          ]
-        }
-      ],
-      "items": false
-    }
-  },
-  "$defs": {
-    "buildReference": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "manifestSha256",
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "manifestSha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "steamAppId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "staticCensusIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256"
-      ],
-      "properties": {
-        "fileName": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/fileName"
-            },
-            {
-              "pattern": "\\.json$"
-            }
-          ]
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        }
-      }
-    },
-    "mappingIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "formatVersion"
-      ],
-      "properties": {
-        "fileName": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/fileName"
-            },
-            {
-              "pattern": "\\.usmap$"
-            }
-          ]
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 16
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "formatVersion": {
-          "const": 4
-        }
-      }
-    },
-    "engineIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "version",
-        "cue4ParseProfile",
-        "source",
-        "confidence"
-      ],
-      "properties": {
-        "version": {
-          "const": "5.4"
-        },
-        "cue4ParseProfile": {
-          "const": "GAME_UE5_4"
-        },
-        "source": {
-          "const": "configured"
-        },
-        "confidence": {
-          "const": "probable"
-        }
-      }
-    },
-    "extractorIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version",
-        "cue4ParseVersion"
-      ],
-      "properties": {
-        "name": {
-          "const": "NeonRetroRewind.StaticExtractor"
-        },
-        "version": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "cue4ParseVersion": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "totals": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packageCount",
-        "blueprintClassCount",
-        "userDefinedStructCount",
-        "functionCount",
-        "fieldCount",
-        "defaultPropertyCount",
-        "referenceCount"
-      ],
-      "properties": {
-        "packageCount": {
-          "const": 4
-        },
-        "blueprintClassCount": {
-          "const": 3
-        },
-        "userDefinedStructCount": {
-          "const": 1
-        },
-        "functionCount": {
-          "$ref": "#/$defs/nonNegativeInteger"
-        },
-        "fieldCount": {
-          "$ref": "#/$defs/nonNegativeInteger"
-        },
-        "defaultPropertyCount": {
-          "$ref": "#/$defs/nonNegativeInteger"
-        },
-        "referenceCount": {
-          "$ref": "#/$defs/nonNegativeInteger"
-        }
-      }
-    },
-    "package": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "path",
-        "blueprintClasses",
-        "userDefinedStructs"
-      ],
-      "properties": {
-        "path": {
-          "enum": [
-            "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.uasset",
-            "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockFunctions.uasset",
-            "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset",
-            "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockState.uasset"
-          ]
-        },
-        "blueprintClasses": {
-          "type": "array",
-          "maxItems": 1,
-          "items": {
-            "$ref": "#/$defs/blueprintClass"
-          }
-        },
-        "userDefinedStructs": {
-          "type": "array",
-          "maxItems": 1,
-          "items": {
-            "$ref": "#/$defs/userDefinedStruct"
-          }
-        }
-      }
-    },
-    "blueprintClass": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "path",
-        "superclassPath",
-        "functions",
-        "fields",
-        "classDefault"
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "path": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "superclassPath": {
-          "$ref": "#/$defs/nullableString"
-        },
-        "functions": {
-          "$ref": "#/$defs/stringArray"
-        },
-        "fields": {
-          "$ref": "#/$defs/fields"
-        },
-        "classDefault": {
-          "$ref": "#/$defs/classDefault"
-        }
-      }
-    },
-    "userDefinedStruct": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "path",
-        "superStructPath",
-        "fields",
-        "defaults",
-        "references"
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "path": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "superStructPath": {
-          "$ref": "#/$defs/nullableString"
-        },
-        "fields": {
-          "$ref": "#/$defs/fields"
-        },
-        "defaults": {
-          "$ref": "#/$defs/defaults"
-        },
-        "references": {
-          "$ref": "#/$defs/references"
-        }
-      }
-    },
-    "classDefault": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "path",
-        "properties",
-        "references"
-      ],
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "path": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "properties": {
-          "$ref": "#/$defs/defaults"
-        },
-        "references": {
-          "$ref": "#/$defs/references"
-        }
-      }
-    },
-    "fields": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "name",
-          "type",
-          "arrayDimension"
-        ],
-        "properties": {
-          "name": {
-            "$ref": "#/$defs/nonEmptyString"
-          },
-          "type": {
-            "$ref": "#/$defs/nonEmptyString"
-          },
-          "arrayDimension": {
-            "type": "integer",
-            "minimum": 1
-          }
-        }
-      }
-    },
-    "defaults": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "name",
-          "type",
-          "arrayIndex",
-          "value"
-        ],
-        "properties": {
-          "name": {
-            "$ref": "#/$defs/nonEmptyString"
-          },
-          "type": {
-            "$ref": "#/$defs/nonEmptyString"
-          },
-          "arrayIndex": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "value": true
-        }
-      }
-    },
-    "references": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "propertyPath",
-          "kind",
-          "objectPath"
-        ],
-        "properties": {
-          "propertyPath": {
-            "$ref": "#/$defs/nonEmptyString"
-          },
-          "kind": {
-            "enum": [
-              "delegate",
-              "hard",
-              "interface",
-              "soft"
-            ]
-          },
-          "objectPath": {
-            "$ref": "#/$defs/nonEmptyString"
-          }
-        }
-      }
-    },
-    "stringArray": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/nonEmptyString"
-      }
-    },
-    "nullableString": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "minLength": 1
-    },
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^[^/\\\\]+$"
-    },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "nonEmptyString": {
-      "type": "string",
-      "minLength": 1
-    },
-    "nonNegativeInteger": {
-      "type": "integer",
-      "minimum": 0
-    }
-  }
-} as const;
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionBuildReference = type({
+  manifestSha256: $definitionSha256,
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionFileName = type("string")
+  .matching(new RegExp("^[^/\\\\]+$"))
+  .atLeastLength(1);
+const $definitionStaticCensusIdentity = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.json$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  "+": "reject",
+}).readonly();
+const $definitionMappingIdentity = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.usmap$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(16),
+  sha256: $definitionSha256,
+  formatVersion: type.unit(4),
+  "+": "reject",
+}).readonly();
+const $definitionEngineIdentity = type({
+  version: type.unit("5.4"),
+  cue4ParseProfile: type.unit("GAME_UE5_4"),
+  source: type.unit("configured"),
+  confidence: type.unit("probable"),
+  "+": "reject",
+}).readonly();
+const $definitionNonEmptyString = type("string").atLeastLength(1);
+const $definitionExtractorIdentity = type({
+  name: type.unit("NeonRetroRewind.StaticExtractor"),
+  version: $definitionNonEmptyString,
+  cue4ParseVersion: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionNonNegativeInteger = type("number.integer").atLeast(0);
+const $definitionTotals = type({
+  packageCount: type.unit(4),
+  blueprintClassCount: type.unit(3),
+  userDefinedStructCount: type.unit(1),
+  functionCount: $definitionNonNegativeInteger,
+  fieldCount: $definitionNonNegativeInteger,
+  defaultPropertyCount: $definitionNonNegativeInteger,
+  referenceCount: $definitionNonNegativeInteger,
+  "+": "reject",
+}).readonly();
+const $definitionNullableString = type.or(
+  type("string").atLeastLength(1),
+  type("null"),
+);
+const $definitionStringArray = $definitionNonEmptyString.array().readonly();
+const $definitionFields = type({
+  name: $definitionNonEmptyString,
+  type: $definitionNonEmptyString,
+  arrayDimension: type("number.integer").atLeast(1),
+  "+": "reject",
+})
+  .readonly()
+  .array()
+  .readonly();
+const $definitionDefaults = type({
+  name: $definitionNonEmptyString,
+  type: $definitionNonEmptyString,
+  arrayIndex: type("number.integer").atLeast(0),
+  value: type("unknown"),
+  "+": "reject",
+})
+  .readonly()
+  .array()
+  .readonly();
+const $definitionReferences = type({
+  propertyPath: $definitionNonEmptyString,
+  kind: type.enumerated("delegate", "hard", "interface", "soft"),
+  objectPath: $definitionNonEmptyString,
+  "+": "reject",
+})
+  .readonly()
+  .array()
+  .readonly();
+const $definitionClassDefault = type({
+  name: $definitionNonEmptyString,
+  path: $definitionNonEmptyString,
+  properties: $definitionDefaults,
+  references: $definitionReferences,
+  "+": "reject",
+}).readonly();
+const $definitionBlueprintClass = type({
+  name: $definitionNonEmptyString,
+  path: $definitionNonEmptyString,
+  superclassPath: $definitionNullableString,
+  functions: $definitionStringArray,
+  fields: $definitionFields,
+  classDefault: $definitionClassDefault,
+  "+": "reject",
+}).readonly();
+const $definitionUserDefinedStruct = type({
+  name: $definitionNonEmptyString,
+  path: $definitionNonEmptyString,
+  superStructPath: $definitionNullableString,
+  fields: $definitionFields,
+  defaults: $definitionDefaults,
+  references: $definitionReferences,
+  "+": "reject",
+}).readonly();
+const $definitionPackage = type({
+  path: type.enumerated(
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.uasset",
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockFunctions.uasset",
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset",
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockState.uasset",
+  ),
+  blueprintClasses: $definitionBlueprintClass
+    .array()
+    .readonly()
+    .atMostLength(1),
+  userDefinedStructs: $definitionUserDefinedStruct
+    .array()
+    .readonly()
+    .atMostLength(1),
+  "+": "reject",
+}).readonly();
 
-export const UnlockableEvidenceSchema = defineArtifactSchema<UnlockableEvidenceContract>(UnlockableEvidenceJsonSchema);
+export const UnlockableEvidenceSchema = type({
+  artifactType: type.unit("unlockable-evidence"),
+  build: $definitionBuildReference,
+  staticCensus: $definitionStaticCensusIdentity,
+  mappings: $definitionMappingIdentity,
+  engine: $definitionEngineIdentity,
+  extractor: $definitionExtractorIdentity,
+  totals: $definitionTotals,
+  packages: type([
+    type.and(
+      $definitionPackage,
+      type({
+        "path?": type.unit(
+          "ExampleGame/Content/ExampleProject/core/blueprint/research/BP_ExampleItem.uasset",
+        ),
+        "blueprintClasses?": type([
+          type("unknown"),
+          "...",
+          type("unknown").array(),
+        ]).readonly(),
+        "userDefinedStructs?": type("unknown")
+          .array()
+          .readonly()
+          .atMostLength(0),
+      }).readonly(),
+    ),
+    type.and(
+      $definitionPackage,
+      type({
+        "path?": type.unit(
+          "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockFunctions.uasset",
+        ),
+        "blueprintClasses?": type([
+          type("unknown"),
+          "...",
+          type("unknown").array(),
+        ]).readonly(),
+        "userDefinedStructs?": type("unknown")
+          .array()
+          .readonly()
+          .atMostLength(0),
+      }).readonly(),
+    ),
+    type.and(
+      $definitionPackage,
+      type({
+        "path?": type.unit(
+          "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.uasset",
+        ),
+        "blueprintClasses?": type([
+          type("unknown"),
+          "...",
+          type("unknown").array(),
+        ]).readonly(),
+        "userDefinedStructs?": type("unknown")
+          .array()
+          .readonly()
+          .atMostLength(0),
+      }).readonly(),
+    ),
+    type.and(
+      $definitionPackage,
+      type({
+        "path?": type.unit(
+          "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockState.uasset",
+        ),
+        "blueprintClasses?": type("unknown").array().readonly().atMostLength(0),
+        "userDefinedStructs?": type([
+          type("unknown"),
+          "...",
+          type("unknown").array(),
+        ]).readonly(),
+      }).readonly(),
+    ),
+  ])
+    .readonly()
+    .atMostLength(4),
+  "+": "reject",
+}).readonly();
 export type UnlockableEvidence = typeof UnlockableEvidenceSchema.infer;

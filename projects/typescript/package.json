@@ -5,8 +5,6 @@
   "scripts": {
     "build": "pnpm --recursive --if-present build",
     "check": "pnpm --recursive --if-present check",
-    "contracts:check": "pnpm --filter @neonretrorewind/core contracts:check",
-    "contracts:generate": "pnpm --filter @neonretrorewind/core contracts:generate",
     "console-return-mechanics": "node packages/data-compiler/src/cli.ts console-return-mechanics",
     "film-catalog": "node packages/data-compiler/src/cli.ts film-catalog",
     "membership-fee-mechanics": "node packages/data-compiler/src/cli.ts membership-fee-mechanics",

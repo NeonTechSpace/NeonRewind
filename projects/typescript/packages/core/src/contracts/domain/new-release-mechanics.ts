@@ -1,1271 +1,413 @@
-import type { NewReleaseMechanicsContract } from "../generated/domain/new-release-mechanics.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
 
-export const NewReleaseMechanicsJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:domain:new-release-mechanics",
-  "title": "NeonRetroRewind new-release mechanics",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "sources",
-    "scope",
-    "evidenceLevel",
-    "runtimeValidation",
-    "unlock",
-    "requestSelection",
-    "requestGeneration",
-    "candidateEligibility"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "new-release-mechanics"
-    },
-    "build": {
-      "$ref": "#/$defs/build"
-    },
-    "sources": {
-      "$ref": "#/$defs/sources"
-    },
-    "scope": {
-      "const": "new-release"
-    },
-    "evidenceLevel": {
-      "const": "typed-blueprint"
-    },
-    "runtimeValidation": {
-      "const": "not-run"
-    },
-    "unlock": {
-      "$ref": "#/$defs/unlock"
-    },
-    "requestSelection": {
-      "$ref": "#/$defs/requestSelection"
-    },
-    "requestGeneration": {
-      "$ref": "#/$defs/requestGeneration"
-    },
-    "candidateEligibility": {
-      "$ref": "#/$defs/candidateEligibility"
-    }
-  },
-  "$defs": {
-    "build": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "steamAppId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "sources": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "managerTrace",
-        "wrapperTrace",
-        "propertyReaderTrace",
-        "requestGeneratorTrace",
-        "candidateMapTrace",
-        "callTargetTrace"
-      ],
-      "properties": {
-        "managerTrace": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "unlockable-manager-trace"
-                }
-              }
-            }
-          ]
-        },
-        "wrapperTrace": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "blueprint-function-trace"
-                }
-              }
-            }
-          ]
-        },
-        "propertyReaderTrace": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "blueprint-property-reference-trace"
-                }
-              }
-            }
-          ]
-        },
-        "requestGeneratorTrace": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "blueprint-function-trace"
-                }
-              }
-            }
-          ]
-        },
-        "candidateMapTrace": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "blueprint-property-reference-trace"
-                }
-              }
-            }
-          ]
-        },
-        "callTargetTrace": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/sourceIdentity"
-            },
-            {
-              "properties": {
-                "artifactType": {
-                  "const": "blueprint-call-target-trace"
-                }
-              }
-            }
-          ]
-        }
-      }
-    },
-    "sourceIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sha256",
-        "sizeBytes",
-        "artifactType"
-      ],
-      "properties": {
-        "fileName": {
-          "type": "string",
-          "pattern": "^[^/\\\\]+\\.json$"
-        },
-        "sha256": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "artifactType": {
-          "enum": [
-            "unlockable-manager-trace",
-            "blueprint-function-trace",
-            "blueprint-property-reference-trace",
-            "blueprint-call-target-trace"
-          ]
-        }
-      }
-    },
-    "candidateEligibility": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "rebuild",
-        "preconditions",
-        "predicate",
-        "outcomes",
-        "evidence"
-      ],
-      "properties": {
-        "rebuild": {
-          "$ref": "#/$defs/candidateRebuild"
-        },
-        "preconditions": {
-          "$ref": "#/$defs/candidatePreconditions"
-        },
-        "predicate": {
-          "$ref": "#/$defs/candidatePredicate"
-        },
-        "outcomes": {
-          "$ref": "#/$defs/candidateOutcomes"
-        },
-        "evidence": {
-          "$ref": "#/$defs/candidateEvidence"
-        }
-      }
-    },
-    "candidateRebuild": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "trigger",
-        "requiresWeatherReference",
-        "sourceCollection",
-        "candidateCollection",
-        "candidateCollectionClearedBeforeScan",
-        "iteration"
-      ],
-      "properties": {
-        "trigger": {
-          "const": "filter-all-new-release-movie-data"
-        },
-        "requiresWeatherReference": {
-          "const": true
-        },
-        "sourceCollection": {
-          "const": "Example Source Map"
-        },
-        "candidateCollection": {
-          "const": "Example Candidate Map"
-        },
-        "candidateCollectionClearedBeforeScan": {
-          "const": true
-        },
-        "iteration": {
-          "const": "source-map-values"
-        }
-      }
-    },
-    "candidatePreconditions": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "released",
-        "secondHandAvailable",
-        "operator"
-      ],
-      "properties": {
-        "released": {
-          "const": true
-        },
-        "secondHandAvailable": {
-          "const": false
-        },
-        "operator": {
-          "const": "and"
-        }
-      }
-    },
-    "candidatePredicate": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "function",
-        "ownerClass",
-        "durationDays",
-        "elapsedDays",
-        "comparison",
-        "lowerBoundEnforced",
-        "remainingDays",
-        "gameModeCastFailure"
-      ],
-      "properties": {
-        "function": {
-          "const": "Evaluate Example Record"
-        },
-        "ownerClass": {
-          "const": "ExampleRecord_C"
-        },
-        "durationDays": {
-          "const": 7
-        },
-        "elapsedDays": {
-          "const": "days-passed-minus-available-in-game-day"
-        },
-        "comparison": {
-          "const": "elapsed-days-less-than-or-equal-to-duration"
-        },
-        "lowerBoundEnforced": {
-          "const": false
-        },
-        "remainingDays": {
-          "const": "available-in-game-day-plus-duration-minus-days-passed"
-        },
-        "gameModeCastFailure": {
-          "$ref": "#/$defs/gameModeCastFailure"
-        }
-      }
-    },
-    "gameModeCastFailure": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "isNew",
-        "remainingDays"
-      ],
-      "properties": {
-        "isNew": {
-          "const": false
-        },
-        "remainingDays": {
-          "const": 0
-        }
-      }
-    },
-    "candidateOutcomes": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "eligible",
-        "preconditionFailure",
-        "predicateFailure",
-        "remainingDaysConsumedByCaller"
-      ],
-      "properties": {
-        "eligible": {
-          "$ref": "#/$defs/candidateOutcomeEligible"
-        },
-        "preconditionFailure": {
-          "$ref": "#/$defs/candidateOutcomePreconditionFailure"
-        },
-        "predicateFailure": {
-          "$ref": "#/$defs/candidateOutcomePredicateFailure"
-        },
-        "remainingDaysConsumedByCaller": {
-          "const": false
-        }
-      }
-    },
-    "candidateOutcomeEligible": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "collection",
-        "key",
-        "secondHandAvailable",
-        "basePrice"
-      ],
-      "properties": {
-        "collection": {
-          "const": "Example Candidate Map"
-        },
-        "key": {
-          "const": "product-sku"
-        },
-        "secondHandAvailable": {
-          "const": false
-        },
-        "basePrice": {
-          "const": 0
-        }
-      }
-    },
-    "candidateOutcomePreconditionFailure": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "collection",
-        "effect"
-      ],
-      "properties": {
-        "collection": {
-          "const": "Example Source Map"
-        },
-        "effect": {
-          "const": "no-mutation"
-        }
-      }
-    },
-    "candidateOutcomePredicateFailure": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "collection",
-        "key",
-        "secondHandAvailable",
-        "basePrice"
-      ],
-      "properties": {
-        "collection": {
-          "const": "Example Source Map"
-        },
-        "key": {
-          "const": "product-sku"
-        },
-        "secondHandAvailable": {
-          "const": true
-        },
-        "basePrice": {
-          "const": 0
-        }
-      }
-    },
-    "candidateEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "confidence",
-        "marketClassPath",
-        "rebuildFunction",
-        "filterFunction",
-        "predicateClassPath",
-        "predicateFunction",
-        "bindingRule",
-        "relationship",
-        "statementIndexes"
-      ],
-      "properties": {
-        "kind": {
-          "const": "kismet-analysis"
-        },
-        "confidence": {
-          "const": "direct"
-        },
-        "marketClassPath": {
-          "const": "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C"
-        },
-        "rebuildFunction": {
-          "const": "ExampleRebuildCandidates"
-        },
-        "filterFunction": {
-          "const": "Filter Example Schedule"
-        },
-        "predicateClassPath": {
-          "const": "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C"
-        },
-        "predicateFunction": {
-          "const": "Evaluate Example Record"
-        },
-        "bindingRule": {
-          "const": "exact-context-object-class-and-declaration"
-        },
-        "relationship": {
-          "const": "verified"
-        },
-        "statementIndexes": {
-          "$ref": "#/$defs/candidateStatementIndexes"
-        }
-      }
-    },
-    "candidateStatementIndexes": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "clearCandidateCollection",
-        "enumerateSourceValues",
-        "callPerFilmFilter",
-        "checkSecondHand",
-        "checkReleased",
-        "combinePreconditions",
-        "preconditionBranch",
-        "predicateCall",
-        "predicateBranch",
-        "addEligible",
-        "addIneligible",
-        "durationAssignment",
-        "gameModeCastBranch",
-        "elapsedSubtract",
-        "compareDuration",
-        "remainingAdd",
-        "remainingSubtract",
-        "setEligible",
-        "setRemainingDays",
-        "castFailureSetEligible",
-        "castFailureSetRemainingDays"
-      ],
-      "properties": {
-        "clearCandidateCollection": { "const": 66 },
-        "enumerateSourceValues": { "const": 118 },
-        "callPerFilmFilter": { "const": 390 },
-        "checkSecondHand": { "const": 10 },
-        "checkReleased": { "const": 49 },
-        "combinePreconditions": { "const": 88 },
-        "preconditionBranch": { "const": 116 },
-        "predicateCall": { "const": 152 },
-        "predicateBranch": { "const": 203 },
-        "addEligible": { "const": 418 },
-        "addIneligible": { "const": 697 },
-        "durationAssignment": { "const": 0 },
-        "gameModeCastBranch": { "const": 117 },
-        "elapsedSubtract": { "const": 1512 },
-        "compareDuration": { "const": 1634 },
-        "remainingAdd": { "const": 1680 },
-        "remainingSubtract": { "const": 1744 },
-        "setEligible": { "const": 1838 },
-        "setRemainingDays": { "const": 1857 },
-        "castFailureSetEligible": { "const": 1889 },
-        "castFailureSetRemainingDays": { "const": 1900 }
-      }
-    },
-    "unlock": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "trigger",
-        "threshold",
-        "mutation",
-        "evidence"
-      ],
-      "properties": {
-        "trigger": {
-          "const": "reset-to-new-day-event"
-        },
-        "threshold": {
-          "$ref": "#/$defs/threshold"
-        },
-        "mutation": {
-          "$ref": "#/$defs/mutation"
-        },
-        "evidence": {
-          "$ref": "#/$defs/evidence"
-        }
-      }
-    },
-    "threshold": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "origin",
-        "elapsedDays",
-        "operator",
-        "currentDate"
-      ],
-      "properties": {
-        "origin": {
-          "const": "first-save-game-day"
-        },
-        "elapsedDays": {
-          "const": 2
-        },
-        "operator": {
-          "const": "greater-than-or-equal"
-        },
-        "currentDate": {
-          "const": "weather-current-date"
-        }
-      }
-    },
-    "requestSelection": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "trigger",
-        "condition",
-        "effect",
-        "evidence"
-      ],
-      "properties": {
-        "trigger": {
-          "const": "return-movie-request"
-        },
-        "condition": {
-          "$ref": "#/$defs/requestCondition"
-        },
-        "effect": {
-          "$ref": "#/$defs/requestEffect"
-        },
-        "evidence": {
-          "$ref": "#/$defs/requestEvidence"
-        }
-      }
-    },
-    "requestGeneration": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "trigger",
-        "selector",
-        "newReleaseCandidateSelection",
-        "effect",
-        "evidence"
-      ],
-      "properties": {
-        "trigger": {
-          "const": "generate-movie-request"
-        },
-        "selector": {
-          "$ref": "#/$defs/generatorSelector"
-        },
-        "newReleaseCandidateSelection": {
-          "$ref": "#/$defs/newReleaseCandidateSelection"
-        },
-        "effect": {
-          "$ref": "#/$defs/generatorEffect"
-        },
-        "evidence": {
-          "$ref": "#/$defs/generatorEvidence"
-        }
-      }
-    },
-    "generatorSelector": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "function",
-        "successRequired",
-        "copiedOutputs",
-        "requestGenerated"
-      ],
-      "properties": {
-        "function": {
-          "const": "Return Example Request"
-        },
-        "successRequired": {
-          "const": true
-        },
-        "copiedOutputs": {
-          "$ref": "#/$defs/generatorCopiedOutputs"
-        },
-        "requestGenerated": {
-          "const": true
-        }
-      }
-    },
-    "generatorCopiedOutputs": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "onlyNewRelease",
-        "primaryRequest",
-        "optionalRequest"
-      ],
-      "properties": {
-        "onlyNewRelease": {
-          "const": "only-new-release-output"
-        },
-        "primaryRequest": {
-          "const": "mandatory-request-output"
-        },
-        "optionalRequest": {
-          "const": "optional-request-output"
-        }
-      }
-    },
-    "newReleaseCandidateSelection": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "condition",
-        "enumeration",
-        "index"
-      ],
-      "properties": {
-        "condition": {
-          "$ref": "#/$defs/generatorCondition"
-        },
-        "enumeration": {
-          "$ref": "#/$defs/candidateEnumeration"
-        },
-        "index": {
-          "$ref": "#/$defs/candidateIndex"
-        }
-      }
-    },
-    "generatorCondition": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "onlyNewRelease",
-        "gameModeType",
-        "randomGate",
-        "candidateCollection",
-        "candidateCount",
-        "operator"
-      ],
-      "properties": {
-        "onlyNewRelease": {
-          "const": true
-        },
-        "gameModeType": {
-          "const": "ExampleMode"
-        },
-        "randomGate": {
-          "$ref": "#/$defs/generatorRandomGate"
-        },
-        "candidateCollection": {
-          "const": "Example Candidate Map"
-        },
-        "candidateCount": {
-          "const": "greater-than-zero"
-        },
-        "operator": {
-          "const": "and"
-        }
-      }
-    },
-    "generatorRandomGate": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "function",
-        "trueWeight"
-      ],
-      "properties": {
-        "function": {
-          "const": "RandomBoolWithWeight"
-        },
-        "trueWeight": {
-          "const": 0.66
-        }
-      }
-    },
-    "candidateEnumeration": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "keys",
-        "values",
-        "pairing"
-      ],
-      "properties": {
-        "keys": {
-          "const": "map-keys"
-        },
-        "values": {
-          "const": "map-values"
-        },
-        "pairing": {
-          "const": "shared-array-index"
-        }
-      }
-    },
-    "candidateIndex": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "function",
-        "input",
-        "engineSemantics",
-        "result"
-      ],
-      "properties": {
-        "function": {
-          "const": "RandomInteger"
-        },
-        "input": {
-          "const": "candidate-count-minus-one"
-        },
-        "engineSemantics": {
-          "$ref": "#/$defs/randomIntegerEngineSemantics"
-        },
-        "result": {
-          "$ref": "#/$defs/candidateIndexResult"
-        }
-      }
-    },
-    "randomIntegerEngineSemantics": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "engineVersion",
-        "wrapper",
-        "implementation",
-        "positiveInputRange",
-        "nonPositiveInputResult"
-      ],
-      "properties": {
-        "engineVersion": {
-          "const": "5.4"
-        },
-        "wrapper": {
-          "const": "UKismetMathLibrary::RandomInteger"
-        },
-        "implementation": {
-          "const": "FMath::RandHelper"
-        },
-        "positiveInputRange": {
-          "const": "zero-inclusive-to-input-exclusive"
-        },
-        "nonPositiveInputResult": {
-          "const": 0
-        }
-      }
-    },
-    "candidateIndexResult": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "oneCandidate",
-        "multipleCandidates",
-        "finalEnumeratedPairSelectable"
-      ],
-      "properties": {
-        "oneCandidate": {
-          "const": "index-zero"
-        },
-        "multipleCandidates": {
-          "const": "zero-through-candidate-count-minus-two"
-        },
-        "finalEnumeratedPairSelectable": {
-          "const": false
-        }
-      }
-    },
-    "generatorEffect": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "requestMovieSku",
-        "reservedMovieProduct",
-        "generateSuccess",
-        "candidateSelectionRequiredForSuccess"
-      ],
-      "properties": {
-        "requestMovieSku": {
-          "const": "selected-key"
-        },
-        "reservedMovieProduct": {
-          "const": "selected-value-product"
-        },
-        "generateSuccess": {
-          "const": true
-        },
-        "candidateSelectionRequiredForSuccess": {
-          "const": false
-        }
-      }
-    },
-    "generatorEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "confidence",
-        "classPath",
-        "functionName",
-        "statementIndexes",
-        "engineSource"
-      ],
-      "properties": {
-        "kind": {
-          "const": "kismet-and-engine-source-analysis"
-        },
-        "confidence": {
-          "const": "direct"
-        },
-        "classPath": {
-          "const": "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C"
-        },
-        "functionName": {
-          "const": "Generate Example Request"
-        },
-        "statementIndexes": {
-          "$ref": "#/$defs/generatorStatementIndexes"
-        },
-        "engineSource": {
-          "$ref": "#/$defs/generatorEngineSource"
-        }
-      }
-    },
-    "generatorStatementIndexes": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "selectorCall",
-        "selectorSuccessBranch",
-        "copyOnlyNewRelease",
-        "copyMandatoryRequest",
-        "copyOptionalRequest",
-        "newReleaseBranch",
-        "randomGate",
-        "candidateCount",
-        "combinedCondition",
-        "enumerateKeys",
-        "enumerateValues",
-        "subtractOne",
-        "randomIndex",
-        "selectKey",
-        "assignMovieSku",
-        "selectValue",
-        "assignReservedProduct",
-        "setGenerateSuccess"
-      ],
-      "properties": {
-        "selectorCall": { "const": 448 },
-        "selectorSuccessBranch": { "const": 570 },
-        "copyOnlyNewRelease": { "const": 735 },
-        "copyMandatoryRequest": { "const": 1272 },
-        "copyOptionalRequest": { "const": 1299 },
-        "newReleaseBranch": { "const": 1331 },
-        "randomGate": { "const": 1447 },
-        "candidateCount": { "const": 1502 },
-        "combinedCondition": { "const": 1631 },
-        "enumerateKeys": { "const": 1702 },
-        "enumerateValues": { "const": 1829 },
-        "subtractOne": { "const": 2066 },
-        "randomIndex": { "const": 2108 },
-        "selectKey": { "const": 2176 },
-        "assignMovieSku": { "const": 2213 },
-        "selectValue": { "const": 2262 },
-        "assignReservedProduct": { "const": 2299 },
-        "setGenerateSuccess": { "const": 2336 }
-      }
-    },
-    "generatorEngineSource": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "repository",
-        "commit",
-        "wrapperFile",
-        "implementationFile"
-      ],
-      "properties": {
-        "repository": {
-          "const": "EpicGames/UnrealEngine"
-        },
-        "commit": {
-          "const": "847de5e2553adeb4d3498953604d0b0abe669780"
-        },
-        "wrapperFile": {
-          "const": "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl"
-        },
-        "implementationFile": {
-          "const": "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h"
-        }
-      }
-    },
-    "requestCondition": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "unlockField",
-        "requiredValue",
-        "operator",
-        "randomGate"
-      ],
-      "properties": {
-        "unlockField": {
-          "const": "ExampleReleaseKind"
-        },
-        "requiredValue": {
-          "const": true
-        },
-        "operator": {
-          "const": "and"
-        },
-        "randomGate": {
-          "$ref": "#/$defs/randomGate"
-        }
-      }
-    },
-    "randomGate": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "function",
-        "trueWeight"
-      ],
-      "properties": {
-        "function": {
-          "const": "RandomBoolWithWeight"
-        },
-        "trueWeight": {
-          "const": 0.5
-        }
-      }
-    },
-    "requestEffect": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "guaranteedRequestStep",
-        "runOptionalPass",
-        "newReleaseRequested",
-        "primaryRequestCode",
-        "primaryRequestValue",
-        "outputs"
-      ],
-      "properties": {
-        "guaranteedRequestStep": {
-          "const": 1
-        },
-        "runOptionalPass": {
-          "const": false
-        },
-        "newReleaseRequested": {
-          "const": true
-        },
-        "primaryRequestCode": {
-          "const": 5
-        },
-        "primaryRequestValue": {
-          "const": true
-        },
-        "outputs": {
-          "$ref": "#/$defs/requestOutputs"
-        }
-      }
-    },
-    "requestOutputs": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "onlyNewRelease",
-        "mandatoryRequest"
-      ],
-      "properties": {
-        "onlyNewRelease": {
-          "const": true
-        },
-        "mandatoryRequest": {
-          "const": "primary-request-map"
-        }
-      }
-    },
-    "requestEvidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "confidence",
-        "classPath",
-        "functionName",
-        "statementIndexes"
-      ],
-      "properties": {
-        "kind": {
-          "const": "kismet-analysis"
-        },
-        "confidence": {
-          "const": "direct"
-        },
-        "classPath": {
-          "const": "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C"
-        },
-        "functionName": {
-          "const": "Return Example Request"
-        },
-        "statementIndexes": {
-          "$ref": "#/$defs/requestStatementIndexes"
-        }
-      }
-    },
-    "requestStatementIndexes": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "randomCall",
-        "combineConditions",
-        "unlockRead",
-        "conditionBranch",
-        "setGuaranteedStep",
-        "disableOptionalPass",
-        "loopToDispatch",
-        "stepOneComparison",
-        "stepOneRoute",
-        "setNewReleaseRequested",
-        "setRequestValue",
-        "setRequestCode",
-        "addPrimaryRequest",
-        "setOnlyNewReleaseOutput",
-        "setMandatoryRequestOutput"
-      ],
-      "properties": {
-        "randomCall": {
-          "const": 2253
-        },
-        "combineConditions": {
-          "const": 2278
-        },
-        "unlockRead": {
-          "const": 2309
-        },
-        "conditionBranch": {
-          "const": 2328
-        },
-        "setGuaranteedStep": {
-          "const": 2342
-        },
-        "disableOptionalPass": {
-          "const": 2365
-        },
-        "loopToDispatch": {
-          "const": 2376
-        },
-        "stepOneComparison": {
-          "const": 2108
-        },
-        "stepOneRoute": {
-          "const": 2132
-        },
-        "setNewReleaseRequested": {
-          "const": 4028
-        },
-        "setRequestValue": {
-          "const": 4039
-        },
-        "setRequestCode": {
-          "const": 4050
-        },
-        "addPrimaryRequest": {
-          "const": 4092
-        },
-        "setOnlyNewReleaseOutput": {
-          "const": 3358
-        },
-        "setMandatoryRequestOutput": {
-          "const": 3396
-        }
-      }
-    },
-    "mutation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "field",
-        "value",
-        "when"
-      ],
-      "properties": {
-        "field": {
-          "const": "ExampleReleaseKind"
-        },
-        "value": {
-          "const": true
-        },
-        "when": {
-          "const": "threshold-reached"
-        }
-      }
-    },
-    "evidence": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "confidence",
-        "classPath",
-        "wrapperFunctions",
-        "entryPoints",
-        "eventGraphFunction",
-        "statementIndexes"
-      ],
-      "properties": {
-        "kind": {
-          "const": "kismet-analysis"
-        },
-        "confidence": {
-          "const": "direct"
-        },
-        "classPath": {
-          "const": "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C"
-        },
-        "wrapperFunctions": {
-          "$ref": "#/$defs/wrapperFunctions"
-        },
-        "entryPoints": {
-          "$ref": "#/$defs/entryPoints"
-        },
-        "eventGraphFunction": {
-          "const": "ExecuteExampleGraph_ExampleUnlockSystem"
-        },
-        "statementIndexes": {
-          "$ref": "#/$defs/statementIndexes"
-        }
-      }
-    },
-    "wrapperFunctions": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "resetToNewDay",
-        "newReleaseCheck"
-      ],
-      "properties": {
-        "resetToNewDay": {
-          "const": "Reset to new Day Event_Event"
-        },
-        "newReleaseCheck": {
-          "const": "ExampleReleaseEnabled"
-        }
-      }
-    },
-    "entryPoints": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "resetToNewDay",
-        "newReleaseCheck"
-      ],
-      "properties": {
-        "resetToNewDay": {
-          "const": 3364
-        },
-        "newReleaseCheck": {
-          "const": 3379
-        }
-      }
-    },
-    "statementIndexes": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "resetCallsCheck",
-        "firstSaveDay",
-        "makeTwoDayTimespan",
-        "addThreshold",
-        "compareCurrentDate",
-        "condition",
-        "successJump",
-        "setUnlocked"
-      ],
-      "properties": {
-        "resetCallsCheck": {
-          "const": 3364
-        },
-        "firstSaveDay": {
-          "const": 3401
-        },
-        "makeTwoDayTimespan": {
-          "const": 3442
-        },
-        "addThreshold": {
-          "const": 3495
-        },
-        "compareCurrentDate": {
-          "const": 3533
-        },
-        "condition": {
-          "const": 3583
-        },
-        "successJump": {
-          "const": 3593
-        },
-        "setUnlocked": {
-          "const": 3352
-        }
-      }
-    }
-  }
-} as const;
+const $definitionBuild = type({
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionSourceIdentity = type({
+  fileName: type("string").matching(new RegExp("^[^/\\\\]+\\.json$")),
+  sha256: type("string").matching(new RegExp("^[0-9a-f]{64}$")),
+  sizeBytes: type("number.integer").atLeast(1),
+  artifactType: type.enumerated(
+    "unlockable-manager-trace",
+    "blueprint-function-trace",
+    "blueprint-property-reference-trace",
+    "blueprint-call-target-trace",
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionSources = type({
+  managerTrace: type.and(
+    $definitionSourceIdentity,
+    type({ "artifactType?": type.unit("unlockable-manager-trace") }).readonly(),
+  ),
+  wrapperTrace: type.and(
+    $definitionSourceIdentity,
+    type({ "artifactType?": type.unit("blueprint-function-trace") }).readonly(),
+  ),
+  propertyReaderTrace: type.and(
+    $definitionSourceIdentity,
+    type({
+      "artifactType?": type.unit("blueprint-property-reference-trace"),
+    }).readonly(),
+  ),
+  requestGeneratorTrace: type.and(
+    $definitionSourceIdentity,
+    type({ "artifactType?": type.unit("blueprint-function-trace") }).readonly(),
+  ),
+  candidateMapTrace: type.and(
+    $definitionSourceIdentity,
+    type({
+      "artifactType?": type.unit("blueprint-property-reference-trace"),
+    }).readonly(),
+  ),
+  callTargetTrace: type.and(
+    $definitionSourceIdentity,
+    type({
+      "artifactType?": type.unit("blueprint-call-target-trace"),
+    }).readonly(),
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateRebuild = type({
+  trigger: type.unit("filter-all-new-release-movie-data"),
+  requiresWeatherReference: type.unit(true),
+  sourceCollection: type.unit("Example Source Map"),
+  candidateCollection: type.unit(
+    "Example Candidate Map",
+  ),
+  candidateCollectionClearedBeforeScan: type.unit(true),
+  iteration: type.unit("source-map-values"),
+  "+": "reject",
+}).readonly();
+const $definitionCandidatePreconditions = type({
+  released: type.unit(true),
+  secondHandAvailable: type.unit(false),
+  operator: type.unit("and"),
+  "+": "reject",
+}).readonly();
+const $definitionGameModeCastFailure = type({
+  isNew: type.unit(false),
+  remainingDays: type.unit(0),
+  "+": "reject",
+}).readonly();
+const $definitionCandidatePredicate = type({
+  function: type.unit("Evaluate Example Record"),
+  ownerClass: type.unit("ExampleRecord_C"),
+  durationDays: type.unit(7),
+  elapsedDays: type.unit("days-passed-minus-available-in-game-day"),
+  comparison: type.unit("elapsed-days-less-than-or-equal-to-duration"),
+  lowerBoundEnforced: type.unit(false),
+  remainingDays: type.unit(
+    "available-in-game-day-plus-duration-minus-days-passed",
+  ),
+  gameModeCastFailure: $definitionGameModeCastFailure,
+  "+": "reject",
+}).readonly();
+const $definitionCandidateOutcomeEligible = type({
+  collection: type.unit("Example Candidate Map"),
+  key: type.unit("product-sku"),
+  secondHandAvailable: type.unit(false),
+  basePrice: type.unit(0),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateOutcomePreconditionFailure = type({
+  collection: type.unit("Example Source Map"),
+  effect: type.unit("no-mutation"),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateOutcomePredicateFailure = type({
+  collection: type.unit("Example Source Map"),
+  key: type.unit("product-sku"),
+  secondHandAvailable: type.unit(true),
+  basePrice: type.unit(0),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateOutcomes = type({
+  eligible: $definitionCandidateOutcomeEligible,
+  preconditionFailure: $definitionCandidateOutcomePreconditionFailure,
+  predicateFailure: $definitionCandidateOutcomePredicateFailure,
+  remainingDaysConsumedByCaller: type.unit(false),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateStatementIndexes = type({
+  clearCandidateCollection: type.unit(66),
+  enumerateSourceValues: type.unit(118),
+  callPerFilmFilter: type.unit(390),
+  checkSecondHand: type.unit(10),
+  checkReleased: type.unit(49),
+  combinePreconditions: type.unit(88),
+  preconditionBranch: type.unit(116),
+  predicateCall: type.unit(152),
+  predicateBranch: type.unit(203),
+  addEligible: type.unit(418),
+  addIneligible: type.unit(697),
+  durationAssignment: type.unit(0),
+  gameModeCastBranch: type.unit(117),
+  elapsedSubtract: type.unit(1512),
+  compareDuration: type.unit(1634),
+  remainingAdd: type.unit(1680),
+  remainingSubtract: type.unit(1744),
+  setEligible: type.unit(1838),
+  setRemainingDays: type.unit(1857),
+  castFailureSetEligible: type.unit(1889),
+  castFailureSetRemainingDays: type.unit(1900),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateEvidence = type({
+  kind: type.unit("kismet-analysis"),
+  confidence: type.unit("direct"),
+  marketClassPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C",
+  ),
+  rebuildFunction: type.unit("ExampleRebuildCandidates"),
+  filterFunction: type.unit("Filter Example Schedule"),
+  predicateClassPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleRecord.ExampleRecord_C",
+  ),
+  predicateFunction: type.unit("Evaluate Example Record"),
+  bindingRule: type.unit("exact-context-object-class-and-declaration"),
+  relationship: type.unit("verified"),
+  statementIndexes: $definitionCandidateStatementIndexes,
+  "+": "reject",
+}).readonly();
+const $definitionCandidateEligibility = type({
+  rebuild: $definitionCandidateRebuild,
+  preconditions: $definitionCandidatePreconditions,
+  predicate: $definitionCandidatePredicate,
+  outcomes: $definitionCandidateOutcomes,
+  evidence: $definitionCandidateEvidence,
+  "+": "reject",
+}).readonly();
+const $definitionThreshold = type({
+  origin: type.unit("first-save-game-day"),
+  elapsedDays: type.unit(2),
+  operator: type.unit("greater-than-or-equal"),
+  currentDate: type.unit("weather-current-date"),
+  "+": "reject",
+}).readonly();
+const $definitionMutation = type({
+  field: type.unit("ExampleReleaseKind"),
+  value: type.unit(true),
+  when: type.unit("threshold-reached"),
+  "+": "reject",
+}).readonly();
+const $definitionWrapperFunctions = type({
+  resetToNewDay: type.unit("Reset to new Day Event_Event"),
+  newReleaseCheck: type.unit("ExampleReleaseEnabled"),
+  "+": "reject",
+}).readonly();
+const $definitionEntryPoints = type({
+  resetToNewDay: type.unit(3364),
+  newReleaseCheck: type.unit(3379),
+  "+": "reject",
+}).readonly();
+const $definitionStatementIndexes = type({
+  resetCallsCheck: type.unit(3364),
+  firstSaveDay: type.unit(3401),
+  makeTwoDayTimespan: type.unit(3442),
+  addThreshold: type.unit(3495),
+  compareCurrentDate: type.unit(3533),
+  condition: type.unit(3583),
+  successJump: type.unit(3593),
+  setUnlocked: type.unit(3352),
+  "+": "reject",
+}).readonly();
+const $definitionEvidence = type({
+  kind: type.unit("kismet-analysis"),
+  confidence: type.unit("direct"),
+  classPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C",
+  ),
+  wrapperFunctions: $definitionWrapperFunctions,
+  entryPoints: $definitionEntryPoints,
+  eventGraphFunction: type.unit("ExecuteExampleGraph_ExampleUnlockSystem"),
+  statementIndexes: $definitionStatementIndexes,
+  "+": "reject",
+}).readonly();
+const $definitionUnlock = type({
+  trigger: type.unit("reset-to-new-day-event"),
+  threshold: $definitionThreshold,
+  mutation: $definitionMutation,
+  evidence: $definitionEvidence,
+  "+": "reject",
+}).readonly();
+const $definitionRandomGate = type({
+  function: type.unit("RandomBoolWithWeight"),
+  trueWeight: type.unit(0.5),
+  "+": "reject",
+}).readonly();
+const $definitionRequestCondition = type({
+  unlockField: type.unit("ExampleReleaseKind"),
+  requiredValue: type.unit(true),
+  operator: type.unit("and"),
+  randomGate: $definitionRandomGate,
+  "+": "reject",
+}).readonly();
+const $definitionRequestOutputs = type({
+  onlyNewRelease: type.unit(true),
+  mandatoryRequest: type.unit("primary-request-map"),
+  "+": "reject",
+}).readonly();
+const $definitionRequestEffect = type({
+  guaranteedRequestStep: type.unit(1),
+  runOptionalPass: type.unit(false),
+  newReleaseRequested: type.unit(true),
+  primaryRequestCode: type.unit(5),
+  primaryRequestValue: type.unit(true),
+  outputs: $definitionRequestOutputs,
+  "+": "reject",
+}).readonly();
+const $definitionRequestStatementIndexes = type({
+  randomCall: type.unit(2253),
+  combineConditions: type.unit(2278),
+  unlockRead: type.unit(2309),
+  conditionBranch: type.unit(2328),
+  setGuaranteedStep: type.unit(2342),
+  disableOptionalPass: type.unit(2365),
+  loopToDispatch: type.unit(2376),
+  stepOneComparison: type.unit(2108),
+  stepOneRoute: type.unit(2132),
+  setNewReleaseRequested: type.unit(4028),
+  setRequestValue: type.unit(4039),
+  setRequestCode: type.unit(4050),
+  addPrimaryRequest: type.unit(4092),
+  setOnlyNewReleaseOutput: type.unit(3358),
+  setMandatoryRequestOutput: type.unit(3396),
+  "+": "reject",
+}).readonly();
+const $definitionRequestEvidence = type({
+  kind: type.unit("kismet-analysis"),
+  confidence: type.unit("direct"),
+  classPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C",
+  ),
+  functionName: type.unit("Return Example Request"),
+  statementIndexes: $definitionRequestStatementIndexes,
+  "+": "reject",
+}).readonly();
+const $definitionRequestSelection = type({
+  trigger: type.unit("return-movie-request"),
+  condition: $definitionRequestCondition,
+  effect: $definitionRequestEffect,
+  evidence: $definitionRequestEvidence,
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorCopiedOutputs = type({
+  onlyNewRelease: type.unit("only-new-release-output"),
+  primaryRequest: type.unit("mandatory-request-output"),
+  optionalRequest: type.unit("optional-request-output"),
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorSelector = type({
+  function: type.unit("Return Example Request"),
+  successRequired: type.unit(true),
+  copiedOutputs: $definitionGeneratorCopiedOutputs,
+  requestGenerated: type.unit(true),
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorRandomGate = type({
+  function: type.unit("RandomBoolWithWeight"),
+  trueWeight: type.unit(0.66),
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorCondition = type({
+  onlyNewRelease: type.unit(true),
+  gameModeType: type.unit("ExampleMode"),
+  randomGate: $definitionGeneratorRandomGate,
+  candidateCollection: type.unit(
+    "Example Candidate Map",
+  ),
+  candidateCount: type.unit("greater-than-zero"),
+  operator: type.unit("and"),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateEnumeration = type({
+  keys: type.unit("map-keys"),
+  values: type.unit("map-values"),
+  pairing: type.unit("shared-array-index"),
+  "+": "reject",
+}).readonly();
+const $definitionRandomIntegerEngineSemantics = type({
+  engineVersion: type.unit("5.4"),
+  wrapper: type.unit("UKismetMathLibrary::RandomInteger"),
+  implementation: type.unit("FMath::RandHelper"),
+  positiveInputRange: type.unit("zero-inclusive-to-input-exclusive"),
+  nonPositiveInputResult: type.unit(0),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateIndexResult = type({
+  oneCandidate: type.unit("index-zero"),
+  multipleCandidates: type.unit("zero-through-candidate-count-minus-two"),
+  finalEnumeratedPairSelectable: type.unit(false),
+  "+": "reject",
+}).readonly();
+const $definitionCandidateIndex = type({
+  function: type.unit("RandomInteger"),
+  input: type.unit("candidate-count-minus-one"),
+  engineSemantics: $definitionRandomIntegerEngineSemantics,
+  result: $definitionCandidateIndexResult,
+  "+": "reject",
+}).readonly();
+const $definitionNewReleaseCandidateSelection = type({
+  condition: $definitionGeneratorCondition,
+  enumeration: $definitionCandidateEnumeration,
+  index: $definitionCandidateIndex,
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorEffect = type({
+  requestMovieSku: type.unit("selected-key"),
+  reservedMovieProduct: type.unit("selected-value-product"),
+  generateSuccess: type.unit(true),
+  candidateSelectionRequiredForSuccess: type.unit(false),
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorStatementIndexes = type({
+  selectorCall: type.unit(448),
+  selectorSuccessBranch: type.unit(570),
+  copyOnlyNewRelease: type.unit(735),
+  copyMandatoryRequest: type.unit(1272),
+  copyOptionalRequest: type.unit(1299),
+  newReleaseBranch: type.unit(1331),
+  randomGate: type.unit(1447),
+  candidateCount: type.unit(1502),
+  combinedCondition: type.unit(1631),
+  enumerateKeys: type.unit(1702),
+  enumerateValues: type.unit(1829),
+  subtractOne: type.unit(2066),
+  randomIndex: type.unit(2108),
+  selectKey: type.unit(2176),
+  assignMovieSku: type.unit(2213),
+  selectValue: type.unit(2262),
+  assignReservedProduct: type.unit(2299),
+  setGenerateSuccess: type.unit(2336),
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorEngineSource = type({
+  repository: type.unit("EpicGames/UnrealEngine"),
+  commit: type.unit("847de5e2553adeb4d3498953604d0b0abe669780"),
+  wrapperFile: type.unit(
+    "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl",
+  ),
+  implementationFile: type.unit(
+    "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h",
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionGeneratorEvidence = type({
+  kind: type.unit("kismet-and-engine-source-analysis"),
+  confidence: type.unit("direct"),
+  classPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/ai/Task/BTTask_ExampleRequest.BTTask_ExampleRequest_C",
+  ),
+  functionName: type.unit("Generate Example Request"),
+  statementIndexes: $definitionGeneratorStatementIndexes,
+  engineSource: $definitionGeneratorEngineSource,
+  "+": "reject",
+}).readonly();
+const $definitionRequestGeneration = type({
+  trigger: type.unit("generate-movie-request"),
+  selector: $definitionGeneratorSelector,
+  newReleaseCandidateSelection: $definitionNewReleaseCandidateSelection,
+  effect: $definitionGeneratorEffect,
+  evidence: $definitionGeneratorEvidence,
+  "+": "reject",
+}).readonly();
 
-export const NewReleaseMechanicsSchema = defineArtifactSchema<NewReleaseMechanicsContract>(NewReleaseMechanicsJsonSchema);
+export const NewReleaseMechanicsSchema = type({
+  artifactType: type.unit("new-release-mechanics"),
+  build: $definitionBuild,
+  sources: $definitionSources,
+  scope: type.unit("new-release"),
+  evidenceLevel: type.unit("typed-blueprint"),
+  runtimeValidation: type.unit("not-run"),
+  unlock: $definitionUnlock,
+  requestSelection: $definitionRequestSelection,
+  requestGeneration: $definitionRequestGeneration,
+  candidateEligibility: $definitionCandidateEligibility,
+  "+": "reject",
+}).readonly();
 export type NewReleaseMechanics = typeof NewReleaseMechanicsSchema.infer;
 
 type NewReleaseSourceIdentity =

@@ -1,512 +1,173 @@
-import type { BlueprintFunctionTraceContract } from "../generated/acquisition/blueprint-function-trace.ts";
-import { defineArtifactSchema } from "../define-artifact-schema.ts";
+import { type } from "arktype";
+import { withExactlyOneOf, withUniqueItems } from "../contract-constraints.ts";
 
-export const BlueprintFunctionTraceJsonSchema = {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:neonretrorewind:schema:acquisition:blueprint-function-trace",
-  "title": "NeonRetroRewind Blueprint function trace",
-  "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "artifactType",
-    "build",
-    "callerBodies",
-    "mappings",
-    "engine",
-    "extractor",
-    "totals",
-    "functions"
-  ],
-  "properties": {
-    "artifactType": {
-      "const": "blueprint-function-trace"
-    },
-    "build": {
-      "$ref": "#/$defs/buildReference"
-    },
-    "callerBodies": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/callerBodyInput"
-      }
-    },
-    "mappings": {
-      "$ref": "#/$defs/mappingIdentity"
-    },
-    "engine": {
-      "$ref": "#/$defs/engineIdentity"
-    },
-    "extractor": {
-      "$ref": "#/$defs/extractorIdentity"
-    },
-    "totals": {
-      "$ref": "#/$defs/totals"
-    },
-    "functions": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/function"
-      }
-    }
-  },
-  "$defs": {
-    "buildReference": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "manifestSha256",
-        "steamAppId",
-        "steamBuildId"
-      ],
-      "properties": {
-        "manifestSha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "steamAppId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        },
-        "steamBuildId": {
-          "type": "string",
-          "pattern": "^[0-9]+$"
-        }
-      }
-    },
-    "callerBodyInput": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "targetFunctionName"
-      ],
-      "properties": {
-        "fileName": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/fileName"
-            },
-            {
-              "pattern": "\\.json$"
-            }
-          ]
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "targetFunctionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "mappingIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "fileName",
-        "sizeBytes",
-        "sha256",
-        "formatVersion"
-      ],
-      "properties": {
-        "fileName": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/fileName"
-            },
-            {
-              "pattern": "\\.usmap$"
-            }
-          ]
-        },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 16
-        },
-        "sha256": {
-          "$ref": "#/$defs/sha256"
-        },
-        "formatVersion": {
-          "const": 4
-        }
-      }
-    },
-    "engineIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "version",
-        "cue4ParseProfile",
-        "source",
-        "confidence"
-      ],
-      "properties": {
-        "version": {
-          "const": "5.4"
-        },
-        "cue4ParseProfile": {
-          "const": "GAME_UE5_4"
-        },
-        "source": {
-          "const": "configured"
-        },
-        "confidence": {
-          "const": "probable"
-        }
-      }
-    },
-    "extractorIdentity": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "version",
-        "cue4ParseVersion"
-      ],
-      "properties": {
-        "name": {
-          "const": "NeonRetroRewind.StaticExtractor"
-        },
-        "version": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "cue4ParseVersion": {
-          "$ref": "#/$defs/nonEmptyString"
-        }
-      }
-    },
-    "totals": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packageCount",
-        "classCount",
-        "functionCount",
-        "nodeCount",
-        "callCount",
-        "branchCount",
-        "entrypointCount"
-      ],
-      "properties": {
-        "packageCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "classCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "functionCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "nodeCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "callCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "branchCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "entrypointCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "function": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "packagePath",
-        "className",
-        "classPath",
-        "functionName",
-        "functionPath",
-        "flags",
-        "bytecodeExpressionCount",
-        "nodes"
-      ],
-      "properties": {
-        "packagePath": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\.uasset$"
-        },
-        "className": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "classPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "functionPath": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "flags": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "bytecodeExpressionCount": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "nodes": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/node"
-          }
-        }
-      }
-    },
-    "node": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "nodeIndex",
-        "parentNodeIndex",
-        "edge",
-        "depth",
-        "statementIndex",
-        "opcode",
-        "kind",
-        "symbol",
-        "call",
-        "jump",
-        "literal"
-      ],
-      "properties": {
-        "nodeIndex": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "parentNodeIndex": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "edge": {
-          "type": "string",
-          "minLength": 1
-        },
-        "depth": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "statementIndex": {
-          "type": "integer",
-          "minimum": -1
-        },
-        "opcode": {
-          "type": "string",
-          "pattern": "^EX_"
-        },
-        "kind": {
-          "enum": [
-            "call",
-            "branch",
-            "literal",
-            "return",
-            "assignment",
-            "variable",
-            "context",
-            "operation"
-          ]
-        },
-        "symbol": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "minLength": 1,
-          "maxLength": 1024
-        },
-        "call": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/call"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "jump": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/jump"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "literal": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/literal"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "call": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "callKind",
-        "functionName",
-        "argumentCount",
-        "integerArguments"
-      ],
-      "properties": {
-        "callKind": {
-          "enum": [
-            "virtual",
-            "local-virtual",
-            "final",
-            "local-final"
-          ]
-        },
-        "functionName": {
-          "$ref": "#/$defs/nonEmptyString"
-        },
-        "argumentCount": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "integerArguments": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/$defs/integerArgument"
-          }
-        }
-      }
-    },
-    "integerArgument": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "position",
-        "value"
-      ],
-      "properties": {
-        "position": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "value": {
-          "type": "string",
-          "pattern": "^-?(0|[1-9][0-9]*)$"
-        }
-      }
-    },
-    "jump": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "jumpKind",
-        "targets"
-      ],
-      "properties": {
-        "jumpKind": {
-          "enum": [
-            "unconditional",
-            "conditional-false",
-            "computed",
-            "push-flow",
-            "pop-flow",
-            "pop-flow-if-false",
-            "switch"
-          ]
-        },
-        "targets": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/jumpTarget"
-          }
-        }
-      }
-    },
-    "jumpTarget": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "edge",
-        "offset"
-      ],
-      "properties": {
-        "edge": {
-          "type": "string",
-          "minLength": 1
-        },
-        "offset": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "literal": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "literalType",
-        "value"
-      ],
-      "properties": {
-        "literalType": {
-          "enum": [
-            "integer",
-            "number",
-            "string",
-            "name",
-            "boolean",
-            "null"
-          ]
-        },
-        "value": {
-          "type": "string"
-        }
-      }
-    },
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "pattern": "^[^/\\\\]+$"
-    },
-    "sha256": {
-      "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
-    },
-    "nonEmptyString": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 1024,
-      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
-    }
-  }
-} as const;
+const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
+const $definitionBuildReference = type({
+  manifestSha256: $definitionSha256,
+  steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
+  steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
+  "+": "reject",
+}).readonly();
+const $definitionFileName = type("string")
+  .matching(new RegExp("^[^/\\\\]+$"))
+  .atLeastLength(1);
+const $definitionNonEmptyString = type("string")
+  .matching(new RegExp("^[^\\u0000-\\u001f\\u007f-\\u009f]+$"))
+  .atLeastLength(1)
+  .atMostLength(1024);
+const $definitionCallerBodyInput = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.json$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  targetFunctionName: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionMappingIdentity = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.usmap$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(16),
+  sha256: $definitionSha256,
+  formatVersion: type.unit(4),
+  "+": "reject",
+}).readonly();
+const $definitionEngineIdentity = type({
+  version: type.unit("5.4"),
+  cue4ParseProfile: type.unit("GAME_UE5_4"),
+  source: type.unit("configured"),
+  confidence: type.unit("probable"),
+  "+": "reject",
+}).readonly();
+const $definitionExtractorIdentity = type({
+  name: type.unit("NeonRetroRewind.StaticExtractor"),
+  version: $definitionNonEmptyString,
+  cue4ParseVersion: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
+const $definitionTotals = type({
+  packageCount: type("number.integer").atLeast(1),
+  classCount: type("number.integer").atLeast(1),
+  functionCount: type("number.integer").atLeast(1),
+  nodeCount: type("number.integer").atLeast(1),
+  callCount: type("number.integer").atLeast(1),
+  branchCount: type("number.integer").atLeast(0),
+  entrypointCount: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionIntegerArgument = type({
+  position: type("number.integer").atLeast(0),
+  value: type("string").matching(new RegExp("^-?(0|[1-9][0-9]*)$")),
+  "+": "reject",
+}).readonly();
+const $definitionCall = type({
+  callKind: type.enumerated("virtual", "local-virtual", "final", "local-final"),
+  functionName: $definitionNonEmptyString,
+  argumentCount: type("number.integer").atLeast(0),
+  integerArguments: withUniqueItems(
+    $definitionIntegerArgument.array().readonly(),
+  ),
+  "+": "reject",
+}).readonly();
+const $definitionJumpTarget = type({
+  edge: type("string").atLeastLength(1),
+  offset: type("number.integer").atLeast(0),
+  "+": "reject",
+}).readonly();
+const $definitionJump = type({
+  jumpKind: type.enumerated(
+    "unconditional",
+    "conditional-false",
+    "computed",
+    "push-flow",
+    "pop-flow",
+    "pop-flow-if-false",
+    "switch",
+  ),
+  targets: $definitionJumpTarget.array().readonly(),
+  "+": "reject",
+}).readonly();
+const $definitionLiteral = type({
+  literalType: type.enumerated(
+    "integer",
+    "number",
+    "string",
+    "name",
+    "boolean",
+    "null",
+  ),
+  value: type("string"),
+  "+": "reject",
+}).readonly();
+const $definitionNode = type({
+  nodeIndex: type("number.integer").atLeast(0),
+  parentNodeIndex: type.or(type("number.integer").atLeast(0), type("null")),
+  edge: type("string").atLeastLength(1),
+  depth: type("number.integer").atLeast(0),
+  statementIndex: type("number.integer").atLeast(-1),
+  opcode: type("string").matching(new RegExp("^EX_")),
+  kind: type.enumerated(
+    "call",
+    "branch",
+    "literal",
+    "return",
+    "assignment",
+    "variable",
+    "context",
+    "operation",
+  ),
+  symbol: type.or(
+    type("string").atLeastLength(1).atMostLength(1024),
+    type("null"),
+  ),
+  call: withExactlyOneOf(type.or($definitionCall, type("null")), [
+    $definitionCall,
+    type("null"),
+  ]),
+  jump: withExactlyOneOf(type.or($definitionJump, type("null")), [
+    $definitionJump,
+    type("null"),
+  ]),
+  literal: withExactlyOneOf(type.or($definitionLiteral, type("null")), [
+    $definitionLiteral,
+    type("null"),
+  ]),
+  "+": "reject",
+}).readonly();
+const $definitionFunction = type({
+  packagePath: type("string")
+    .matching(new RegExp("\\.uasset$"))
+    .atLeastLength(1),
+  className: $definitionNonEmptyString,
+  classPath: $definitionNonEmptyString,
+  functionName: $definitionNonEmptyString,
+  functionPath: $definitionNonEmptyString,
+  flags: $definitionNonEmptyString,
+  bytecodeExpressionCount: type("number.integer").atLeast(1),
+  nodes: type([$definitionNode, "...", $definitionNode.array()]).readonly(),
+  "+": "reject",
+}).readonly();
 
-export const BlueprintFunctionTraceSchema = defineArtifactSchema<BlueprintFunctionTraceContract>(BlueprintFunctionTraceJsonSchema);
+export const BlueprintFunctionTraceSchema = type({
+  artifactType: type.unit("blueprint-function-trace"),
+  build: $definitionBuildReference,
+  callerBodies: withUniqueItems(
+    type([
+      $definitionCallerBodyInput,
+      "...",
+      $definitionCallerBodyInput.array(),
+    ]).readonly(),
+  ),
+  mappings: $definitionMappingIdentity,
+  engine: $definitionEngineIdentity,
+  extractor: $definitionExtractorIdentity,
+  totals: $definitionTotals,
+  functions: withUniqueItems(
+    type([$definitionFunction, "...", $definitionFunction.array()]).readonly(),
+  ),
+  "+": "reject",
+}).readonly();
 export type BlueprintFunctionTrace = typeof BlueprintFunctionTraceSchema.infer;
