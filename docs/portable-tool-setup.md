@@ -162,7 +162,7 @@ The extracted tools remain inside ignored local directories and can be deleted w
 The extractor reads package files from a locally installed and licensed copy of *Retro Rewind: Video Store Simulator*.
 The game should be closed while the offline commands read its package files.
 
-The structured-index, structured-values, rental-evidence, unlockable-evidence, unlockable-function-trace, unlockable-implementation-sites, unlockable-manager-trace, blueprint-property-references, blueprint-property-reference-trace, blueprint-call-candidate-trace, blueprint-call-target-trace, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace commands also require a `.usmap` mapping produced for the exact game executable recorded in the build manifest.
+The structured-index, structured-values, rental-evidence, unlockable-evidence, statistic-evidence, unlockable-function-trace, unlockable-implementation-sites, unlockable-manager-trace, blueprint-property-references, blueprint-property-reference-trace, blueprint-call-candidate-trace, blueprint-call-target-trace, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace commands also require a `.usmap` mapping produced for the exact game executable recorded in the build manifest.
 NeonRetroRewind does not yet provide a supported mapping-generation procedure.
 Complete the probe, build-manifest, and static-census steps, then stop if you do not already have a matching mapping.
 Do not reuse a mapping from another build.

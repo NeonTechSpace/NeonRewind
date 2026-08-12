@@ -42,6 +42,11 @@ internal static class Program
             return UnlockableEvidenceCommand.Run(unlockableEvidenceArguments);
         }
 
+        if (args is ["statistic-evidence", .. var statisticEvidenceArguments])
+        {
+            return StatisticEvidenceCommand.Run(statisticEvidenceArguments);
+        }
+
         if (args is ["unlockable-function-trace", .. var unlockableFunctionTraceArguments])
         {
             return UnlockableFunctionTraceCommand.Run(unlockableFunctionTraceArguments);
@@ -128,6 +133,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor structured-values --build-manifest <path> --structured-index <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor statistic-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-function-trace --build-manifest <path> --unlockable-evidence <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-implementation-sites --build-manifest <path> --static-census <path> --unlockable-evidence <path> --unlockable-function-trace <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-manager-trace --build-manifest <path> --unlockable-implementation-sites <path> --mappings <path> --package-directory <path> --output <path>");
@@ -149,6 +155,7 @@ internal static class Program
         writer.WriteLine("The structured-values command writes normalized DataTable rows and StringTable entries for local use.");
         writer.WriteLine("The rental-evidence command writes mapped class defaults and references for the rental-system package cluster.");
         writer.WriteLine("The unlockable-evidence command writes mapped class defaults and references for the unlockable-system package cluster.");
+        writer.WriteLine("The statistic-evidence command writes mapped class defaults and references for the statistic package cluster.");
         writer.WriteLine("The unlockable-function-trace command rereads the four unlock eligibility and mutation functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The unlockable-implementation-sites command locates unlock-item descendants, overrides, manager event graphs, and calls to the four selected hooks.");
         writer.WriteLine("The unlockable-manager-trace command rereads the discovered manager event graph into typed Kismet nodes without parsing pseudocode.");

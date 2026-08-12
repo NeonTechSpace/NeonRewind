@@ -53,6 +53,10 @@ export {
   type StaticCensus,
 } from "./contracts/acquisition/static-census.ts";
 export {
+  StatisticEvidenceSchema,
+  type StatisticEvidence,
+} from "./contracts/acquisition/statistic-evidence.ts";
+export {
   StructuredAssetIndexSchema,
   type StructuredAssetIndex,
 } from "./contracts/acquisition/structured-asset-index.ts";
