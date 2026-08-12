@@ -36,6 +36,16 @@ const $definitionSources = type({
     $definitionSourceIdentity,
     type({ "artifactType?": type.unit("blueprint-function-trace") }).readonly(),
   ),
+  marketEntryTrace: type.and(
+    $definitionSourceIdentity,
+    type({ "artifactType?": type.unit("blueprint-function-trace") }).readonly(),
+  ),
+  sourceMapTrace: type.and(
+    $definitionSourceIdentity,
+    type({
+      "artifactType?": type.unit("blueprint-property-reference-trace"),
+    }).readonly(),
+  ),
   candidateMapTrace: type.and(
     $definitionSourceIdentity,
     type({
@@ -48,6 +58,77 @@ const $definitionSources = type({
       "artifactType?": type.unit("blueprint-call-target-trace"),
     }).readonly(),
   ),
+  "+": "reject",
+}).readonly();
+const $definitionSourceMapRestore = type({
+  trigger: type.unit("load"),
+  source: type.unit("Example Save Source Map"),
+  effect: type.unit("replace-source-map"),
+  "+": "reject",
+}).readonly();
+const $definitionSourceMapAdditions = type({
+  sourceMap: type.unit("selected-film-product-sku-to-new-release-film"),
+  posterMap: type.unit("selected-film-product-sku-to-new-release-film"),
+  "+": "reject",
+}).readonly();
+const $definitionSourceMapGeneration = type({
+  trigger: type.unit("generate-new-released-movie"),
+  dataTableObjectPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleScheduleTable.ExampleScheduleTable",
+  ),
+  rowDiscovery: type.unit("data-table-row-names"),
+  rowLookup: type.unit("data-table-row-by-name"),
+  unlockPool: type.unit("rows-with-genre-present-in-movie-genres-unlock"),
+  selection: type.unit("random-unlock-pool-item"),
+  duplicateHandling: type.unit("remove-selected-item-and-retry"),
+  additions: $definitionSourceMapAdditions,
+  "+": "reject",
+}).readonly();
+const $definitionSourceMapCleanup = type({
+  iteration: type.unit("source-map-values"),
+  condition: type.unit("second-hand-available"),
+  removalKey: type.unit("iterated-value-product-sku"),
+  "+": "reject",
+}).readonly();
+const $definitionSourceMapStatementIndexes = type({
+  loadWrapperCall: type.unit(18),
+  restoreAssignment: type.unit(2886),
+  dataTableAssignment: type.unit(5),
+  rowNames: type.unit(535),
+  rowLookup: type.unit(843),
+  genreLookup: type.unit(930),
+  addUnlockPool: type.unit(3559),
+  randomPoolItem: type.unit(1241),
+  findExisting: type.unit(1337),
+  duplicateBranch: type.unit(1383),
+  removeDuplicateFromPool: type.unit(1429),
+  addSourceMap: type.unit(2129),
+  addPosterMap: type.unit(2842),
+  enumerateSourceValues: type.unit(2978),
+  secondHandBranch: type.unit(3254),
+  removeSecondHand: type.unit(3364),
+  cleanupLoopBack: type.unit(3498),
+  "+": "reject",
+}).readonly();
+const $definitionSourceMapEvidence = type({
+  kind: type.unit("kismet-analysis"),
+  confidence: type.unit("direct"),
+  classPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C",
+  ),
+  loadFunction: type.unit("ExampleLoad"),
+  eventGraphFunction: type.unit("ExecuteExampleGraph_ExampleManager"),
+  generationFunction: type.unit("ExampleGenerateRecord"),
+  statementIndexes: $definitionSourceMapStatementIndexes,
+  "+": "reject",
+}).readonly();
+const $definitionSourceMapLifecycle = type({
+  collection: type.unit("Example Source Map"),
+  posterCollection: type.unit("Example Poster Map"),
+  restore: $definitionSourceMapRestore,
+  generation: $definitionSourceMapGeneration,
+  cleanup: $definitionSourceMapCleanup,
+  evidence: $definitionSourceMapEvidence,
   "+": "reject",
 }).readonly();
 const $definitionCandidateRebuild = type({
@@ -405,6 +486,7 @@ export const NewReleaseMechanicsSchema = type({
   unlock: $definitionUnlock,
   requestSelection: $definitionRequestSelection,
   requestGeneration: $definitionRequestGeneration,
+  sourceMapLifecycle: $definitionSourceMapLifecycle,
   candidateEligibility: $definitionCandidateEligibility,
   "+": "reject",
 }).readonly();

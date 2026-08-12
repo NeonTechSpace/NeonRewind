@@ -183,7 +183,7 @@ That command writes a new immutable mechanics artifact which identifies the exac
 
 ## 23. Compile the new-release mechanics
 
-This step joins the typed unlock-manager event graph, typed wrapper entrypoints, traced property reader, typed `Generate Example Request` body, candidate-map trace, and verified call-target trace.
+This step joins the typed unlock-manager event graph, typed unlock and Market wrapper entrypoints, traced property readers, typed request and source-map flows, the candidate-map trace, and the verified call-target trace.
 It confirms that `Reset to new Day Event_Event` enters the manager at statement `3364`, calls `ExampleReleaseEnabled`, compares the Weather Actor's current date with the first save-game day plus two days, and sets `ExampleReleaseKind` to `true` when the threshold is reached.
 It also confirms that `Return Example Request` combines the flag with `RandomBoolWithWeight(0.5)` and, on success, selects guaranteed request step 1, records primary request code `5` as required, and outputs `Only New Release` as `true`.
 `Generate Example Request` copies those outputs and, when `Only New Release` is true, the game-mode cast succeeds, the candidate map is nonempty, and `RandomBoolWithWeight(0.66)` succeeds, enumerates that map's keys and values and reads both at one random index.
@@ -199,8 +199,11 @@ The predicate contains no lower-bound comparison.
 Eligible records are written to `Example Candidate Map` with second-hand false and base price zero.
 A failed caller precondition returns without mutation.
 A failed predicate rewrites the record in `Example Source Map` with second-hand true and base price zero.
+`ExampleManager_C.Load` enters `ExecuteExampleGraph_ExampleManager` at statement `2622` and replaces `Example Source Map` from `Example Save Source Map`.
+`ExampleGenerateRecord` reads rows from `ExampleScheduleTable`, retains rows whose genre is present in `Example Enabled Categories`, and randomly chooses an unused row before adding its constructed film record to the source and poster maps by product SKU.
+After generation, the function enumerates source-map values and removes records whose second-hand field is true by using each record's nested product SKU.
 The compiler checks the exact build, mapping, and engine identities, trace scopes, wrapper entrypoints, typed calls and arguments, target receiver and declaration binding, intermediate value flow, comparisons, branch routes, map access, paired array indexes, mutations, outputs, and input hashes.
-It does not infer save/load behavior, costs, dependencies, exact film identities, runtime map contents, map enumeration identity, or runtime probabilities.
+It does not infer save behavior, costs, dependencies, exact film identities, runtime map contents, map enumeration identity, or runtime probabilities.
 The artifact records typed-Blueprint evidence and `runtimeValidation: not-run`.
 
 Move into the TypeScript workspace if you are not already there.
@@ -223,6 +226,8 @@ pnpm new-release-mechanics `
   --wrapper-trace (Join-Path $buildDirectory "blueprint-function-trace.unlock-manager-entry.json") `
   --property-reader-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-unlock.json") `
   --request-generator-trace (Join-Path $buildDirectory "blueprint-function-trace.generate-movie-request.json") `
+  --market-entry-trace (Join-Path $buildDirectory "blueprint-function-trace.execute-ubergraph-market-entrypoints.json") `
+  --source-map-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-source-flow.json") `
   --candidate-map-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.new-release-candidates.json") `
   --call-target-trace (Join-Path $buildDirectory "blueprint-call-target-trace.return-if-film-is-new.json") `
   --output (Join-Path $domainDirectory "new-release-mechanics.json")
@@ -234,6 +239,8 @@ pnpm new-release-mechanics \
   --wrapper-trace "$buildDirectory/blueprint-function-trace.unlock-manager-entry.json" \
   --property-reader-trace "$buildDirectory/blueprint-property-reference-trace.new-release-unlock.json" \
   --request-generator-trace "$buildDirectory/blueprint-function-trace.generate-movie-request.json" \
+  --market-entry-trace "$buildDirectory/blueprint-function-trace.execute-ubergraph-market-entrypoints.json" \
+  --source-map-trace "$buildDirectory/blueprint-property-reference-trace.new-release-source-flow.json" \
   --candidate-map-trace "$buildDirectory/blueprint-property-reference-trace.new-release-candidates.json" \
   --call-target-trace "$buildDirectory/blueprint-call-target-trace.return-if-film-is-new.json" \
   --output "$domainDirectory/new-release-mechanics.json"

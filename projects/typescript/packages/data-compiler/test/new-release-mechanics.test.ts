@@ -8,8 +8,10 @@ import {
   createManagerTrace,
   createCandidateMapTrace,
   createCallTargetTrace,
+  createMarketEntryTrace,
   createPropertyReaderTrace,
   createRequestGeneratorTrace,
+  createSourceMapTrace,
   createWrapperTrace,
   newReleaseSources,
 } from "./new-release-fixtures.ts";
@@ -187,6 +189,62 @@ test("compiles the complete normalized new-release mechanics", async () => {
           "Engine/Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.inl",
         implementationFile:
           "Engine/Source/Runtime/Core/Public/Math/UnrealMathUtility.h",
+      },
+    },
+  });
+  assert.deepEqual(mechanics.sourceMapLifecycle, {
+    collection: "Example Source Map",
+    posterCollection: "Example Poster Map",
+    restore: {
+      trigger: "load",
+      source: "Example Save Source Map",
+      effect: "replace-source-map",
+    },
+    generation: {
+      trigger: "generate-new-released-movie",
+      dataTableObjectPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleScheduleTable.ExampleScheduleTable",
+      rowDiscovery: "data-table-row-names",
+      rowLookup: "data-table-row-by-name",
+      unlockPool: "rows-with-genre-present-in-movie-genres-unlock",
+      selection: "random-unlock-pool-item",
+      duplicateHandling: "remove-selected-item-and-retry",
+      additions: {
+        sourceMap: "selected-film-product-sku-to-new-release-film",
+        posterMap: "selected-film-product-sku-to-new-release-film",
+      },
+    },
+    cleanup: {
+      iteration: "source-map-values",
+      condition: "second-hand-available",
+      removalKey: "iterated-value-product-sku",
+    },
+    evidence: {
+      kind: "kismet-analysis",
+      confidence: "direct",
+      classPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.ExampleManager_C",
+      loadFunction: "ExampleLoad",
+      eventGraphFunction: "ExecuteExampleGraph_ExampleManager",
+      generationFunction: "ExampleGenerateRecord",
+      statementIndexes: {
+        loadWrapperCall: 18,
+        restoreAssignment: 2886,
+        dataTableAssignment: 5,
+        rowNames: 535,
+        rowLookup: 843,
+        genreLookup: 930,
+        addUnlockPool: 3559,
+        randomPoolItem: 1241,
+        findExisting: 1337,
+        duplicateBranch: 1383,
+        removeDuplicateFromPool: 1429,
+        addSourceMap: 2129,
+        addPosterMap: 2842,
+        enumerateSourceValues: 2978,
+        secondHandBranch: 3254,
+        removeSecondHand: 3364,
+        cleanupLoopBack: 3498,
       },
     },
   });
@@ -583,10 +641,74 @@ test("rejects a call target linked to another candidate-map trace", () => {
   );
 });
 
+test("rejects a changed new-release source DataTable", () => {
+  const sourceMap = createSourceMapTrace();
+  const generation = sourceMap.functions.find(
+    (function_) => function_.functionName === "ExampleGenerateRecord",
+  )!;
+  const dataTable = generation.nodes.find(
+    (node) => node.statementIndex === 15,
+  )!.literal!;
+  (dataTable as { value: string }).value = "ExampleGame/Content/Other.Other";
+
+  assert.throws(
+    () => compileCurrent({ sourceMap }),
+    /object identity changed/u,
+  );
+});
+
+test("rejects a changed genre-pool route", () => {
+  const sourceMap = createSourceMapTrace();
+  const generation = sourceMap.functions.find(
+    (function_) => function_.functionName === "ExampleGenerateRecord",
+  )!;
+  const genreRoute = generation.nodes.find(
+    (node) => node.statementIndex === 1023,
+  )!.jump!.targets[0]!;
+  (genreRoute as { offset: number }).offset = 3518;
+
+  assert.throws(
+    () => compileCurrent({ sourceMap }),
+    /branch changed/u,
+  );
+});
+
+test("rejects a changed Market load entrypoint", () => {
+  const marketEntry = createMarketEntryTrace();
+  const load = marketEntry.functions.find(
+    (function_) => function_.functionName === "ExampleLoad",
+  )!;
+  const entryPoint = load.nodes.find(
+    (node) => node.call?.functionName === "ExecuteExampleGraph_ExampleManager",
+  )!.call!.integerArguments[0]!;
+  (entryPoint as { value: string }).value = "2623";
+
+  assert.throws(
+    () => compileCurrent({ marketEntry }),
+    /entrypoint changed/u,
+  );
+});
+
+test("rejects cleanup of a different map", () => {
+  const sourceMap = createSourceMapTrace();
+  const generation = sourceMap.functions.find(
+    (function_) => function_.functionName === "ExampleGenerateRecord",
+  )!;
+  generation.nodes.find((node) => node.statementIndex === 3373)!.symbol =
+    "Example Poster Map";
+
+  assert.throws(
+    () => compileCurrent({ sourceMap }),
+    /node changed/u,
+  );
+});
+
 function compileCurrent(overrides: {
   manager?: ReturnType<typeof createManagerTrace>;
   propertyReader?: ReturnType<typeof createPropertyReaderTrace>;
   requestGenerator?: ReturnType<typeof createRequestGeneratorTrace>;
+  marketEntry?: ReturnType<typeof createMarketEntryTrace>;
+  sourceMap?: ReturnType<typeof createSourceMapTrace>;
   wrapper?: ReturnType<typeof createWrapperTrace>;
   candidateMap?: ReturnType<typeof createCandidateMapTrace>;
   callTarget?: ReturnType<typeof createCallTargetTrace>;
@@ -596,6 +718,8 @@ function compileCurrent(overrides: {
     overrides.wrapper ?? createWrapperTrace(),
     overrides.propertyReader ?? createPropertyReaderTrace(),
     overrides.requestGenerator ?? createRequestGeneratorTrace(),
+    overrides.marketEntry ?? createMarketEntryTrace(),
+    overrides.sourceMap ?? createSourceMapTrace(),
     overrides.candidateMap ?? createCandidateMapTrace(),
     overrides.callTarget ?? createCallTargetTrace(),
     newReleaseSources,

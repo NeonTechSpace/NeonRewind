@@ -26,6 +26,8 @@ interface Options {
   readonly wrapperTracePath: string;
   readonly propertyReaderTracePath: string;
   readonly requestGeneratorTracePath: string;
+  readonly marketEntryTracePath: string;
+  readonly sourceMapTracePath: string;
   readonly candidateMapTracePath: string;
   readonly callTargetTracePath: string;
   readonly outputPath: string;
@@ -48,6 +50,8 @@ export async function runNewReleaseMechanics(
       wrapper,
       propertyReader,
       requestGenerator,
+      marketEntry,
+      sourceMap,
       candidateMap,
       callTarget,
     ] = await Promise.all([
@@ -55,6 +59,8 @@ export async function runNewReleaseMechanics(
       readInput(options.wrapperTracePath, "Unlock wrapper trace"),
       readInput(options.propertyReaderTracePath, "Property-reader trace"),
       readInput(options.requestGeneratorTracePath, "Request-generator trace"),
+      readInput(options.marketEntryTracePath, "Market entry trace"),
+      readInput(options.sourceMapTracePath, "Source-map trace"),
       readInput(options.candidateMapTracePath, "Candidate-map trace"),
       readInput(options.callTargetTracePath, "Call-target trace"),
     ]);
@@ -68,6 +74,11 @@ export async function runNewReleaseMechanics(
       requestGeneratorTrace: createIdentity(
         requestGenerator,
         "blueprint-function-trace",
+      ),
+      marketEntryTrace: createIdentity(marketEntry, "blueprint-function-trace"),
+      sourceMapTrace: createIdentity(
+        sourceMap,
+        "blueprint-property-reference-trace",
       ),
       candidateMapTrace: createIdentity(
         candidateMap,
@@ -97,6 +108,16 @@ export async function runNewReleaseMechanics(
         "Request-generator trace input",
       ),
       assertArtifactContract(
+        BlueprintFunctionTraceSchema,
+        marketEntry.value,
+        "Market entry trace input",
+      ),
+      assertArtifactContract(
+        BlueprintPropertyReferenceTraceSchema,
+        sourceMap.value,
+        "Source-map trace input",
+      ),
+      assertArtifactContract(
         BlueprintPropertyReferenceTraceSchema,
         candidateMap.value,
         "Candidate-map trace input",
@@ -111,9 +132,16 @@ export async function runNewReleaseMechanics(
     const output = `${JSON.stringify(mechanics, undefined, 2)}\n`;
 
     await Promise.all(
-      [manager, wrapper, propertyReader, requestGenerator, candidateMap, callTarget].map((input) =>
-        assertFileUnchanged(input)
-      ),
+      [
+        manager,
+        wrapper,
+        propertyReader,
+        requestGenerator,
+        marketEntry,
+        sourceMap,
+        candidateMap,
+        callTarget,
+      ].map((input) => assertFileUnchanged(input)),
     );
     const status = await writeImmutableArtifact(options.outputPath, output);
     if (status === "conflict") {
@@ -135,7 +163,7 @@ export async function runNewReleaseMechanics(
 
 export function writeNewReleaseUsage(stream: NodeJS.WritableStream): void {
   stream.write(
-    "  neonretrorewind-data-compiler new-release-mechanics --manager-trace <path> --wrapper-trace <path> --property-reader-trace <path> --request-generator-trace <path> --candidate-map-trace <path> --call-target-trace <path> --output <path>\n",
+    "  neonretrorewind-data-compiler new-release-mechanics --manager-trace <path> --wrapper-trace <path> --property-reader-trace <path> --request-generator-trace <path> --market-entry-trace <path> --source-map-trace <path> --candidate-map-trace <path> --call-target-trace <path> --output <path>\n",
   );
 }
 
@@ -161,6 +189,8 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     "--wrapper-trace",
     "--property-reader-trace",
     "--request-generator-trace",
+    "--market-entry-trace",
+    "--source-map-trace",
     "--candidate-map-trace",
     "--call-target-trace",
     "--output",
@@ -183,13 +213,15 @@ function parseOptions(arguments_: readonly string[]): Options | string {
   }
   const missing = names.filter((name) => !values.has(name));
   if (missing.length > 0) {
-    return `Expected manager, wrapper, property-reader, request-generator, candidate-map, and call-target traces and --output, missing ${missing.join(", ")}.`;
+    return `Expected manager, wrapper, property-reader, request-generator, Market entry, source-map, candidate-map, and call-target traces and --output, missing ${missing.join(", ")}.`;
   }
   return {
     managerTracePath: values.get("--manager-trace")!,
     wrapperTracePath: values.get("--wrapper-trace")!,
     propertyReaderTracePath: values.get("--property-reader-trace")!,
     requestGeneratorTracePath: values.get("--request-generator-trace")!,
+    marketEntryTracePath: values.get("--market-entry-trace")!,
+    sourceMapTracePath: values.get("--source-map-trace")!,
     candidateMapTracePath: values.get("--candidate-map-trace")!,
     callTargetTracePath: values.get("--call-target-trace")!,
     outputPath: values.get("--output")!,

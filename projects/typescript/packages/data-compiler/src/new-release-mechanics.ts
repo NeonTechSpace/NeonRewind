@@ -22,6 +22,7 @@ import type {
   UnlockableManagerTraceArtifact,
 } from "./blueprint-trace-inputs.ts";
 import { compileNewReleaseCandidateEligibility } from "./new-release-candidate-eligibility.ts";
+import { compileNewReleaseSourceMapLifecycle } from "./new-release-source-map.ts";
 
 const classPath =
   "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockSystem.ExampleUnlockSystem_C";
@@ -51,6 +52,8 @@ export interface NewReleaseSources {
   readonly wrapperTrace: NewReleaseArtifactIdentity<"blueprint-function-trace">;
   readonly propertyReaderTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
   readonly requestGeneratorTrace: NewReleaseArtifactIdentity<"blueprint-function-trace">;
+  readonly marketEntryTrace: NewReleaseArtifactIdentity<"blueprint-function-trace">;
+  readonly sourceMapTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
   readonly candidateMapTrace: NewReleaseArtifactIdentity<"blueprint-property-reference-trace">;
   readonly callTargetTrace: NewReleaseArtifactIdentity<"blueprint-call-target-trace">;
 }
@@ -60,6 +63,8 @@ export function compileNewReleaseMechanics(
   wrapperTrace: BlueprintFunctionTraceArtifact,
   propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
   requestGeneratorTrace: BlueprintFunctionTraceArtifact,
+  marketEntryTrace: BlueprintFunctionTraceArtifact,
+  sourceMapTrace: BlueprintPropertyReferenceTraceArtifact,
   candidateMapTrace: BlueprintPropertyReferenceTraceArtifact,
   callTargetTrace: BlueprintCallTargetTraceArtifact,
   sources: NewReleaseSources,
@@ -69,6 +74,8 @@ export function compileNewReleaseMechanics(
     wrapperTrace,
     propertyReaderTrace,
     requestGeneratorTrace,
+    marketEntryTrace,
+    sourceMapTrace,
     candidateMapTrace,
     callTargetTrace,
   );
@@ -331,6 +338,10 @@ export function compileNewReleaseMechanics(
         },
       },
     },
+    sourceMapLifecycle: compileNewReleaseSourceMapLifecycle(
+      marketEntryTrace,
+      sourceMapTrace,
+    ),
     candidateEligibility: compileNewReleaseCandidateEligibility(
       candidateMapTrace,
       callTargetTrace,
@@ -344,6 +355,8 @@ function assertInputContracts(
   wrapperTrace: BlueprintFunctionTraceArtifact,
   propertyReaderTrace: BlueprintPropertyReferenceTraceArtifact,
   requestGeneratorTrace: BlueprintFunctionTraceArtifact,
+  marketEntryTrace: BlueprintFunctionTraceArtifact,
+  sourceMapTrace: BlueprintPropertyReferenceTraceArtifact,
   candidateMapTrace: BlueprintPropertyReferenceTraceArtifact,
   callTargetTrace: BlueprintCallTargetTraceArtifact,
 ): void {
@@ -359,6 +372,12 @@ function assertInputContracts(
   if (requestGeneratorTrace.artifactType !== "blueprint-function-trace") {
     throw new Error("Expected a blueprint-function-trace request-generator input.");
   }
+  if (marketEntryTrace.artifactType !== "blueprint-function-trace") {
+    throw new Error("Expected a Blueprint function trace for Market entrypoints.");
+  }
+  if (sourceMapTrace.artifactType !== "blueprint-property-reference-trace") {
+    throw new Error("Expected a source-map property-reference trace input.");
+  }
   if (candidateMapTrace.artifactType !== "blueprint-property-reference-trace") {
     throw new Error("Expected a candidate-map property-reference trace input.");
   }
@@ -369,6 +388,8 @@ function assertInputContracts(
     wrapperTrace,
     propertyReaderTrace,
     requestGeneratorTrace,
+    marketEntryTrace,
+    sourceMapTrace,
     candidateMapTrace,
     callTargetTrace,
   ];

@@ -39,6 +39,16 @@ export const newReleaseSources: NewReleaseSources = {
     "blueprint-function-trace",
     "d",
   ),
+  marketEntryTrace: identity(
+    "blueprint-function-trace.execute-ubergraph-market-entrypoints.json",
+    "blueprint-function-trace",
+    "e",
+  ),
+  sourceMapTrace: identity(
+    "blueprint-property-reference-trace.new-release-source-flow.json",
+    "blueprint-property-reference-trace",
+    "f",
+  ),
   candidateMapTrace: identity(
     "blueprint-property-reference-trace.new-release-candidates.v2.json",
     "blueprint-property-reference-trace",
@@ -562,6 +572,205 @@ export function createRequestGeneratorTrace(): Mutable<BlueprintFunctionTraceArt
     extractor: extractor(),
     totals: totals([function_], 0),
     functions: [function_],
+  };
+}
+
+export function createMarketEntryTrace(): Mutable<BlueprintFunctionTraceArtifact> {
+  const entries = [
+    ["Bind Actors", "4334", false],
+    ["ExampleCreatePeriodEvent", "2587", true],
+    ["Generate Example Manager State", "2617", true],
+    ["ExampleLoad", "2622", true],
+    ["ReceiveBeginPlay", "2388", false],
+    ["Save", "3539", false],
+  ] as const;
+  const functions = entries.map(([functionName, entryPoint, parameter]) =>
+    marketWrapper(functionName, entryPoint, parameter)
+  );
+  return {
+    artifactType: "blueprint-function-trace",
+    build: createBuild(),
+    callerBodies: [{
+      fileName: "blueprint-caller-bodies.execute-ubergraph-market.json",
+      sizeBytes: 100,
+      sha256: "8".repeat(64),
+      targetFunctionName: "ExecuteExampleGraph_ExampleManager",
+    }],
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: extractor(),
+    totals: totals(functions, functions.length),
+    functions,
+  };
+}
+
+export function createSourceMapTrace(): Mutable<BlueprintPropertyReferenceTraceArtifact> {
+  const eventNodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const eventRoot = fixtureRoot(eventNodes);
+  const loadEntry = eventRoot(2622, "EX_PushExecutionFlow", "branch");
+  loadEntry.jump = {
+    jumpKind: "push-flow",
+    targets: [{ edge: "pushingAddress", offset: 3307 }],
+  };
+  const restore = eventRoot(2886, "EX_Let", "assignment", "Example Source Map");
+  addNode(eventNodes, restore, "Variable", 2895, "EX_InstanceVariable", "variable", "Example Source Map");
+  const savedMap = addNode(
+    eventNodes,
+    restore,
+    "Assignment",
+    2904,
+    "EX_StructMemberContext",
+    "context",
+    "ExampleField10_0_00000000000000000000000000000000",
+  );
+  const market = addNode(
+    eventNodes,
+    savedMap,
+    "StructExpression",
+    2913,
+    "EX_Context",
+    "context",
+    "Example Manager",
+  );
+  addNode(eventNodes, market, "ObjectExpression", 2914, "EX_LocalVariable", "variable", "ExampleSymbol_37c2ed4f4d9d");
+  addNode(eventNodes, market, "ContextExpression", 2935, "EX_InstanceVariable", "variable", "Example Manager");
+
+  const generationNodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  const root = fixtureRoot(generationNodes);
+  const dataTableAssignment = root(5, "EX_LetObj", "assignment");
+  addNode(generationNodes, dataTableAssignment, "Variable", 6, "EX_LocalVariable", "variable", "new Release Data table");
+  const dataTable = addNode(generationNodes, dataTableAssignment, "Assignment", 15, "EX_ObjectConst", "literal");
+  dataTable.literal = {
+    literalType: "object",
+    value:
+      "ExampleGame/Content/ExampleProject/core/blueprint/data/ExampleScheduleTable.ExampleScheduleTable",
+  };
+
+  const rowNames = root(535, "EX_CallMath", "call");
+  rowNames.call = call("final", "GetDataTableRowNames", 2, []);
+  addNode(generationNodes, rowNames, "Parameters[0]", 544, "EX_LocalVariable", "variable", "new Release Data table");
+  addNode(generationNodes, rowNames, "Parameters[1]", 553, "EX_LocalVariable", "variable", "ExampleSymbol_db9f9613b85f");
+
+  const rowLookup = root(843, "EX_FinalFunction", "call");
+  rowLookup.call = call("final", "GetDataTableRowFromName", 3, []);
+  const lookupTable = addNode(generationNodes, rowLookup, "Parameters[0]", 852, "EX_ObjectConst", "literal");
+  lookupTable.literal = { ...dataTable.literal };
+  addNode(generationNodes, rowLookup, "Parameters[1]", 861, "EX_LocalVariable", "variable", "ExampleSymbol_38f1ea380eae");
+  addNode(generationNodes, rowLookup, "Parameters[2]", 870, "EX_LocalVariable", "variable", "ExampleSymbol_b0106fce9ba0");
+
+  const genreLookup = root(930, "EX_FinalFunction", "call");
+  genreLookup.call = call("final", "Array_Find", 2, []);
+  const unlockedGenres = addNode(generationNodes, genreLookup, "Parameters[0]", 939, "EX_Context", "context", "Example Enabled Categories");
+  addNode(generationNodes, unlockedGenres, "ContextExpression", 961, "EX_InstanceVariable", "variable", "Example Enabled Categories");
+  const genre = addNode(generationNodes, genreLookup, "Parameters[1]", 970, "EX_StructMemberContext", "context", "ExampleField08_0_00000000000000000000000000000000");
+  addNode(generationNodes, genre, "StructExpression", 979, "EX_LocalVariable", "variable", "ExampleSymbol_b0106fce9ba0");
+  const missingGenre = root(999, "EX_CallMath", "call");
+  missingGenre.call = call("final", "EqualEqual_IntInt", 2, []);
+  addNode(generationNodes, missingGenre, "Parameters[0]", 1008, "EX_LocalVariable", "variable", "ExampleSymbol_0b481d5b7326");
+  const minusOne = addNode(generationNodes, missingGenre, "Parameters[1]", 1017, "EX_IntConst", "literal");
+  minusOne.literal = { literalType: "integer", value: "-1" };
+  const genreBranch = root(1023, "EX_JumpIfNot", "branch");
+  genreBranch.jump = {
+    jumpKind: "conditional-false",
+    targets: [{ edge: "codeOffset", offset: 3519 }],
+  };
+  addNode(generationNodes, genreBranch, "BooleanExpression", 1028, "EX_LocalVariable", "variable", "ExampleSymbol_df2629fe7327");
+  const addUnlockPoolAssignment = root(
+    3519,
+    "EX_Let",
+    "assignment",
+    "ExampleSymbol_560edd151976",
+  );
+  const addUnlockPoolContext = addNode(
+    generationNodes,
+    addUnlockPoolAssignment,
+    "Assignment",
+    3537,
+    "EX_Context",
+    "context",
+    "ExampleSymbol_560edd151976",
+  );
+  const addUnlockPool = addNode(
+    generationNodes,
+    addUnlockPoolContext,
+    "ContextExpression",
+    3559,
+    "EX_FinalFunction",
+    "call",
+  );
+  addUnlockPool.call = call("final", "Array_Add", 2, []);
+  addNode(generationNodes, addUnlockPool, "Parameters[0]", 3568, "EX_LocalVariable", "variable", "ExampleAddCandidate");
+  addNode(generationNodes, addUnlockPool, "Parameters[1]", 3577, "EX_LocalVariable", "variable", "ExampleSymbol_b0106fce9ba0");
+
+  const randomItem = root(1241, "EX_FinalFunction", "call");
+  randomItem.call = call("final", "Array_Random", 3, []);
+  addNode(generationNodes, randomItem, "Parameters[0]", 1250, "EX_LocalVariable", "variable", "ExampleAddCandidate");
+
+  const existing = root(1337, "EX_FinalFunction", "call");
+  existing.call = call("final", "Map_Find", 3, []);
+  addNode(generationNodes, existing, "Parameters[0]", 1346, "EX_InstanceVariable", "variable", "Example Source Map");
+  const existingSku = addNode(generationNodes, existing, "Parameters[1]", 1355, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  addNode(generationNodes, existingSku, "StructExpression", 1364, "EX_LocalVariable", "variable", "ExampleCurrentCandidate");
+  const duplicateBranch = root(1383, "EX_JumpIfNot", "branch");
+  duplicateBranch.jump = {
+    jumpKind: "conditional-false",
+    targets: [{ edge: "codeOffset", offset: 1462 }],
+  };
+  const removeDuplicate = root(1429, "EX_FinalFunction", "call");
+  removeDuplicate.call = call("final", "Array_RemoveItem", 2, []);
+  addNode(generationNodes, removeDuplicate, "Parameters[0]", 1438, "EX_LocalVariable", "variable", "ExampleAddCandidate");
+  addNode(generationNodes, removeDuplicate, "Parameters[1]", 1447, "EX_LocalVariable", "variable", "ExampleCurrentCandidate");
+  const retry = root(1457, "EX_Jump", "branch");
+  retry.jump = {
+    jumpKind: "unconditional",
+    targets: [{ edge: "codeOffset", offset: 1112 }],
+  };
+
+  sourceMapAdd(generationNodes, root, 2129, 2138, 2147, 2156, 2165, "Example Source Map");
+  sourceMapAdd(generationNodes, root, 2842, 2851, 2860, 2869, 2878, "Example Poster Map");
+
+  const values = root(2978, "EX_FinalFunction", "call");
+  values.call = call("final", "Map_Values", 2, []);
+  addNode(generationNodes, values, "Parameters[0]", 2987, "EX_InstanceVariable", "variable", "Example Source Map");
+  addNode(generationNodes, values, "Parameters[1]", 2996, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
+  const secondHandBranch = root(3254, "EX_PopExecutionFlowIfNot", "branch");
+  secondHandBranch.jump = { jumpKind: "pop-flow-if-false", targets: [] };
+  const secondHand = addNode(generationNodes, secondHandBranch, "BooleanExpression", 3255, "EX_StructMemberContext", "context", "ExampleField14_0_00000000000000000000000000000000");
+  addNode(generationNodes, secondHand, "StructExpression", 3264, "EX_LocalVariable", "variable", "ExampleSymbol_4bb2d3edf81f");
+  const remove = root(3364, "EX_FinalFunction", "call");
+  remove.call = call("final", "Map_Remove", 2, []);
+  addNode(generationNodes, remove, "Parameters[0]", 3373, "EX_InstanceVariable", "variable", "Example Source Map");
+  const removalSku = addNode(generationNodes, remove, "Parameters[1]", 3382, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  const removalBoxData = addNode(generationNodes, removalSku, "StructExpression", 3391, "EX_StructMemberContext", "context", "ExampleField03_0_00000000000000000000000000000000");
+  const removalBaseStructure = addNode(generationNodes, removalBoxData, "StructExpression", 3400, "EX_StructMemberContext", "context", "ExampleField02_0_00000000000000000000000000000000");
+  const removalProduct = addNode(generationNodes, removalBaseStructure, "StructExpression", 3409, "EX_StructMemberContext", "context", "ExampleField11_0_00000000000000000000000000000000");
+  addNode(generationNodes, removalProduct, "StructExpression", 3418, "EX_LocalVariable", "variable", "ExampleSymbol_4bb2d3edf81f");
+  const cleanupLoop = root(3498, "EX_Jump", "branch");
+  cleanupLoop.jump = {
+    jumpKind: "unconditional",
+    targets: [{ edge: "codeOffset", offset: 3052 }],
+  };
+
+  const functions = [
+    candidateFunction("ExecuteExampleGraph_ExampleManager", eventNodes),
+    candidateFunction("ExampleGenerateRecord", generationNodes),
+  ];
+  return {
+    artifactType: "blueprint-property-reference-trace",
+    build: createBuild(),
+    blueprintPropertyReferences: {
+      fileName: "blueprint-property-references.new-release-source.json",
+      sizeBytes: 100,
+      sha256: "7".repeat(64),
+      targetPropertyName: "Example Source Map",
+    },
+    requestedFunctionPaths: functions.map((function_) => function_.functionPath),
+    selectionRule: "explicit-functions-with-read-references",
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: extractor(),
+    totals: totals(functions, 0),
+    functions,
   };
 }
 
@@ -1148,6 +1357,113 @@ function literalAssignment(
     "literal",
   );
   literal.literal = { literalType, value };
+}
+
+function marketWrapper(
+  functionName: string,
+  entryPoint: string,
+  parameter: boolean,
+): Mutable<BlueprintTraceFunctionInput> {
+  const nodes: Mutable<BlueprintTraceNodeInput>[] = [];
+  if (parameter) {
+    const assignment = addNode(
+      nodes,
+      null,
+      "script[0]",
+      0,
+      "EX_LetValueOnPersistentFrame",
+      "assignment",
+      "Parameter",
+    );
+    addNode(
+      nodes,
+      assignment,
+      "AssignmentExpression",
+      9,
+      "EX_LocalVariable",
+      "variable",
+      "Parameter",
+    );
+  }
+  const statementIndex = parameter ? 18 : 0;
+  const entry = addNode(
+    nodes,
+    null,
+    `script[${parameter ? 1 : 0}]`,
+    statementIndex,
+    "EX_LocalFinalFunction",
+    "call",
+  );
+  entry.call = call("local-final", "ExecuteExampleGraph_ExampleManager", 1, [entryPoint]);
+  const literal = addNode(
+    nodes,
+    entry,
+    "Parameters[0]",
+    statementIndex + 9,
+    "EX_IntConst",
+    "literal",
+  );
+  literal.literal = { literalType: "integer", value: entryPoint };
+  return {
+    packagePath: "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleManager.uasset",
+    className: "ExampleManager_C",
+    classPath: marketClassPath,
+    functionName,
+    functionPath: `${marketClassPath}:${functionName}`,
+    flags: "FUNC_Public, FUNC_BlueprintCallable",
+    bytecodeExpressionCount: parameter ? 2 : 1,
+    nodes,
+  };
+}
+
+function sourceMapAdd(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  callStatement: number,
+  mapStatement: number,
+  skuStatement: number,
+  filmStatement: number,
+  valueStatement: number,
+  collection: string,
+): void {
+  const add = root(callStatement, "EX_FinalFunction", "call");
+  add.call = call("final", "Map_Add", 3, []);
+  addNode(
+    nodes,
+    add,
+    "Parameters[0]",
+    mapStatement,
+    "EX_InstanceVariable",
+    "variable",
+    collection,
+  );
+  const sku = addNode(
+    nodes,
+    add,
+    "Parameters[1]",
+    skuStatement,
+    "EX_StructMemberContext",
+    "context",
+    "ExampleField15_0_00000000000000000000000000000000",
+  );
+  addNode(
+    nodes,
+    sku,
+    "StructExpression",
+    filmStatement,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleCurrentCandidate",
+  );
+  addNode(
+    nodes,
+    add,
+    "Parameters[2]",
+    valueStatement,
+    "EX_LocalVariable",
+    "variable",
+    "ExampleSymbol_5ac47990d176 Input Record",
+  );
 }
 
 function wrapper(functionName: string, entryPoint: number, parameter = false): Mutable<BlueprintTraceFunctionInput> {
