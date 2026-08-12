@@ -568,6 +568,11 @@ export function createRequestGeneratorTrace(): Mutable<BlueprintFunctionTraceArt
 export function createCandidateMapTrace(): Mutable<BlueprintPropertyReferenceTraceArtifact> {
   const rebuildNodes: Mutable<BlueprintTraceNodeInput>[] = [];
   const rebuildRoot = fixtureRoot(rebuildNodes);
+  const rebuildReturn = rebuildRoot(0, "EX_PushExecutionFlow", "branch");
+  rebuildReturn.jump = {
+    jumpKind: "push-flow",
+    targets: [{ edge: "pushingAddress", offset: 519 }],
+  };
   const weatherValid = rebuildRoot(15, "EX_CallMath", "call");
   weatherValid.call = call("final", "IsValid", 1, []);
   addNode(rebuildNodes, weatherValid, "Parameters[0]", 24, "EX_InstanceVariable", "variable", "Weather ref");
@@ -582,6 +587,29 @@ export function createCandidateMapTrace(): Mutable<BlueprintPropertyReferenceTra
   values.call = call("final", "Map_Values", 2, []);
   addNode(rebuildNodes, values, "Parameters[0]", 127, "EX_InstanceVariable", "variable", "Example Source Map");
   addNode(rebuildNodes, values, "Parameters[1]", 136, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
+  fixtureLiteralAssignment(rebuildNodes, rebuildRoot, 146, "EX_Let", "Temp_int_Loop_Counter_Variable", "integer", "0", 155, 164);
+  fixtureLiteralAssignment(rebuildNodes, rebuildRoot, 169, "EX_Let", "Temp_int_Array_Index_Variable", "integer", "0", 178, 187);
+  const lengthAssignment = rebuildRoot(192, "EX_Let", "assignment", "ExampleSymbol_5546bd5cfb37");
+  addNode(rebuildNodes, lengthAssignment, "Variable", 201, "EX_LocalOutVariable", "variable", "ExampleSymbol_5546bd5cfb37");
+  const lengthContext = addNode(rebuildNodes, lengthAssignment, "Assignment", 210, "EX_Context", "context", "ExampleSymbol_5546bd5cfb37");
+  const length = addNode(rebuildNodes, lengthContext, "ContextExpression", 232, "EX_FinalFunction", "call");
+  length.call = call("final", "Array_Length", 1, []);
+  addNode(rebuildNodes, length, "Parameters[0]", 241, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
+  const loopConditionAssignment = rebuildRoot(251, "EX_LetBool", "assignment");
+  addNode(rebuildNodes, loopConditionAssignment, "Variable", 252, "EX_LocalOutVariable", "variable", "ExampleSymbol_ea1fd7e15884");
+  const loopCondition = addNode(rebuildNodes, loopConditionAssignment, "Assignment", 261, "EX_CallMath", "call");
+  loopCondition.call = call("final", "Less_IntInt", 2, []);
+  addNode(rebuildNodes, loopCondition, "Parameters[0]", 270, "EX_LocalVariable", "variable", "Temp_int_Loop_Counter_Variable");
+  addNode(rebuildNodes, loopCondition, "Parameters[1]", 279, "EX_LocalVariable", "variable", "ExampleSymbol_5546bd5cfb37");
+  const loopBranch = rebuildRoot(289, "EX_PopExecutionFlowIfNot", "branch");
+  loopBranch.jump = { jumpKind: "pop-flow-if-false", targets: [] };
+  addNode(rebuildNodes, loopBranch, "BooleanExpression", 290, "EX_LocalVariable", "variable", "ExampleSymbol_ea1fd7e15884");
+  fixtureVariableAssignment(rebuildNodes, rebuildRoot, 299, "EX_Let", "Temp_int_Array_Index_Variable", "Temp_int_Loop_Counter_Variable", 308, 317);
+  const loopIncrement = rebuildRoot(326, "EX_PushExecutionFlow", "branch");
+  loopIncrement.jump = {
+    jumpKind: "push-flow",
+    targets: [{ edge: "pushingAddress", offset: 445 }],
+  };
   const item = rebuildRoot(353, "EX_FinalFunction", "call");
   item.call = call("final", "Array_Get", 3, []);
   addNode(rebuildNodes, item, "Parameters[0]", 362, "EX_LocalVariable", "variable", "ExampleSymbol_5c9e16b9b19d");
@@ -593,6 +621,22 @@ export function createCandidateMapTrace(): Mutable<BlueprintPropertyReferenceTra
   addNode(rebuildNodes, date, "ObjectExpression", 404, "EX_InstanceVariable", "variable", "Weather ref");
   addNode(rebuildNodes, date, "ContextExpression", 425, "EX_InstanceVariable", "variable", "ExampleCurrentPeriod");
   addNode(rebuildNodes, filterCall, "Parameters[1]", 434, "EX_LocalVariable", "variable", "ExampleSymbol_4bb2d3edf81f");
+  const loopPop = rebuildRoot(444, "EX_PopExecutionFlow", "branch");
+  loopPop.jump = { jumpKind: "pop-flow", targets: [] };
+  const incrementAssignment = rebuildRoot(445, "EX_Let", "assignment", "ExampleSymbol_fbf99360b7d0");
+  addNode(rebuildNodes, incrementAssignment, "Variable", 454, "EX_LocalOutVariable", "variable", "ExampleSymbol_fbf99360b7d0");
+  const increment = addNode(rebuildNodes, incrementAssignment, "Assignment", 463, "EX_CallMath", "call");
+  increment.call = call("final", "Add_IntInt", 2, []);
+  addNode(rebuildNodes, increment, "Parameters[0]", 472, "EX_LocalVariable", "variable", "Temp_int_Loop_Counter_Variable");
+  const one = addNode(rebuildNodes, increment, "Parameters[1]", 481, "EX_IntConst", "literal");
+  one.literal = { literalType: "integer", value: "1" };
+  fixtureVariableAssignment(rebuildNodes, rebuildRoot, 487, "EX_Let", "Temp_int_Loop_Counter_Variable", "ExampleSymbol_fbf99360b7d0", 496, 505);
+  const loopBack = rebuildRoot(514, "EX_Jump", "branch");
+  loopBack.jump = {
+    jumpKind: "unconditional",
+    targets: [{ edge: "codeOffset", offset: 192 }],
+  };
+  rebuildRoot(519, "EX_Return", "return");
 
   const filterNodes: Mutable<BlueprintTraceNodeInput>[] = [];
   const filterRoot = fixtureRoot(filterNodes);
@@ -615,28 +659,43 @@ export function createCandidateMapTrace(): Mutable<BlueprintPropertyReferenceTra
   addNode(filterNodes, preconditionBranch, "BooleanExpression", 121, "EX_LocalVariable", "variable", "ExampleSymbol_69ac0269c2d9");
   const predicate = filterRoot(152, "EX_LocalVirtualFunction", "call");
   predicate.call = call("local-virtual", "Evaluate Example Record", 4, []);
-  addNode(filterNodes, predicate, "Parameters[0]", 165, "EX_StructMemberContext", "context", "ExampleField11_0_00000000000000000000000000000000");
+  const predicateProduct = addNode(filterNodes, predicate, "Parameters[0]", 165, "EX_StructMemberContext", "context", "ExampleField11_0_00000000000000000000000000000000");
+  addNode(filterNodes, predicateProduct, "StructExpression", 174, "EX_LocalVariable", "variable", "Example Input Record");
   addNode(filterNodes, predicate, "Parameters[1]", 183, "EX_Self", "operation");
   addNode(filterNodes, predicate, "Parameters[2]", 184, "EX_LocalVariable", "variable", "ExampleSymbol_cb75a284c42b");
   addNode(filterNodes, predicate, "Parameters[3]", 193, "EX_LocalVariable", "variable", "ExampleSymbol_c12d64d7fc3d");
   const predicateBranch = filterRoot(203, "EX_JumpIfNot", "branch");
   predicateBranch.jump = { jumpKind: "conditional-false", targets: [{ edge: "codeOffset", offset: 496 }] };
   addNode(filterNodes, predicateBranch, "BooleanExpression", 208, "EX_LocalVariable", "variable", "ExampleSymbol_cb75a284c42b");
-  fixtureLiteralAssignment(filterNodes, filterRoot, 299, "EX_LetBool", "ExampleField14_0_00000000000000000000000000000000", "boolean", "false", 300, 318, "EX_StructMemberContext", "context");
-  fixtureLiteralAssignment(filterNodes, filterRoot, 364, "EX_Let", "ExampleField01_0_00000000000000000000000000000000", "integer", "0", 373, 391, "EX_StructMemberContext", "context");
+  fixtureStructMemberCopy(filterNodes, filterRoot, 217, 226, 235, 244, 253, "ExampleField11_0_00000000000000000000000000000000", "ExampleSymbol_5ac47990d176 Input Record");
+  const eligibleSecondHand = fixtureLiteralAssignment(filterNodes, filterRoot, 299, "EX_LetBool", "ExampleField14_0_00000000000000000000000000000000", "boolean", "false", 300, 318, "EX_StructMemberContext", "context");
+  addNode(filterNodes, eligibleSecondHand, "StructExpression", 309, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record");
+  const eligibleBasePrice = fixtureLiteralAssignment(filterNodes, filterRoot, 364, "EX_Let", "ExampleField01_0_00000000000000000000000000000000", "integer", "0", 373, 391, "EX_StructMemberContext", "context");
+  addNode(filterNodes, eligibleBasePrice, "StructExpression", 382, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record");
   const eligible = filterRoot(418, "EX_FinalFunction", "call");
   eligible.call = call("final", "Map_Add", 3, []);
   addNode(filterNodes, eligible, "Parameters[0]", 427, "EX_InstanceVariable", "variable", "Example Candidate Map");
-  addNode(filterNodes, eligible, "Parameters[1]", 436, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  const eligibleSku = addNode(filterNodes, eligible, "Parameters[1]", 436, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  const eligibleBoxData = addNode(filterNodes, eligibleSku, "StructExpression", 445, "EX_StructMemberContext", "context", "ExampleField03_0_00000000000000000000000000000000");
+  const eligibleBaseStructure = addNode(filterNodes, eligibleBoxData, "StructExpression", 454, "EX_StructMemberContext", "context", "ExampleField02_0_00000000000000000000000000000000");
+  const eligibleProduct = addNode(filterNodes, eligibleBaseStructure, "StructExpression", 463, "EX_StructMemberContext", "context", "ExampleField11_0_00000000000000000000000000000000");
+  addNode(filterNodes, eligibleProduct, "StructExpression", 472, "EX_LocalVariable", "variable", "Example Input Record");
   addNode(filterNodes, eligible, "Parameters[2]", 481, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record");
   const successJump = filterRoot(491, "EX_Jump", "branch");
   successJump.jump = { jumpKind: "unconditional", targets: [{ edge: "codeOffset", offset: 770 }] };
-  fixtureLiteralAssignment(filterNodes, filterRoot, 578, "EX_LetBool", "ExampleField14_0_00000000000000000000000000000000", "boolean", "true", 579, 597, "EX_StructMemberContext", "context");
-  fixtureLiteralAssignment(filterNodes, filterRoot, 643, "EX_Let", "ExampleField01_0_00000000000000000000000000000000", "integer", "0", 652, 670, "EX_StructMemberContext", "context");
+  fixtureStructMemberCopy(filterNodes, filterRoot, 496, 505, 514, 523, 532, "ExampleField11_0_00000000000000000000000000000000", "ExampleSymbol_5ac47990d176 Input Record_1");
+  const ineligibleSecondHand = fixtureLiteralAssignment(filterNodes, filterRoot, 578, "EX_LetBool", "ExampleField14_0_00000000000000000000000000000000", "boolean", "true", 579, 597, "EX_StructMemberContext", "context");
+  addNode(filterNodes, ineligibleSecondHand, "StructExpression", 588, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record_1");
+  const ineligibleBasePrice = fixtureLiteralAssignment(filterNodes, filterRoot, 643, "EX_Let", "ExampleField01_0_00000000000000000000000000000000", "integer", "0", 652, 670, "EX_StructMemberContext", "context");
+  addNode(filterNodes, ineligibleBasePrice, "StructExpression", 661, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record_1");
   const ineligible = filterRoot(697, "EX_FinalFunction", "call");
   ineligible.call = call("final", "Map_Add", 3, []);
   addNode(filterNodes, ineligible, "Parameters[0]", 706, "EX_InstanceVariable", "variable", "Example Source Map");
-  addNode(filterNodes, ineligible, "Parameters[1]", 715, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  const ineligibleSku = addNode(filterNodes, ineligible, "Parameters[1]", 715, "EX_StructMemberContext", "context", "ExampleField15_0_00000000000000000000000000000000");
+  const ineligibleBoxData = addNode(filterNodes, ineligibleSku, "StructExpression", 724, "EX_StructMemberContext", "context", "ExampleField03_0_00000000000000000000000000000000");
+  const ineligibleBaseStructure = addNode(filterNodes, ineligibleBoxData, "StructExpression", 733, "EX_StructMemberContext", "context", "ExampleField02_0_00000000000000000000000000000000");
+  const ineligibleProduct = addNode(filterNodes, ineligibleBaseStructure, "StructExpression", 742, "EX_StructMemberContext", "context", "ExampleField11_0_00000000000000000000000000000000");
+  addNode(filterNodes, ineligibleProduct, "StructExpression", 751, "EX_LocalVariable", "variable", "Example Input Record");
   addNode(filterNodes, ineligible, "Parameters[2]", 760, "EX_LocalVariable", "variable", "ExampleSymbol_5ac47990d176 Input Record_1");
   filterRoot(770, "EX_Return", "return");
 
@@ -809,9 +868,9 @@ function fixtureLiteralAssignment(
   literalStatementIndex: number,
   variableOpcode = "EX_LocalVariable",
   variableKind: BlueprintTraceNodeInput["kind"] = "variable",
-): void {
+): Mutable<BlueprintTraceNodeInput> {
   const assignment = root(statementIndex, opcode, "assignment", opcode === "EX_Let" ? symbol : null);
-  addNode(
+  const target = addNode(
     nodes,
     assignment,
     "Variable",
@@ -829,6 +888,57 @@ function fixtureLiteralAssignment(
     "literal",
   );
   literal.literal = { literalType, value };
+  return target;
+}
+
+function fixtureStructMemberCopy(
+  nodes: Mutable<BlueprintTraceNodeInput>[],
+  root: ReturnType<typeof fixtureRoot>,
+  assignmentStatementIndex: number,
+  targetMemberStatementIndex: number,
+  targetStructStatementIndex: number,
+  sourceMemberStatementIndex: number,
+  sourceStructStatementIndex: number,
+  memberSymbol: string,
+  targetStructSymbol: string,
+): void {
+  const assignment = root(assignmentStatementIndex, "EX_Let", "assignment", memberSymbol);
+  const target = addNode(
+    nodes,
+    assignment,
+    "Variable",
+    targetMemberStatementIndex,
+    "EX_StructMemberContext",
+    "context",
+    memberSymbol,
+  );
+  addNode(
+    nodes,
+    target,
+    "StructExpression",
+    targetStructStatementIndex,
+    "EX_LocalVariable",
+    "variable",
+    targetStructSymbol,
+  );
+  const source = addNode(
+    nodes,
+    assignment,
+    "Assignment",
+    sourceMemberStatementIndex,
+    "EX_StructMemberContext",
+    "context",
+    memberSymbol,
+  );
+  addNode(
+    nodes,
+    source,
+    "StructExpression",
+    sourceStructStatementIndex,
+    "EX_LocalVariable",
+    "variable",
+    "Example Input Record",
+  );
 }
 
 function fixtureVariableAssignment(

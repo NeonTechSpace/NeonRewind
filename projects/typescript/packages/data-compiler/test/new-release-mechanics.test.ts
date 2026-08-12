@@ -484,6 +484,79 @@ test("rejects a changed released-film gate", () => {
   assert.throws(() => compileCurrent({ candidateMap }), /trace literal changed/u);
 });
 
+test("rejects candidate iteration over a different array index", () => {
+  const candidateMap = createCandidateMapTrace();
+  const index = candidateMap.functions
+    .find((function_) => function_.functionName === "ExampleRebuildCandidates")!
+    .nodes.find((node) => node.statementIndex === 371);
+  assert.ok(index);
+  index.symbol = "Unrelated_Array_Index";
+  assert.throws(() => compileCurrent({ candidateMap }), /trace symbol changed/u);
+});
+
+test("rejects measuring a different candidate source array", () => {
+  const candidateMap = createCandidateMapTrace();
+  const measuredValues = candidateMap.functions
+    .find((function_) => function_.functionName === "ExampleRebuildCandidates")!
+    .nodes.find((node) => node.statementIndex === 241);
+  assert.ok(measuredValues);
+  measuredValues.symbol = "Unrelated_Map_Values";
+  assert.throws(() => compileCurrent({ candidateMap }), /trace symbol changed/u);
+});
+
+test("rejects a changed candidate iteration back edge", () => {
+  const candidateMap = createCandidateMapTrace();
+  const loopBack = candidateMap.functions
+    .find((function_) => function_.functionName === "ExampleRebuildCandidates")!
+    .nodes.find((node) => node.statementIndex === 514);
+  assert.ok(loopBack?.jump);
+  loopBack.jump = {
+    ...loopBack.jump,
+    targets: [{ edge: "codeOffset", offset: 251 }],
+  };
+  assert.throws(() => compileCurrent({ candidateMap }), /trace branch changed/u);
+});
+
+test("rejects adding a different eligible record", () => {
+  const candidateMap = createCandidateMapTrace();
+  const insertedRecord = candidateMap.functions
+    .find((function_) => function_.functionName === "Filter Example Schedule")!
+    .nodes.find((node) => node.statementIndex === 481);
+  assert.ok(insertedRecord);
+  insertedRecord.symbol = "Unrelated_Film_Record";
+  assert.throws(() => compileCurrent({ candidateMap }), /trace variable changed/u);
+});
+
+test("rejects adding a different predicate-failure record", () => {
+  const candidateMap = createCandidateMapTrace();
+  const insertedRecord = candidateMap.functions
+    .find((function_) => function_.functionName === "Filter Example Schedule")!
+    .nodes.find((node) => node.statementIndex === 760);
+  assert.ok(insertedRecord);
+  insertedRecord.symbol = "Unrelated_Film_Record";
+  assert.throws(() => compileCurrent({ candidateMap }), /trace variable changed/u);
+});
+
+test("rejects a candidate key from a different film record", () => {
+  const candidateMap = createCandidateMapTrace();
+  const keySource = candidateMap.functions
+    .find((function_) => function_.functionName === "Filter Example Schedule")!
+    .nodes.find((node) => node.statementIndex === 472);
+  assert.ok(keySource);
+  keySource.symbol = "Unrelated_Film_Record";
+  assert.throws(() => compileCurrent({ candidateMap }), /trace variable changed/u);
+});
+
+test("rejects a different SKU field as the candidate key", () => {
+  const candidateMap = createCandidateMapTrace();
+  const key = candidateMap.functions
+    .find((function_) => function_.functionName === "Filter Example Schedule")!
+    .nodes.find((node) => node.statementIndex === 436);
+  assert.ok(key);
+  key.symbol = "ExampleField15_0_00000000000000000000000000000000";
+  assert.throws(() => compileCurrent({ candidateMap }), /trace context changed/u);
+});
+
 test("rejects a changed still-new duration", () => {
   const callTarget = createCallTargetTrace();
   const duration = callTarget.binding.function.nodes.find(

@@ -31,10 +31,23 @@ const predicateClassPath =
 const predicateFunctionPath = `${predicateClassPath}:${predicateFunctionName}`;
 const candidateCollection = "Example Candidate Map";
 const sourceCollection = "Example Source Map";
+const sourceValuesSymbol = "ExampleSymbol_5c9e16b9b19d";
+const loopCounterSymbol = "Temp_int_Loop_Counter_Variable";
+const arrayIndexSymbol = "Temp_int_Array_Index_Variable";
+const arrayLengthSymbol = "ExampleSymbol_5546bd5cfb37";
+const loopConditionSymbol = "ExampleSymbol_ea1fd7e15884";
+const incrementedCounterSymbol = "ExampleSymbol_fbf99360b7d0";
+const selectedFilmSymbol = "ExampleSymbol_4bb2d3edf81f";
+const inputFilmSymbol = "Example Input Record";
+const eligibleFilmSymbol = "ExampleSymbol_5ac47990d176 Input Record";
+const ineligibleFilmSymbol = "ExampleSymbol_5ac47990d176 Input Record_1";
 const releasedSymbol = "ExampleField12_0_00000000000000000000000000000000";
 const secondHandSymbol =
   "ExampleField14_0_00000000000000000000000000000000";
 const productSymbol = "ExampleField11_0_00000000000000000000000000000000";
+const productSkuSymbol = "ExampleField15_0_00000000000000000000000000000000";
+const productBoxDataSymbol = "ExampleField03_0_00000000000000000000000000000000";
+const productBaseStructureSymbol = "ExampleField02_0_00000000000000000000000000000000";
 const basePriceSymbol = "ExampleField01_0_00000000000000000000000000000000";
 const availableDaySymbol =
   "Example Available Period_0_00000000000000000000000000000000";
@@ -219,6 +232,7 @@ function assertRebuildFlow(
   }
   assertTraceNodeTree(function_);
 
+  assertTraceJump(function_, 0, "push-flow", "pushingAddress", 519);
   const weatherValid = findTraceCall(function_, 15, "IsValid", "final", 1);
   assertTraceSymbolChild(weatherValid, function_, "Parameters[0]", "Weather ref");
   const validityBranch = assertTraceJump(function_, 34, "pop-flow-if-false");
@@ -236,16 +250,96 @@ function assertRebuildFlow(
 
   const values = findTraceCall(function_, 118, "Map_Values", "final", 2);
   assertTraceSymbolChild(values, function_, "Parameters[0]", sourceCollection);
-  assertTraceSymbolChild(values, function_, "Parameters[1]", "ExampleSymbol_5c9e16b9b19d");
+  assertTraceSymbolChild(values, function_, "Parameters[1]", sourceValuesSymbol);
+
+  assertLiteralAssignment(
+    function_,
+    146,
+    "EX_Let",
+    loopCounterSymbol,
+    "integer",
+    "0",
+  );
+  assertLiteralAssignment(
+    function_,
+    169,
+    "EX_Let",
+    arrayIndexSymbol,
+    "integer",
+    "0",
+  );
+
+  const lengthAssignment = findTraceNode(function_, 192);
+  assertTraceRootNode(function_, 192, "EX_Let");
+  assertTraceSymbolChild(lengthAssignment, function_, "Variable", arrayLengthSymbol);
+  const lengthContext = assertContextNodeChild(
+    lengthAssignment,
+    function_,
+    "Assignment",
+    210,
+    "EX_Context",
+    arrayLengthSymbol,
+  );
+  const length = findTraceCall(function_, 232, "Array_Length", "final", 1);
+  assertChildNode(lengthContext, length, "ContextExpression");
+  assertTraceSymbolChild(length, function_, "Parameters[0]", sourceValuesSymbol);
+
+  const loopConditionAssignment = findTraceNode(function_, 251);
+  assertTraceRootNode(function_, 251, "EX_LetBool");
+  assertTraceSymbolChild(
+    loopConditionAssignment,
+    function_,
+    "Variable",
+    loopConditionSymbol,
+  );
+  const loopCondition = findTraceCall(function_, 261, "Less_IntInt", "final", 2);
+  assertChildNode(loopConditionAssignment, loopCondition, "Assignment");
+  assertTraceSymbolChild(loopCondition, function_, "Parameters[0]", loopCounterSymbol);
+  assertTraceSymbolChild(loopCondition, function_, "Parameters[1]", arrayLengthSymbol);
+  const loopBranch = assertTraceJump(function_, 289, "pop-flow-if-false");
+  assertTraceSymbolChild(loopBranch, function_, "BooleanExpression", loopConditionSymbol);
+
+  assertVariableAssignment(
+    function_,
+    299,
+    "EX_Let",
+    arrayIndexSymbol,
+    loopCounterSymbol,
+  );
+  assertTraceJump(function_, 326, "push-flow", "pushingAddress", 445);
   const item = findTraceCall(function_, 353, "Array_Get", "final", 3);
-  assertTraceSymbolChild(item, function_, "Parameters[0]", "ExampleSymbol_5c9e16b9b19d");
-  assertTraceSymbolChild(item, function_, "Parameters[2]", "ExampleSymbol_4bb2d3edf81f");
+  assertTraceSymbolChild(item, function_, "Parameters[0]", sourceValuesSymbol);
+  assertTraceSymbolChild(item, function_, "Parameters[1]", arrayIndexSymbol);
+  assertTraceSymbolChild(item, function_, "Parameters[2]", selectedFilmSymbol);
   const filter = findTraceCall(function_, 390, filterFunctionName, "local-virtual", 2);
-  assertTraceSymbolChild(filter, function_, "Parameters[1]", "ExampleSymbol_4bb2d3edf81f");
+  assertTraceSymbolChild(filter, function_, "Parameters[1]", selectedFilmSymbol);
   const dateContext = findTraceNode(function_, 403);
   assertChildNode(filter, dateContext, "Parameters[0]");
   assertTraceSymbolChild(dateContext, function_, "ObjectExpression", "Weather ref");
   assertTraceSymbolChild(dateContext, function_, "ContextExpression", "ExampleCurrentPeriod");
+
+  assertTraceJump(function_, 444, "pop-flow");
+  const incrementAssignment = findTraceNode(function_, 445);
+  assertTraceRootNode(function_, 445, "EX_Let");
+  assertTraceSymbolChild(
+    incrementAssignment,
+    function_,
+    "Variable",
+    incrementedCounterSymbol,
+  );
+  const increment = findTraceCall(function_, 463, "Add_IntInt", "final", 2);
+  assertChildNode(incrementAssignment, increment, "Assignment");
+  assertTraceSymbolChild(increment, function_, "Parameters[0]", loopCounterSymbol);
+  assertTraceLiteralChild(increment, function_, "Parameters[1]", "integer", "1");
+  assertVariableAssignment(
+    function_,
+    487,
+    "EX_Let",
+    loopCounterSymbol,
+    incrementedCounterSymbol,
+  );
+  assertTraceJump(function_, 514, "unconditional", "codeOffset", 192);
+  assertTraceRootNode(function_, 519, "EX_Return");
 }
 
 function assertFilterFlow(
@@ -310,13 +404,20 @@ function assertFilterFlow(
     "local-virtual",
     4,
   );
-  assertContextSymbolChild(
+  const predicateProduct = assertContextSymbolChild(
     predicate,
     function_,
     "Parameters[0]",
     165,
     "EX_StructMemberContext",
     productSymbol,
+  );
+  assertVariableNodeChild(
+    predicateProduct,
+    function_,
+    "StructExpression",
+    174,
+    inputFilmSymbol,
   );
   assertTraceSymbolChild(predicate, function_, "Parameters[2]", predicateOutputSymbol);
   assertTraceSymbolChild(
@@ -339,7 +440,17 @@ function assertFilterFlow(
     predicateOutputSymbol,
   );
 
-  assertContextLiteralAssignment(
+  assertStructMemberCopy(
+    function_,
+    217,
+    226,
+    235,
+    244,
+    253,
+    productSymbol,
+    eligibleFilmSymbol,
+  );
+  const eligibleSecondHand = assertContextLiteralAssignment(
     function_,
     299,
     "EX_LetBool",
@@ -348,7 +459,14 @@ function assertFilterFlow(
     "boolean",
     "false",
   );
-  assertContextLiteralAssignment(
+  assertVariableNodeChild(
+    eligibleSecondHand,
+    function_,
+    "StructExpression",
+    309,
+    eligibleFilmSymbol,
+  );
+  const eligibleBasePrice = assertContextLiteralAssignment(
     function_,
     364,
     "EX_Let",
@@ -357,12 +475,36 @@ function assertFilterFlow(
     "integer",
     "0",
   );
+  assertVariableNodeChild(
+    eligibleBasePrice,
+    function_,
+    "StructExpression",
+    382,
+    eligibleFilmSymbol,
+  );
   const addEligible = findTraceCall(function_, 418, "Map_Add", "final", 3);
   assertTraceSymbolChild(addEligible, function_, "Parameters[0]", candidateCollection);
-  assertProductSkuKey(function_, addEligible, 436);
+  assertProductSkuKey(function_, addEligible, [436, 445, 454, 463, 472]);
+  assertVariableNodeChild(
+    addEligible,
+    function_,
+    "Parameters[2]",
+    481,
+    eligibleFilmSymbol,
+  );
   assertTraceJump(function_, 491, "unconditional", "codeOffset", 770);
 
-  assertContextLiteralAssignment(
+  assertStructMemberCopy(
+    function_,
+    496,
+    505,
+    514,
+    523,
+    532,
+    productSymbol,
+    ineligibleFilmSymbol,
+  );
+  const ineligibleSecondHand = assertContextLiteralAssignment(
     function_,
     578,
     "EX_LetBool",
@@ -371,7 +513,14 @@ function assertFilterFlow(
     "boolean",
     "true",
   );
-  assertContextLiteralAssignment(
+  assertVariableNodeChild(
+    ineligibleSecondHand,
+    function_,
+    "StructExpression",
+    588,
+    ineligibleFilmSymbol,
+  );
+  const ineligibleBasePrice = assertContextLiteralAssignment(
     function_,
     643,
     "EX_Let",
@@ -380,9 +529,23 @@ function assertFilterFlow(
     "integer",
     "0",
   );
+  assertVariableNodeChild(
+    ineligibleBasePrice,
+    function_,
+    "StructExpression",
+    661,
+    ineligibleFilmSymbol,
+  );
   const addIneligible = findTraceCall(function_, 697, "Map_Add", "final", 3);
   assertTraceSymbolChild(addIneligible, function_, "Parameters[0]", sourceCollection);
-  assertProductSkuKey(function_, addIneligible, 715);
+  assertProductSkuKey(function_, addIneligible, [715, 724, 733, 742, 751]);
+  assertVariableNodeChild(
+    addIneligible,
+    function_,
+    "Parameters[2]",
+    760,
+    ineligibleFilmSymbol,
+  );
 
   const remainingDayUses = function_.nodes.filter(
     (node) => node.symbol === predicateRemainingDaysSymbol,
@@ -499,13 +662,49 @@ function assertPredicateFlow(
 function assertProductSkuKey(
   function_: BlueprintPropertyReferenceTraceArtifact["functions"][number],
   mapAdd: ReturnType<typeof findTraceCall>,
-  keyStatementIndex: number,
+  statementIndexes: readonly [number, number, number, number, number],
 ): void {
-  const key = findTraceNode(function_, keyStatementIndex);
-  assertChildNode(mapAdd, key, "Parameters[1]");
-  if (key.kind !== "context" || !key.symbol?.startsWith("SKU_")) {
-    throw new Error(`Candidate map key changed at statement ${keyStatementIndex}.`);
-  }
+  const [skuIndex, boxDataIndex, baseStructureIndex, productIndex, inputIndex] =
+    statementIndexes;
+  const sku = assertContextNodeChild(
+    mapAdd,
+    function_,
+    "Parameters[1]",
+    skuIndex,
+    "EX_StructMemberContext",
+    productSkuSymbol,
+  );
+  const boxData = assertContextNodeChild(
+    sku,
+    function_,
+    "StructExpression",
+    boxDataIndex,
+    "EX_StructMemberContext",
+    productBoxDataSymbol,
+  );
+  const baseStructure = assertContextNodeChild(
+    boxData,
+    function_,
+    "StructExpression",
+    baseStructureIndex,
+    "EX_StructMemberContext",
+    productBaseStructureSymbol,
+  );
+  const product = assertContextNodeChild(
+    baseStructure,
+    function_,
+    "StructExpression",
+    productIndex,
+    "EX_StructMemberContext",
+    productSymbol,
+  );
+  assertVariableNodeChild(
+    product,
+    function_,
+    "StructExpression",
+    inputIndex,
+    inputFilmSymbol,
+  );
 }
 
 function assertContextSymbolChild(
@@ -516,7 +715,26 @@ function assertContextSymbolChild(
   statementIndex: number,
   opcode: string,
   symbol: string,
-): void {
+): ReturnType<typeof findTraceNode> {
+  return assertContextNodeChild(
+    parent,
+    function_,
+    edge,
+    statementIndex,
+    opcode,
+    symbol,
+  );
+}
+
+function assertContextNodeChild(
+  parent: ReturnType<typeof findTraceNode>,
+  function_: BlueprintCallTargetTraceArtifact["binding"]["function"] |
+    BlueprintPropertyReferenceTraceArtifact["functions"][number],
+  edge: string,
+  statementIndex: number,
+  opcode: string,
+  symbol: string,
+): ReturnType<typeof findTraceNode> {
   const child = findTraceNode(function_, statementIndex);
   assertChildNode(parent, child, edge);
   if (child.kind !== "context" || child.opcode !== opcode || child.symbol !== symbol) {
@@ -524,6 +742,25 @@ function assertContextSymbolChild(
       `Candidate trace context changed for ${edge} at statement ${parent.statementIndex}.`,
     );
   }
+  return child;
+}
+
+function assertVariableNodeChild(
+  parent: ReturnType<typeof findTraceNode>,
+  function_: BlueprintCallTargetTraceArtifact["binding"]["function"] |
+    BlueprintPropertyReferenceTraceArtifact["functions"][number],
+  edge: string,
+  statementIndex: number,
+  symbol: string,
+): ReturnType<typeof findTraceNode> {
+  const child = findTraceNode(function_, statementIndex);
+  assertChildNode(parent, child, edge);
+  if (child.kind !== "variable" || child.symbol !== symbol) {
+    throw new Error(
+      `Candidate trace variable changed for ${edge} at statement ${parent.statementIndex}.`,
+    );
+  }
+  return child;
 }
 
 function assertLiteralAssignment(
@@ -552,13 +789,13 @@ function assertContextLiteralAssignment(
   symbol: string,
   literalType: "boolean" | "integer",
   value: string,
-): void {
+): ReturnType<typeof findTraceNode> {
   const assignment = findTraceNode(function_, statementIndex);
   assertTraceRootNode(function_, statementIndex, opcode);
   if (assignment.kind !== "assignment") {
     throw new Error(`Candidate assignment changed at statement ${statementIndex}.`);
   }
-  assertContextSymbolChild(
+  const target = assertContextSymbolChild(
     assignment,
     function_,
     "Variable",
@@ -567,10 +804,61 @@ function assertContextLiteralAssignment(
     symbol,
   );
   assertTraceLiteralChild(assignment, function_, "Assignment", literalType, value);
+  return target;
+}
+
+function assertStructMemberCopy(
+  function_: BlueprintPropertyReferenceTraceArtifact["functions"][number],
+  assignmentStatementIndex: number,
+  targetMemberStatementIndex: number,
+  targetStructStatementIndex: number,
+  sourceMemberStatementIndex: number,
+  sourceStructStatementIndex: number,
+  memberSymbol: string,
+  targetStructSymbol: string,
+): void {
+  const assignment = findTraceNode(function_, assignmentStatementIndex);
+  assertTraceRootNode(function_, assignmentStatementIndex, "EX_Let");
+  if (assignment.kind !== "assignment") {
+    throw new Error(
+      `Candidate assignment changed at statement ${assignmentStatementIndex}.`,
+    );
+  }
+  const target = assertContextNodeChild(
+    assignment,
+    function_,
+    "Variable",
+    targetMemberStatementIndex,
+    "EX_StructMemberContext",
+    memberSymbol,
+  );
+  assertVariableNodeChild(
+    target,
+    function_,
+    "StructExpression",
+    targetStructStatementIndex,
+    targetStructSymbol,
+  );
+  const source = assertContextNodeChild(
+    assignment,
+    function_,
+    "Assignment",
+    sourceMemberStatementIndex,
+    "EX_StructMemberContext",
+    memberSymbol,
+  );
+  assertVariableNodeChild(
+    source,
+    function_,
+    "StructExpression",
+    sourceStructStatementIndex,
+    inputFilmSymbol,
+  );
 }
 
 function assertVariableAssignment(
-  function_: BlueprintCallTargetTraceArtifact["binding"]["function"],
+  function_: BlueprintCallTargetTraceArtifact["binding"]["function"] |
+    BlueprintPropertyReferenceTraceArtifact["functions"][number],
   statementIndex: number,
   opcode: string,
   targetSymbol: string,
