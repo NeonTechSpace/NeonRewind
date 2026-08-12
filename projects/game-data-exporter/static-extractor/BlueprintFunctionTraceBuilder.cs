@@ -220,6 +220,7 @@ internal static class BlueprintFunctionTraceBuilder
             EX_StringConst value => new BlueprintTraceLiteral("string", value.Value),
             EX_UnicodeStringConst value => new BlueprintTraceLiteral("string", value.Value),
             EX_NameConst value => new BlueprintTraceLiteral("name", value.Value.Text),
+            EX_ObjectConst value => ObjectLiteral(value),
             _ when expression.GetType().Name == "EX_True" => new BlueprintTraceLiteral("boolean", "true"),
             _ when expression.GetType().Name == "EX_False" => new BlueprintTraceLiteral("boolean", "false"),
             _ when expression.GetType().Name is "EX_Nothing" or "EX_NoObject" =>
@@ -230,6 +231,19 @@ internal static class BlueprintFunctionTraceBuilder
 
     private static BlueprintTraceLiteral NumberLiteral<T>(T value) where T : IFormattable
         => new("number", value.ToString(null, CultureInfo.InvariantCulture));
+
+    private static BlueprintTraceLiteral ObjectLiteral(EX_ObjectConst value)
+    {
+        var resolvedObject = value.Value.ResolvedObject ??
+            throw new InvalidDataException("Blueprint object constant did not resolve.");
+        var objectPath = resolvedObject.GetPathName();
+        if (string.IsNullOrWhiteSpace(objectPath))
+        {
+            throw new InvalidDataException("Blueprint object constant has no path.");
+        }
+
+        return new BlueprintTraceLiteral("object", objectPath);
+    }
 
     private static bool TryReadInteger(KismetExpression expression, out long value)
     {

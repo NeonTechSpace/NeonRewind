@@ -85,6 +85,7 @@ const $definitionLiteral = type({
     "name",
     "boolean",
     "null",
+    "object",
   ),
   value: type("string"),
   "+": "reject",

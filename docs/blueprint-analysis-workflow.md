@@ -214,6 +214,7 @@ The output contains game-specific wrapper pseudocode and must remain in the igno
 
 This step rereads the exact functions in the three caller-body artifacts from cooked Kismet bytecode.
 It writes typed nodes for calls, call arguments, branches, jumps, assignments, variables, symbols, literals, contexts, and returns.
+Resolved object constants retain their exact object path as an `object` literal.
 Each input file is recorded by hash, and the command confirms that its functions and target calls still match the game package.
 
 ```powershell
