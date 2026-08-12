@@ -1,59 +1,170 @@
-# Repository reference
+# Contributor and repository guide
 
-Troubleshooting, artifact ownership, repository layout, licensing, and the project disclaimer live here.
+This page explains what is currently built, how the repository is organized, and how to run its normal development checks.
+A repository is the folder that holds the project's source code, tests, and documentation.
 
-[Documentation overview](README.md)
+Start with the [project overview](README.md) if you only want to understand what NeonRetroRewind is.
+Read the [research overview](research-overview.md) before working with game files or research artifacts.
 
-## Common problems
+## Who this page is for
 
-### A command says that a file does not exist
+Use this page if you want to change NeonRetroRewind's code or understand where an existing feature belongs.
+You do not need a copy of the game to work on most public code and tests.
 
-Check `$steamRoot`, then run the path setup block again.
-Paths containing spaces are safe when passed through the variables shown above.
+The later research command guides are separate because they require a licensed game installation and more specialized knowledge.
 
-### The output conflicts with an existing file
+## Current implementation
 
-The artifact commands never replace different existing content.
-Use a new build directory for a different game build or choose a new output filename.
+| Area | Current state |
+|---|---|
+| Public guide and website | Not built |
+| Reading game files while the game is closed | Implemented for focused data and selected game logic |
+| Stable NeonRetroRewind research records | Film catalog and console-return, membership-fee, movie-return, and new-release compilers exist |
+| Checking behavior while the game runs | One bounded movie-return collector and validator exist, with one passing user-operated observation |
+| Public calculator | Not planned as part of the current read-only guide |
 
-### The structured index rejects the mapping
+The repository is useful today as a research and validation codebase.
+It is not yet a player-facing product.
 
-Confirm that the `.usmap` file came from the same game executable as the build manifest.
-The repository cannot repair or convert a mapping from another build.
+## How the repository works
 
-### `pnpm` is not recognized
+NeonRetroRewind separates collecting information, turning it into project records, and checking uncertain behavior.
 
-Install pnpm `11.x`, open a new PowerShell or Git Bash window, and run `pnpm --version` again.
+1. The C# research tools read focused information from a licensed local game installation
+2. The TypeScript compilers check that information and create stable NeonRetroRewind records
+3. The validator compares selected records with small observations from the running game
+4. The future guide can use findings that have enough evidence for their intended claim
+
+Raw game-derived evidence does not become public repository content.
+Public tests use invented fixtures.
+
+The [research overview](research-overview.md) defines the specialist terms and explains why each stage exists.
+
+## Repository areas
+
+| Path | Responsibility |
+|---|---|
+| `docs` | Public project, research, and validation documentation |
+| `projects/game-data-exporter/static-extractor` | .NET 10 tools for build identity, focused data extraction, and selected Blueprint analysis |
+| `projects/game-data-exporter/runtime-exporter` | Offline staging, installation preview, and cleanup commands for runtime probes and collectors |
+| `projects/game-data-exporter/runtime-collector` | The bounded native movie-return collector and its local build tools |
+| `projects/game-data-exporter/schemas` | Generated JSON Schemas used at .NET, C++, and other language boundaries |
+| `projects/typescript/packages/core` | Canonical artifact contracts and generated public types |
+| `projects/typescript/packages/data-compiler` | Validation and compilation of private evidence into normalized records |
+| `projects/typescript/packages/validator` | Comparison of runtime observations with normalized mechanics |
+
+The C# projects are separate from the pnpm workspace.
+The TypeScript workspace begins at `projects/typescript`.
+
+## Development requirements
+
+The TypeScript workspace uses:
+
+- Node.js `24.19.0`
+- pnpm `11.x`
+- TypeScript `7.0.2`
+
+The C# acquisition and runtime-host projects target .NET 10.
+The native runtime collector has additional pinned tools and private dependency requirements described in its [build guide](../projects/game-data-exporter/runtime-collector/README.md).
+
+A game installation is not required for TypeScript checks or tests.
+It is required only when collecting new game evidence or performing runtime validation.
+
+## TypeScript development
+
+Run these commands from `projects/typescript`.
+
+Install the locked dependencies:
+
+```text
+pnpm install --frozen-lockfile
+```
+
+Check generated-contract drift and TypeScript types:
+
+```text
+pnpm check
+```
+
+Run all current TypeScript tests:
+
+```text
+pnpm test
+```
+
+Run package build scripts where they exist:
+
+```text
+pnpm build
+```
+
+There is no single repository-wide command that also builds both .NET projects and the native collector.
+Use the owning workflow for those components.
+
+## Research workflows
+
+The research pages are advanced operational documentation.
+Read the [prerequisite-free research overview](research-overview.md) before using them.
+They are ordered by dependency:
+
+1. [Portable local tool setup](portable-tool-setup.md)
+2. [Static acquisition](static-acquisition-workflow.md)
+3. [Blueprint analysis](blueprint-analysis-workflow.md)
+4. [Domain compilation](domain-compilation-workflow.md)
+5. [Runtime preparation](runtime-preparation-workflow.md), only when controlled observation is required
+
+The [movie-return runtime observation](movie-return-runtime-observation.md) is the implemented validation case.
+The [runtime-host design](movie-return-runtime-host.md) records its installation and cleanup boundaries.
+
+## Local and generated files
+
+- `projects/game-data-exporter/.local` contains private acquisition, runtime, and native-build state
+- `projects/typescript/.local` contains private compiled records and validation reports
+- `projects/typescript/node_modules` contains installed workspace dependencies
+- `projects/typescript/packages/core/src/contracts/generated` contains generated TypeScript contract output
+- `projects/game-data-exporter/schemas` contains generated cross-language boundary schemas
+
+The `.local` directories and build outputs are ignored by Git.
+Generated contract files are tracked and must match their canonical definitions.
 
 ## Artifact contracts
 
 `@neonretrorewind/core` owns one executable ArkType contract for every acquisition, domain, runtime, and validation artifact.
-Public TypeScript types use each contract's `infer` type instead of separate handwritten interfaces.
-The compiler and validator call the ArkType contracts at JSON and output boundaries.
-Acquisition, runtime-host, runtime-observation, and movie-return-mechanics contracts also produce standalone JSON Schema because .NET, C++, or another language-neutral tool consumes those artifacts.
-TypeScript-only domain artifacts and the movie-return validation report do not have standalone schema files.
-The retained JSON Schemas and generated TypeScript contract types must be regenerated after changing a canonical contract.
+Public TypeScript types are inferred from those contracts rather than maintained as separate handwritten interfaces.
 
-Run these commands from `projects/typescript`:
+Standalone JSON Schema is generated only when .NET, C++, or another language-neutral workflow consumes the artifact.
+TypeScript-only domain records and the movie-return validation report do not need separate schema files.
+
+After changing a canonical contract, run:
 
 ```text
 pnpm contracts:generate
 pnpm contracts:check
 ```
 
-The workspace `pnpm check` command includes `contracts:check` and fails when generated output is stale.
+The workspace `pnpm check` command already includes the drift check.
 
-## Repository layout
+## Common problems
 
-- `projects/game-data-exporter/static-extractor` contains the .NET 10 acquisition commands.
-- `projects/game-data-exporter/schemas/acquisition` contains generated JSON Schemas for .NET acquisition boundaries.
-- `projects/game-data-exporter/schemas/runtime` contains generated JSON Schemas for runtime-host, collector, and observation boundaries.
-- `projects/game-data-exporter/runtime-exporter` contains the offline probe and collector runtime-host lifecycle commands and the Lua compatibility probe source.
-- `projects/game-data-exporter/runtime-collector` contains the bounded UE4SS C++ collector and its local Windows build entry points.
-- [Movie-return runtime observation](movie-return-runtime-observation.md) defines the first runtime test and the collector's limits.
-- `projects/typescript/packages/core` owns the canonical executable artifact contracts, inferred public types, and generated boundary-schema workflow.
-- `projects/typescript/packages/data-compiler` validates acquisition data and compiles private domain artifacts.
-- `projects/typescript/packages/validator` checks ordered runtime observations against deterministic mechanic relationships.
+### A command says that a file does not exist
+
+Check the path variables required by the workflow and run its path setup block again.
+Paths containing spaces are safe when passed through the documented variables.
+
+### An artifact conflicts with an existing file
+
+Artifact commands accept identical existing content but do not replace different content.
+Use a new generation directory for a new run or changed input.
+
+### The structured index rejects the mapping
+
+Confirm that the `.usmap` mapping came from the same executable recorded by the build manifest.
+The repository cannot repair or convert a mapping from another game build.
+
+### `pnpm` is not recognized
+
+Install pnpm `11.x`, open a new shell, and run `pnpm --version` again.
+The [portable setup](portable-tool-setup.md) provides a local alternative to a system-wide installation.
 
 ## License
 
@@ -66,4 +177,4 @@ The licence contains the complete warranty disclaimer and limitation of liabilit
 NeonRetroRewind is an unofficial fan project and is not affiliated with or endorsed by the developers or publishers of *Retro Rewind: Video Store Simulator*.
 The game and its related names and assets belong to their respective owners.
 
-[Documentation overview](README.md)
+[Return to the project overview](README.md)

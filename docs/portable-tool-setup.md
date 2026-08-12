@@ -1,7 +1,35 @@
 # Portable local tool setup
 
-NeonRetroRewind can use local copies of .NET, Node.js, and pnpm without an installer, administrator access, or a permanent `PATH` change.
-The directories used below are ignored by Git.
+This page prepares the basic software needed to run NeonRetroRewind's research commands on Windows.
+It is the first command guide in the research sequence.
+
+[Research overview](research-overview.md) · [Next: static acquisition](static-acquisition-workflow.md)
+
+## Who needs this page
+
+Use this page if you want to run the research tools and do not already have the required versions of .NET, Node.js, and pnpm.
+If you only want to read about the project or work with an existing result, you can skip it.
+
+.NET runs the tools that read the game files.
+Node.js and pnpm run the tools that validate and convert the collected information.
+
+## What this setup changes
+
+The instructions place local copies of the three tools in directories ignored by Git.
+They do not require an installer, administrator access, or a permanent `PATH` change.
+A `PATH` is the list of directories Windows searches when you enter a command.
+
+The setup does not read the game or produce research results.
+It only prepares the software needed by the next workflow.
+
+## Before you begin
+
+You need:
+
+- 64-bit Windows
+- PowerShell or Git Bash
+- An internet connection for the downloads
+- Enough permission to create ignored files inside your local repository folder
 
 ## Download the archives
 

@@ -1,18 +1,35 @@
 # Static acquisition workflow
 
-This workflow identifies one installed game build and produces private acquisition evidence from its cooked Unreal packages. Generated outputs remain in ignored local directories.
+This page shows how to collect focused evidence from the files of a game installation you own.
+The game stays closed during the entire workflow.
 
-[Documentation overview](README.md) · [Next: Blueprint analysis](blueprint-analysis-workflow.md)
+[Research overview](research-overview.md) · [Tool setup](portable-tool-setup.md) · [Next: Blueprint analysis](blueprint-analysis-workflow.md)
+
+## Who needs this page
+
+Use this workflow only if you want to reproduce or extend NeonRetroRewind's research with your own licensed copy of the game.
+You do not need it for normal code changes, tests, or reading the project documentation.
+
+## What you will produce
+
+The first commands identify the exact game build and list which packaged files can be read.
+Later commands use a matching Unreal mapping to collect selected values and script locations.
+
+These results are private research artifacts.
+They stay in local directories ignored by Git and must not be published.
 
 ## Before you start
 
 You need the following items:
 
 - Windows and a licensed Steam installation of *Retro Rewind: Video Store Simulator*.
-- The .NET 10 SDK for the acquisition commands.
-- Node.js `24.19.0` and pnpm `11.x` for the normalized-data compilers.
+- The .NET 10 SDK for the commands on this page.
+- Node.js `24.19.0` and pnpm `11.x` for the later compilation workflow.
 - An internet connection for the first dependency installation unless the packages are already cached.
-- A `.usmap` mapping generated for the exact game executable when running the structured-index, structured-values, rental-evidence, unlockable-evidence, unlockable-function-trace, unlockable-implementation-sites, unlockable-manager-trace, blueprint-property-references, blueprint-property-reference-trace, blueprint-call-candidate-trace, blueprint-call-target-trace, rental-blueprint-bodies, blueprint-call-sites, blueprint-caller-bodies, blueprint-function-trace, and rental-function-trace steps.
+- A `.usmap` mapping made for the exact game executable before running any step that reads structured values or Blueprint logic.
+
+The [research overview](research-overview.md) explains game builds, packages, mappings, Blueprints, evidence, and artifacts in plain language.
+Read it before continuing if any of those terms are unfamiliar.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
 Follow [Portable local tool setup](portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
@@ -20,6 +37,8 @@ Follow [Portable local tool setup](portable-tool-setup.md) to install nothing sy
 The repository does not currently generate the `.usmap` mapping.
 If you do not already have a matching mapping, you can complete the probe, build-manifest, and static-census steps, then stop.
 Do not reuse a mapping from a different game build.
+
+The commands that require the mapping will report that requirement again when you reach them.
 
 Open PowerShell or Git Bash in the repository root and verify the installed tools.
 
@@ -319,7 +338,8 @@ dotnet run --project "$extractor" -- unlockable-implementation-sites \
 ```
 
 The artifact records complete or partial scan coverage and package failures explicitly.
-Function-name call sites are candidates because virtual Kismet calls do not always encode a unique declaring class. Inheritance and override records use exact class paths.
+Function-name call sites are candidates because virtual Kismet calls do not always encode a unique declaring class.
+Inheritance and override records use exact class paths.
 The command verifies all package and input identities before and after scanning, accepts identical existing output, and refuses to overwrite different content.
 The output contains extracted game metadata and must remain in the ignored local acquisition directory.
 
@@ -380,7 +400,8 @@ The output contains game-specific function locations and must remain in the igno
 ## 7f. Trace a discovered property reader
 
 This step accepts only a complete property-reference artifact for the supplied build and mappings.
-Each requested function must contain a recorded property read. The command rereads its cooked bytecode into typed Kismet nodes and rechecks every recorded reference in that function against the trace.
+Each requested function must contain a recorded property read.
+The command rereads its cooked bytecode into typed Kismet nodes and rechecks every recorded reference in that function against the trace.
 
 ```powershell
 dotnet run --project $extractor -- blueprint-property-reference-trace `
@@ -409,4 +430,4 @@ The output contains extracted game logic and must remain in the ignored local ac
 
 Continue with [Blueprint analysis](blueprint-analysis-workflow.md) to extract caller bodies and typed Kismet traces.
 
-[Documentation overview](README.md)
+[Research overview](research-overview.md)

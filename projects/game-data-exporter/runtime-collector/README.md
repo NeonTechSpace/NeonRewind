@@ -1,15 +1,34 @@
 # Movie-return runtime collector
 
-This directory contains the source and local build commands for the UE4SS C++ movie-return collector.
-Collector `0.1.7` registers bounded hooks for readiness, selection, customer return, and the inventory additions made inside a customer-return call. It resolves the local-virtual inventory function by exact name through the already resolved customer class hierarchy. Before registration it checks the pinned UE4SS callable-dispatch rules: a resolved function without callable dispatch is retried as load readiness, while an unsupported native-flag and dispatch combination fails closed. A customer frame binds the ExampleQueueSystem and pre-ready queue when its first nested movie-selection call begins. Calls that never enter the movie branch produce no movie-return event. The selection post-hook reads both Blueprint out-parameters through `FFrame::OutParms` using UE4SS's exported `FindOutParamValueAddress`, matching the runtime host's own post-hook path. The inventory hook ignores calls outside an active customer-return frame before reading their parameters. It writes the three contracted observation event types. The inventory hook supplies state for the customer-return event and does not create another event type. While waiting, it reports only unresolved target or dispatch labels on first attempt, when the set changes, and every 30 attempts. Reflected-contract rejection, hook-registration exceptions, and guarded runtime failures report fixed labels.
+This directory contains the source and build instructions for the most specialized NeonRetroRewind component.
+The collector is a small Windows library that UE4SS loads into the game for one controlled movie-return observation.
 
-A user-operated collector `0.1.7` run for Steam build `23896268` completed with every required event kind and passed the repository's semantic validator with no issues. The observation, validation report, and runtime log remain private ignored artifacts.
+[Research overview](../../../docs/research-overview.md) · [Observation design](../../../docs/movie-return-runtime-observation.md) · [Runtime preparation](../../../docs/runtime-preparation-workflow.md)
 
-The collector accepts only the closed staged config for its version, the pinned UE4SS host, and Steam app `3552140`. Before registering hooks, it verifies the staged observation schema and target-mechanics files against the sizes and SHA-256 hashes in that config. It retries hook discovery until all four Blueprint functions are loaded, checks their reflected parameter shapes, and fails closed if those shapes do not match.
+## Who needs this page
 
-Each run writes `movie-return-observation.json` and `movie-return-observation.sha256` below `<configured-output-root>/<steam-build-id>/<run-id>/`. The JSON and hash sidecar are each published through a same-directory temporary file and atomic replacement. The record remains `aborted` while capture is incomplete, becomes `complete` after at least one readiness, selection, and customer-return event, and records a bounded failure status when the collector can still persist one.
+Use this page only if you need to build or change the native movie-return collector.
+You do not need the collector for static research, TypeScript development, or ordinary documentation work.
 
-Customer inventory capture is scoped to the active customer-return call: its pre-state is empty and its post-state contains the objects actually passed to `ExampleAddInventoryItem` during that call. This event-local representation lets the validator compare the observed additions with the selected movies without requiring or guessing a separate full-inventory field on the customer Blueprint.
+Building it requires C++, several pinned build tools, a GitHub account with access to one private upstream dependency, and about 12 GB of local disk space.
+The preparation scripts keep those tools and outputs in a directory ignored by Git.
+
+## What the collector does
+
+During player-controlled gameplay, the collector watches four specific functions involved in movie readiness, selection, customer return, and inventory updates.
+It records only the before and after state required by the movie-return observation contract.
+It does not automate the game, inspect unrelated objects, or send data over the network.
+
+Each run writes a private observation file and a file containing its SHA-256 hash.
+The record stays incomplete until the required readiness, selection, and customer-return events have all occurred.
+
+## Current status
+
+Collector `0.1.7` is the implemented version.
+A user-operated run for Steam build `23896268` recorded every required event type and passed the repository's semantic validator with no issues.
+The observation, validation report, and runtime log remain private ignored artifacts.
+
+## Build environment
 
 The build is portable on 64-bit Windows.
 Its compiler, linker, CMake, Ninja, Rust toolchain, Windows SDK files, dependency source, and output remain in `projects/game-data-exporter/.local`, which Git ignores.
@@ -55,7 +74,8 @@ $env:Path = $portableGitPath + [IO.Path]::PathSeparator + $env:Path
 git --version
 ```
 
-Extracted directory names can differ between Portable Git releases. Use the directory that directly contains `cmd\git.exe`.
+Extracted directory names can differ between Portable Git releases.
+Use the directory that directly contains `cmd\git.exe`.
 
 ## 1. Prepare the portable tools
 
@@ -119,8 +139,10 @@ bash projects/game-data-exporter/runtime-collector/Build-Collector.sh
 
 The first build compiles the pinned UE4SS baseline and then the collector.
 Ninja keeps the native incremental state in the persistent build directory, and Cargo keeps its Rust build state there as well.
-Later builds ask Ninja whether the baseline has pending work. With the same toolchain, dependency revisions, build configuration, and baseline source, changing only collector source compiles and links only the collector's native code.
-The upstream Rust integration may still run a quick Cargo freshness check. Cargo reuses its persistent output and does not recompile unchanged Rust crates.
+Later builds ask Ninja whether the baseline has pending work.
+With the same toolchain, dependency revisions, build configuration, and baseline source, changing only collector source compiles and links only the collector's native code.
+The upstream Rust integration may still run a quick Cargo freshness check.
+Cargo reuses its persistent output and does not recompile unchanged Rust crates.
 There is no compiler-cache service or background build process to preserve between commands.
 
 To prepare or verify only the persistent baseline without building the collector:
@@ -133,7 +155,8 @@ To prepare or verify only the persistent baseline without building the collector
 bash projects/game-data-exporter/runtime-collector/Build-Collector.sh -BaselineOnly
 ```
 
-Local builds use at most six logical processors by default. The memory-heavy Unreal baseline target uses at most four of that limit, while the remaining baseline and collector use the full limit.
+Local builds use at most six logical processors by default.
+The memory-heavy Unreal baseline target uses at most four of that limit, while the remaining baseline and collector use the full limit.
 Nested Rust compilation stays within the outer build limit rather than adding another group of parallel jobs.
 To choose an explicit positive limit, pass `-ParallelJobs` through either shell:
 
@@ -155,7 +178,33 @@ Deleting or damaging the active build directory also requires a new baseline.
 Changing only collector source does not invalidate the baseline.
 
 If a build is interrupted, rerun the same build command.
-Ninja keeps completed outputs and schedules unfinished or invalid targets again. No manual process or cache cleanup is required.
+Ninja keeps completed outputs and schedules unfinished or invalid targets again.
+No manual process or cache cleanup is required.
 
 Building does not copy anything into the game directory.
-The runtime exporter can stage the DLL with its exact path, size, SHA-256 hash, generated config, observation schema, target-mechanics identity, and output root. Installation and cleanup remain separate explicit commands, and none of the build or staging commands starts the game.
+The runtime exporter can stage the DLL with its exact path, size, SHA-256 hash, generated config, observation schema, target-mechanics identity, and output root.
+Installation and cleanup remain separate explicit commands, and none of the build or staging commands starts the game.
+
+## Implementation details
+
+The collector accepts only its versioned staged configuration, the pinned UE4SS host, and Steam application `3552140`.
+Before registering hooks, it checks the sizes and SHA-256 hashes of the staged observation schema and target mechanics record.
+
+It waits until all four required Blueprint functions are loaded and checks their reflected parameter shapes.
+A resolved function without callable dispatch is treated as not ready yet.
+An unsupported combination of native flags and callable dispatch causes the collector to stop.
+
+The customer-return frame gains its rental-system context when the first nested movie-selection call begins.
+Calls that never enter the movie branch do not produce a movie-return event.
+The selection hook reads both Blueprint output parameters through `FFrame::OutParms` with UE4SS's exported `FindOutParamValueAddress`.
+The inventory hook ignores calls outside an active customer-return frame before reading parameters.
+
+Inventory capture is limited to objects added during the active customer-return call.
+This lets the validator compare those additions with the selected movies without collecting or guessing the customer's complete inventory.
+
+The collector writes `movie-return-observation.json` and `movie-return-observation.sha256` below `<configured-output-root>/<steam-build-id>/<run-id>/`.
+Each file is published through a temporary file in the same directory and an atomic replacement.
+When possible, an interrupted or failed run retains a bounded status and reason.
+
+While waiting for functions, the collector reports unresolved target or dispatch labels on the first attempt, when the set changes, and every 30 attempts.
+Contract rejection, hook registration failures, and guarded runtime failures use fixed labels.

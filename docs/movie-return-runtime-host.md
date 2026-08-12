@@ -1,9 +1,40 @@
 # Movie-return runtime host
 
-This document records the runtime-host investigation for the first movie-return observation.
-The Lua compatibility probe source and approval-gated probe lifecycle exist.
-Collector-specific staging, installation preview, cleanup routing, and the bounded `0.1.7` C++ collector now exist. A user-operated observation for Steam build `23896268` completed and passed semantic validation. Its observation, report, and runtime log remain private ignored artifacts.
-The Lua probe produces a compatibility diagnostic, not a runtime observation.
+This page explains how NeonRetroRewind temporarily connects a purpose-built probe or collector to the running game.
+It is a design and safety reference for the implemented movie-return observation.
+
+[Research overview](research-overview.md) · [Runtime preparation](runtime-preparation-workflow.md) · [Observation design](movie-return-runtime-observation.md)
+
+## Who needs this page
+
+Read this page if you are changing the runtime host, reviewing what it adds to the game directory, or investigating a failed compatibility check.
+You do not need it to understand the project, perform static research, or run normal repository tests.
+
+## The design in plain language
+
+Static research studies files while the game is closed.
+Runtime research needs a small piece of NeonRetroRewind code to observe selected state while the game is running.
+
+UE4SS is the external runtime host used to load that code.
+The first payload is a Lua compatibility probe that checks whether required objects, fields, and functions can be found.
+The second payload is a narrow C++ collector that records the before and after states required by the observation.
+
+Neither payload starts the game or controls gameplay.
+Installation and cleanup are separate commands that show an exact file list and require approval for that exact list.
+
+## Current status
+
+The probe lifecycle, collector lifecycle, and bounded collector version `0.1.7` are implemented.
+A user-operated observation for Steam build `23896268` completed and passed semantic validation.
+Its observation, report, and runtime log remain private ignored artifacts.
+
+The Lua probe produces a compatibility diagnostic.
+It does not produce a runtime observation or prove that a game rule passed.
+
+## Before reading the implementation details
+
+Read the [research overview](research-overview.md) for the difference between static evidence and a runtime observation.
+Read the [movie-return observation](movie-return-runtime-observation.md) for the exact behavior being checked and the limits on collected data.
 
 ## Investigation result
 
@@ -110,6 +141,17 @@ An approved run requires the SHA-256 hash of the reviewed installation manifest,
 
 The completed compatibility probe proved the required objects, fields, arrays, Blueprint hook paths, and private output behavior for Steam build `23896268`.
 That result leads to a purpose-specific C++ collector using the observation contract because Lua cannot provide the exact Blueprint pre-call state.
-The probe's 16-element diagnostic limit does not define the collector limit. The contract permits at most 256 captured references per collection and requires the collector to record the actual count and whether references were omitted.
+The probe's 16-element diagnostic limit does not define the collector limit.
+The contract permits at most 256 captured references per collection and requires the collector to record the actual count and whether references were omitted.
 If required fields or hooks are unavailable, the collector design must stop and be revised from the diagnostic evidence.
-Collector `0.1.7` implements the bounded gameplay hooks and atomic observation writer. It resolves the local-virtual inventory function by exact name through the already resolved customer class hierarchy, then checks each function against the pinned UE4SS callable-dispatch rules before reflected-parameter validation. A resolved function with no callable dispatch is retried as load readiness, while an unsupported dispatch and native-flag combination fails closed with a fixed label. A customer frame starts with only its customer context. The first nested movie-selection pre-hook supplies the actual ExampleQueueSystem and pre-ready queue before selection or removal. Calls that do not enter the movie branch are discarded. It ignores inventory calls outside an active customer-return frame before reading their parameters. Selector post-hooks resolve both Blueprint out-parameter addresses from `FFrame::OutParms` with UE4SS's exported `FindOutParamValueAddress`, matching the runtime host's own post-hook handling. It reports exact unresolved-target, dispatch-readiness, reflected-contract, hook-registration, and guarded-callback labels without enumerating unrelated objects. Native and offline checks establish the build and contracts. The completed user-operated run establishes the observed in-game path for the pinned build.
+Collector `0.1.7` implements the bounded gameplay hooks and atomic observation writer.
+It resolves the local-virtual inventory function by exact name through the already resolved customer class hierarchy, then checks each function against the pinned UE4SS callable-dispatch rules before reflected-parameter validation.
+A resolved function with no callable dispatch is retried as load readiness, while an unsupported dispatch and native-flag combination fails closed with a fixed label.
+A customer frame starts with only its customer context.
+The first nested movie-selection pre-hook supplies the actual ExampleQueueSystem and pre-ready queue before selection or removal.
+Calls that do not enter the movie branch are discarded.
+It ignores inventory calls outside an active customer-return frame before reading their parameters.
+Selector post-hooks resolve both Blueprint out-parameter addresses from `FFrame::OutParms` with UE4SS's exported `FindOutParamValueAddress`, matching the runtime host's own post-hook handling.
+It reports exact unresolved-target, dispatch-readiness, reflected-contract, hook-registration, and guarded-callback labels without enumerating unrelated objects.
+Native and offline checks establish the build and contracts.
+The completed user-operated run establishes the observed in-game path for the pinned build.

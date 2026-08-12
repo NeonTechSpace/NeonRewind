@@ -1,10 +1,42 @@
 # Runtime preparation workflow
 
-This workflow prepares the movie-return compatibility probe and collector payload. It does not start the game, install files without explicit commands, or publish private observations.
+This page prepares an optional check of movie-return behavior while a person plays the game.
+Use it only after static research has produced the movie-return record that the observation will test.
 
-Read [Movie-return runtime host](movie-return-runtime-host.md) for the lifecycle and ownership rules and [Movie-return runtime observation](movie-return-runtime-observation.md) for the implemented validation case.
+[Research overview](research-overview.md) · [Previous: domain compilation](domain-compilation-workflow.md) · [Observation design](movie-return-runtime-observation.md)
 
-[Documentation overview](README.md) · [Previous: domain compilation](domain-compilation-workflow.md)
+## Who needs this page
+
+This workflow is for contributors reproducing the implemented movie-return runtime observation.
+Most NeonRetroRewind research does not need runtime access.
+
+The first prepared payload is a compatibility probe.
+It checks whether the runtime host can find the required game objects and functions.
+It does not claim that the movie-return rule passed.
+
+The second payload is the collector.
+It records only the selected state changes needed by the movie-return observation contract.
+
+## Before you start
+
+You need:
+
+- A completed private build manifest for the supported game build
+- A compiled private movie-return mechanics record
+- The exact supported UE4SS archive
+- A locally built collector when preparing the collector payload
+- The game closed during every staging, installation, and cleanup command
+
+UE4SS is the runtime host that loads the purpose-built NeonRetroRewind probe or collector into the game process.
+Read [Movie-return runtime host](movie-return-runtime-host.md) for its file lifecycle, safety boundaries, and approval rules.
+Read [Movie-return runtime observation](movie-return-runtime-observation.md) for what the collector is allowed to record and what the result can prove.
+
+## What the commands do
+
+The staging commands prepare ignored local files and record their exact hashes.
+The install commands first show an exact copy plan and change nothing until the person using the computer approves that plan by hash.
+
+The tooling does not start the game, play the game, publish private observations, or install files without the explicit approval command.
 
 ## Prepare the runtime compatibility probe
 
@@ -143,7 +175,12 @@ The collector staging command uses the same verified UE4SS archive, game executa
 It additionally copies a source-built `main.dll`, the observation schema, and one exact `movie-return-mechanics.json` into ignored local staging and generates a closed collector config.
 The staging manifest binds all of those inputs by byte length and SHA-256 hash.
 
-Collector `0.1.7` implements the bounded hooks and observation writer, resolves the inherited inventory function through the customer class hierarchy, scopes inventory reads to active customer returns, and reports bounded target, callable-dispatch, reflected-contract, registration, and callback labels without enumerating unrelated runtime objects. Resolved functions whose callable dispatch is not yet available are retried, while unsupported flag and dispatch combinations fail closed. A customer frame binds its ExampleQueueSystem and pre-ready queue only when the nested movie selector runs, and customer calls that never enter the movie branch produce no movie-return event. Selector post-hooks read Blueprint out-parameters through UE4SS's `FFrame::OutParms` lookup rather than the temporary locals container. A user-operated run for Steam build `23896268` completed and passed the repository's semantic validator. The observation and validation report remain private ignored artifacts. The following command prepares its ignored staging payload without changing the game directory.
+Collector `0.1.7` implements the bounded movie-return hooks and observation writer.
+A user-operated run for Steam build `23896268` completed and passed the repository's semantic validator.
+The observation and validation report remain private ignored artifacts.
+The [collector build guide](../projects/game-data-exporter/runtime-collector/README.md#implementation-details) records the lower-level hook behavior.
+
+The following command prepares the ignored staging payload without changing the game directory.
 
 ```powershell
 $collectorDll = "projects/game-data-exporter/.local/rc-build/<build-id>/artifact/NeonRetroRewindMovieReturnCollector/dlls/main.dll"
@@ -188,4 +225,4 @@ dotnet run --project "$runtimeExporter" -- stage-collector \
 `install-collector` and `cleanup-collector` use the same preview and exact-manifest approval options as the probe commands.
 They accept only collector staging manifests, while the probe commands accept only probe manifests.
 
-[Documentation overview](README.md)
+[Research overview](research-overview.md) · [Observation design](movie-return-runtime-observation.md)

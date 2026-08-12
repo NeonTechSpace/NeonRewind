@@ -1,8 +1,29 @@
 # Domain compilation workflow
 
-This workflow validates private acquisition artifacts and compiles normalized NeonRetroRewind domain records. Complete the [static acquisition](static-acquisition-workflow.md) and [Blueprint analysis](blueprint-analysis-workflow.md) workflows first.
+This page shows how to turn private research evidence into stable records owned by NeonRetroRewind.
+These records describe supported game facts without making later guide code depend on the game's internal file layout.
 
-[Documentation overview](README.md) · [Previous: Blueprint analysis](blueprint-analysis-workflow.md) · [Next: runtime preparation](runtime-preparation-workflow.md)
+[Research overview](research-overview.md) · [Previous: Blueprint analysis](blueprint-analysis-workflow.md) · [Optional next step: runtime preparation](runtime-preparation-workflow.md)
+
+## Who needs this page
+
+Use this workflow after collecting evidence for one of the implemented research areas.
+It is the final static research stage and is enough for questions the game files answer clearly.
+
+## What you will produce
+
+Each command checks that its input artifacts have the expected build, fields, values, and source references.
+It then writes a normalized record for one area such as movie returns or the film catalog.
+
+Normalized means the record uses a consistent NeonRetroRewind shape instead of copying the layout used inside the game.
+The output is still derived from the game, so it remains private and uncommitted.
+
+## Before you start
+
+Complete the [static acquisition](static-acquisition-workflow.md) and relevant [Blueprint analysis](blueprint-analysis-workflow.md) steps first.
+You need Node.js `24.19.0` and pnpm `11.x`.
+
+The commands below continue the numbering from the earlier workflows because they consume those earlier outputs.
 
 ## 20. Compile the console-return mechanics
 
@@ -187,10 +208,17 @@ It confirms that `Reset to new Day Event_Event` enters the manager at statement 
 It also confirms that `Return Example Request` combines the flag with `RandomBoolWithWeight(0.5)` and, on success, selects guaranteed request step 1, records primary request code `5` as required, and outputs `Only New Release` as `true`.
 `Generate Example Request` copies those outputs and, when `Only New Release` is true, the game-mode cast succeeds, the candidate map is nonempty, and `RandomBoolWithWeight(0.66)` succeeds, enumerates that map's keys and values and reads both at one random index.
 The Blueprint passes `candidate count - 1` to Unreal Engine 5.4's `RandomInteger`, whose implementation returns zero for nonpositive input and otherwise samples from zero inclusive to its input exclusive.
-Consequently, a one-entry map selects index zero. A map with two or more entries can select only indices zero through `candidate count - 2`, which leaves the final enumerated key/value pair unreachable.
+Consequently, a one-entry map selects index zero.
+A map with two or more entries can select only indices zero through `candidate count - 2`, which leaves the final enumerated key/value pair unreachable.
 Candidate-selection failure after a successful `Return Example Request` call still rejoins `ExampleGenerateSuccess = true`.
-The candidate map is cleared and rebuilt from `Example Source Map`. The caller admits only records whose `Released` field is true and `SecondHand-Available` field is false. The verified `ExampleRecord_C:Evaluate Example Record` target then computes `is New = (Example Period Count - Example Available Period) <= 7` and remaining days as `(Example Available Period + 7) - Example Period Count`. Its game-mode cast failure returns false and zero. The predicate contains no lower-bound comparison.
-Eligible records are written to `Example Candidate Map` with second-hand false and base price zero. A failed caller precondition returns without mutation. A failed predicate rewrites the record in `Example Source Map` with second-hand true and base price zero.
+The candidate map is cleared and rebuilt from `Example Source Map`.
+The caller admits only records whose `Released` field is true and `SecondHand-Available` field is false.
+The verified `ExampleRecord_C:Evaluate Example Record` target then computes `is New = (Example Period Count - Example Available Period) <= 7` and remaining days as `(Example Available Period + 7) - Example Period Count`.
+Its game-mode cast failure returns false and zero.
+The predicate contains no lower-bound comparison.
+Eligible records are written to `Example Candidate Map` with second-hand false and base price zero.
+A failed caller precondition returns without mutation.
+A failed predicate rewrites the record in `Example Source Map` with second-hand true and base price zero.
 The compiler checks the exact build, mapping, and engine identities, trace scopes, wrapper entrypoints, typed calls and arguments, target receiver and declaration binding, intermediate value flow, comparisons, branch routes, map access, paired array indexes, mutations, outputs, and input hashes.
 It does not infer save/load behavior, costs, dependencies, exact film identities, runtime map contents, map enumeration identity, or runtime probabilities.
 The artifact records typed-Blueprint evidence and `runtimeValidation: not-run`.
@@ -306,6 +334,7 @@ The film catalog still contains extracted game text and remains private and unco
 
 ## Next step
 
-Runtime collection is necessary only for claims that require controlled observation. See [runtime preparation](runtime-preparation-workflow.md) and the [movie-return observation case](movie-return-runtime-observation.md).
+Runtime collection is necessary only for claims that require controlled observation.
+See [runtime preparation](runtime-preparation-workflow.md) and the [movie-return observation case](movie-return-runtime-observation.md).
 
-[Documentation overview](README.md)
+[Research overview](research-overview.md)

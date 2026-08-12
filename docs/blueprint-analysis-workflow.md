@@ -1,8 +1,31 @@
 # Blueprint analysis workflow
 
-This workflow decompiles selected cooked Blueprint functions, discovers exact call sites, and converts the selected functions into typed Kismet traces. Complete the [static acquisition workflow](static-acquisition-workflow.md) first.
+This page shows how to turn selected compiled visual scripts from the game into readable evidence.
+Unreal Engine calls these visual scripts Blueprints.
 
-[Documentation overview](README.md) · [Previous: static acquisition](static-acquisition-workflow.md) · [Next: domain compilation](domain-compilation-workflow.md)
+[Research overview](research-overview.md) · [Previous: static acquisition](static-acquisition-workflow.md) · [Next: domain compilation](domain-compilation-workflow.md)
+
+## Who needs this page
+
+Use this workflow when values and class names from static acquisition do not fully explain a game rule.
+It is for contributors researching how a selected function makes a decision or changes state.
+
+## What you will produce
+
+The commands find selected Blueprint functions, show a readable interpretation of their operations, locate calls between functions, and create typed traces that later compilers can validate.
+A typed trace is a structured record of the important operations and the kinds of values they use.
+
+The readable output is an interpretation of the game's compiled script.
+It must be checked against the recorded function information before it supports a mechanic claim.
+
+All outputs contain game-derived information and must remain in ignored local directories.
+
+## Before you start
+
+Complete the [static acquisition workflow](static-acquisition-workflow.md) first.
+Keep the same build directory, game package directory, and exact-build mapping in your shell.
+
+Read the [research overview](research-overview.md) first if Blueprint, mapping, artifact, or normalized record is unfamiliar.
 
 ## 8. Extract readable rental Blueprint bodies
 
@@ -390,4 +413,4 @@ The output contains game-specific bytecode structure and must remain in the igno
 Compile the verified target trace and caller gates into the normalized new-release mechanic artifact by following the [domain compilation workflow](domain-compilation-workflow.md).
 For subsystems whose required traces already exist, continue with [domain compilation](domain-compilation-workflow.md).
 
-[Documentation overview](README.md)
+[Research overview](research-overview.md)

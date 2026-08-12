@@ -1,8 +1,32 @@
 # Movie-return runtime observation
 
-This document defines the first controlled runtime observation for movie returns.
-Collector `0.1.7`, its observation schema, build instructions, and exact install and cleanup commands are implemented. A user-operated run for Steam build `23896268` completed and passed the semantic validator with all required event kinds and no issues. The private artifacts remain ignored.
-The [runtime-host investigation](movie-return-runtime-host.md) defines the compatibility probe, temporary installation footprint, and approval gates that precede the collector.
+This page explains the first behavior that NeonRetroRewind checked while a person played the game.
+The check compares selected movie-return events with the rule previously recovered from the game files.
+
+[Research overview](research-overview.md) · [Runtime preparation](runtime-preparation-workflow.md) · [Runtime host](movie-return-runtime-host.md)
+
+## Who needs this page
+
+Read this page if you want to understand what the movie-return check proves, reproduce it, or change its data contract.
+You do not need it for static research or normal repository development.
+
+## Result in plain language
+
+A purpose-built collector records a small sequence of movie-return state changes during normal player-controlled gameplay.
+A validator then checks whether that sequence agrees with the private movie-return mechanics record from the same game build.
+
+Collector `0.1.7`, its observation format, build instructions, and exact installation and cleanup commands are implemented.
+A user-operated run for Steam build `23896268` recorded every required event type and passed the validator with no issues.
+The observation, report, and runtime log remain private and ignored by Git.
+
+This one run supports the deterministic state changes it exercised.
+It does not measure the probability of different movie selections or prove behavior on another game build.
+
+## Before reproducing the observation
+
+Complete the static research and compile the private movie-return mechanics record first.
+Then read [runtime preparation](runtime-preparation-workflow.md) for the exact staging, installation, and cleanup commands.
+The [runtime-host design](movie-return-runtime-host.md) explains the compatibility probe, temporary installation footprint, and approval gates.
 
 ## Goal
 
@@ -185,12 +209,14 @@ pnpm movie-return-validated-mechanics \
 
 The linker validates both artifacts with their canonical ArkType contracts, independently checks the generated mechanics JSON Schema, requires matching builds and the exact mechanics identity recorded by the report, and rechecks all three inputs before writing.
 The output records the base mechanics, observation, and report identities under `runtimeValidation` while retaining `evidenceLevel: "decompiled-blueprint"`.
-The original mechanics remain the source of truth for static rules and the collector target. The linked artifact is derived evidence for downstream use.
+The original mechanics remain the source of truth for static rules and the collector target.
+The linked artifact is derived evidence for downstream use.
 An incomplete or mismatched report cannot produce a linked artifact.
 Identical output is unchanged, and different existing output is retained with exit code `7`.
 
 ## Evidence effect
 
 A passing run supports only the deterministic claims exercised by that run and its exact game build.
-The linked normalized artifact remains `decompiled-blueprint` because the rule definitions still come from static Blueprint evidence. Its `runtimeValidation` field identifies the exact passing runtime evidence.
+The linked normalized artifact remains `decompiled-blueprint` because the rule definitions still come from static Blueprint evidence.
+Its `runtimeValidation` field identifies the exact passing runtime evidence.
 The probability values remain supported by typed Blueprint evidence until a separate statistical validation is designed and completed.

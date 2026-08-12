@@ -1,57 +1,79 @@
 # NeonRetroRewind
 
-NeonRetroRewind is an unofficial, open-source research and data project for *Retro Rewind: Video Store Simulator*.
+NeonRetroRewind is an unofficial project that is building an accurate guide to *Retro Rewind: Video Store Simulator*.
+The goal is to answer player questions with information checked against the game instead of guesses or incomplete recollection.
 
-This is a passion project. I enjoy playing the game, which motivates me to build an accurate, evidence-backed guide for it.
+> [!IMPORTANT]
+> There is no public NeonRetroRewind guide or website yet.
+> This repository currently contains the software and research instructions used to discover and verify guide information.
 
-The repository currently provides build-identified Unreal data acquisition, canonical ArkType artifact contracts, generated JSON Schema for cross-language boundaries, normalized film and mechanic compilers, and a bounded movie-return runtime collector and validator. The public guide and website have not been built yet.
+## What you can find here
 
-## Current status
+The repository contains tools that help contributors study a copy of the game they own.
+Those tools can identify the installed game version, collect focused facts, and check selected rules while the game is running.
 
-- Static acquisition reads a user-owned Steam installation and produces ignored, immutable evidence artifacts.
-- The normalized film catalog covers the game's 13 catalog tables.
-- Rental, membership-fee, movie-return, and new-release mechanics have typed or normalized evidence.
-- A user-operated movie-return observation for Steam build `23896268` completed and passed semantic validation.
-- The normalized new-release artifact covers the two-day unlock, request routing and generation, and still-new candidate eligibility for build `23896268`. Eligibility requires a released, non-second-hand film and uses `(Example Period Count - Example Available Period) <= 7`, with no lower-bound check in the predicate. Exact runtime map contents and film identities remain unresolved.
-- No public guide, calculator, or website exists.
+The project has already researched parts of the film catalog, rentals, fees, movie returns, and new releases.
+The generated research artifacts are kept private because they contain information from game files.
+Supported findings can later be written as guide information.
+The public repository contains NeonRetroRewind's own source code, documentation, and tests made with invented examples.
 
-## Documentation
+You do not need to understand the research tools to follow the project or contribute to its future guide.
 
-Start with the page that matches the work you need:
+## Start with what you want to do
 
-| Document | Purpose |
-|---|---|
-| [Static acquisition workflow](docs/static-acquisition-workflow.md) | Build identity, census, mappings, structured values, and subsystem evidence |
-| [Blueprint analysis workflow](docs/blueprint-analysis-workflow.md) | Caller discovery, Blueprint bodies, event-graph entrypoints, and typed Kismet traces |
-| [Domain compilation workflow](docs/domain-compilation-workflow.md) | Compile console-return, membership-fee, movie-return, new-release, and film-catalog artifacts |
-| [Runtime preparation workflow](docs/runtime-preparation-workflow.md) | Prepare the compatibility probe and collector payload without starting or modifying the game automatically |
-| [Portable local tool setup](docs/portable-tool-setup.md) | Use pinned local .NET, Node.js, and pnpm tools without a system-wide installation |
-| [Movie-return runtime host](docs/movie-return-runtime-host.md) | Runtime-host compatibility, staging, installation, cleanup, and ownership rules |
-| [Movie-return runtime observation](docs/movie-return-runtime-observation.md) | Observation contract, validation case, passed run, and evidence linking |
-| [Repository reference](docs/repository-reference.md) | Troubleshooting, artifact contracts, repository layout, license, and disclaimer |
-| [Runtime collector build](projects/game-data-exporter/runtime-collector/README.md) | Build the bounded UE4SS C++ collector from pinned sources |
+### I want to understand the project
+
+Read the [contributor and repository guide](docs/repository-reference.md).
+It explains what is built, what is not built, and where the main parts live.
+
+### I want to understand how the research works
+
+Read [How NeonRetroRewind researches the game](docs/research-overview.md).
+It introduces every important term without assuming knowledge of Unreal Engine, data extraction, or runtime tools.
+
+### I want to run the research tools
+
+Start with the research overview before following any command guide.
+The command guides are ordered from the most generally useful workflow to the most specialized one.
+
+1. [Prepare portable local tools](docs/portable-tool-setup.md)
+2. [Collect evidence from game files](docs/static-acquisition-workflow.md)
+3. [Analyze selected visual game scripts](docs/blueprint-analysis-workflow.md)
+4. [Convert evidence into stable project records](docs/domain-compilation-workflow.md)
+5. [Prepare a runtime check when file research is not enough](docs/runtime-preparation-workflow.md)
+
+Runtime validation is optional and advanced.
+The [movie-return observation](docs/movie-return-runtime-observation.md), [runtime-host design](docs/movie-return-runtime-host.md), and [native collector build](projects/game-data-exporter/runtime-collector/README.md) document the first implemented case.
+
+## How an answer reaches the future guide
+
+1. A contributor starts with a licensed copy of one exact game version
+2. NeonRetroRewind tools collect only the information needed for a specific question
+3. The project converts that information into a consistent record with links back to its source
+4. A controlled in-game check is used only when the files cannot answer the question reliably
+5. A supported finding can become guide information
+
+Each layer requires more technical knowledge than the one before it.
+Readers can stop as soon as they have the information they need.
 
 ## Data and distribution boundary
 
-Game files and raw game data of any kind must never be committed to or published from this repository. The repository contains source code, generated boundary schemas, normalization logic, and instructions. Users provide their own licensed game installation and run acquisition locally.
+Game files and information copied from them must never be committed to or published from this repository.
+Users provide their own licensed installation, and all generated game-derived output stays in ignored local directories.
 
 Do not commit or publish:
 
 - Compiled extractor or collector binaries
 - Game binaries, package files, mappings, or saves
-- Build manifests, censuses, extracted values, or Blueprint-derived evidence
-- Compiled catalogs, mechanic artifacts, runtime observations, validation reports, or extracted game text
-- Extracted or modified game assets
+- Extracted values, game logic, runtime observations, or validation reports
+- Compiled catalogs or mechanic records derived from the game
+- Extracted or modified game assets or text
 
-The documented output directories are ignored by Git.
+## License
 
-## Workflow at a glance
+Original NeonRetroRewind source code is licensed under the [Apache License 2.0](LICENSE).
 
-1. Follow [portable tool setup](docs/portable-tool-setup.md).
-2. Run the [static acquisition workflow](docs/static-acquisition-workflow.md) against one exact game build.
-3. Produce focused cooked-function evidence with the [Blueprint analysis workflow](docs/blueprint-analysis-workflow.md).
-4. Compile private normalized artifacts with the [domain workflow](docs/domain-compilation-workflow.md).
-5. Use the [runtime workflow](docs/runtime-preparation-workflow.md) only when a mechanic requires controlled in-game observation.
-6. Keep all generated game-derived data in the ignored local directories described by the workflow.
+## Disclaimer
 
-See the [repository reference](docs/repository-reference.md) for contract ownership, troubleshooting, layout, licensing, and the project disclaimer.
+NeonRetroRewind is an unofficial fan project and is not affiliated with or endorsed by the developers or publishers of *Retro Rewind: Video Store Simulator*.
+The game and its related names and assets belong to their respective owners.
