@@ -162,7 +162,7 @@ internal static class Program
         writer.WriteLine("The rental-blueprint-bodies command writes pseudocode and function metadata for the rental Blueprint classes.");
         writer.WriteLine("The blueprint-call-sites command scans parsed Blueprint bytecode for calls to one exact function name.");
         writer.WriteLine("The blueprint-property-references command scans parsed Blueprint bytecode for exact Kismet property-pointer names.");
-        writer.WriteLine("The blueprint-property-reference-trace command rereads selected property-reader functions into typed Kismet nodes.");
+        writer.WriteLine("The blueprint-property-reference-trace command rereads selected property-reference functions into typed Kismet nodes.");
         writer.WriteLine("The blueprint-caller-bodies command decompiles the exact caller functions recorded by a complete call-site artifact.");
         writer.WriteLine("The blueprint-function-trace command rereads exact caller functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The blueprint-call-candidate-trace command compares one recorded call with an explicitly selected same-class candidate without asserting that they are related.");

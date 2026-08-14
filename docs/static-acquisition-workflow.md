@@ -423,11 +423,13 @@ dotnet run --project "$extractor" -- blueprint-property-references \
 The command verifies every package and input identity before and after scanning, accepts identical existing output, and refuses to overwrite different content.
 The output contains game-specific function locations and must remain in the ignored local acquisition directory.
 
-## 7g. Trace a discovered property reader
+## 7g. Trace discovered property-reference functions
 
 This step accepts only a complete property-reference artifact for the supplied build and mappings.
-Each requested function must contain a recorded property read.
+Each requested function must contain at least one recorded property reference.
 The command rereads its cooked bytecode into typed Kismet nodes and rechecks every recorded reference in that function against the trace.
+Artifacts containing only selected reader functions retain the existing reader selection rule.
+Selecting a function without a read uses the broader recorded-reference selection rule.
 
 ```powershell
 dotnet run --project $extractor -- blueprint-property-reference-trace `

@@ -13,7 +13,16 @@ test("accepts the bounded Blueprint property-reference trace contract", () => {
   assert.deepEqual(BlueprintPropertyReferenceTraceSchema.assert(artifact), artifact);
 });
 
-test("rejects an unsupported property-reader selection rule", () => {
+test("accepts the exact recorded-reference selection rule", () => {
+  const artifact = {
+    ...createArtifact(),
+    selectionRule: "explicit-functions-with-recorded-references" as const,
+  };
+
+  assert.deepEqual(BlueprintPropertyReferenceTraceSchema.assert(artifact), artifact);
+});
+
+test("rejects an unsupported property-reference selection rule", () => {
   const artifact = createArtifact();
   (artifact as { selectionRule: string }).selectionRule = "all-property-references";
 

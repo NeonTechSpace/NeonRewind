@@ -5,6 +5,8 @@ namespace NeonRetroRewind.StaticExtractor;
 internal static class BlueprintPropertyReferenceTraceCommand
 {
     public const string SelectionRule = "explicit-functions-with-read-references";
+    public const string ReferenceSelectionRule =
+        "explicit-functions-with-recorded-references";
 
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
@@ -48,7 +50,7 @@ internal static class BlueprintPropertyReferenceTraceCommand
                 manifest,
                 manifestIdentity.Sha256,
                 mappings);
-            var selections = CreateSelections(references, options.FunctionPaths);
+            var selection = CreateSelections(references, options.FunctionPaths);
             var packagePaths = AcquisitionValidator.VerifyPackageFiles(
                 manifest,
                 options.PackageDirectory);
@@ -56,13 +58,14 @@ internal static class BlueprintPropertyReferenceTraceCommand
             var functions = BlueprintFunctionTracer.TraceSelected(
                 options.MappingsPath,
                 options.PackageDirectory,
-                selections);
+                selection.Functions);
             VerifyReferences(references, functions);
             var artifact = CreateArtifact(
                 manifest,
                 manifestIdentity.Sha256,
                 referencesIdentity,
                 references.Target.PropertyName,
+                selection.Rule,
                 mappings,
                 functions);
 
@@ -122,21 +125,28 @@ internal static class BlueprintPropertyReferenceTraceCommand
         }
     }
 
-    private static IReadOnlyList<BlueprintFunctionTraceSelection> CreateSelections(
+    public static bool IsSupportedSelectionRule(string selectionRule)
+        => selectionRule is SelectionRule or ReferenceSelectionRule;
+
+    private static PropertyReferenceTraceSelection CreateSelections(
         BlueprintPropertyReferences artifact,
         IReadOnlyList<string> requestedFunctionPaths)
     {
         var selections = new List<BlueprintFunctionTraceSelection>();
+        var everyFunctionHasReadReference = true;
         foreach (var functionPath in requestedFunctionPaths.Order(StringComparer.Ordinal))
         {
             var matches = artifact.References
                 .Where(reference => reference.FunctionPath == functionPath)
                 .ToArray();
-            if (matches.Length == 0 || matches.All(reference => reference.Access != "read"))
+            if (matches.Length == 0)
             {
                 throw new InvalidDataException(
-                    $"Requested function has no recorded property read: {functionPath}");
+                    $"Requested function has no recorded property reference: {functionPath}");
             }
+
+            everyFunctionHasReadReference &=
+                matches.Any(reference => reference.Access == "read");
 
             var first = matches[0];
             if (matches.Any(reference =>
@@ -157,7 +167,9 @@ internal static class BlueprintPropertyReferenceTraceCommand
                 first.FunctionPath));
         }
 
-        return selections;
+        return new PropertyReferenceTraceSelection(
+            selections,
+            everyFunctionHasReadReference ? SelectionRule : ReferenceSelectionRule);
     }
 
     private static void VerifyReferences(
@@ -188,6 +200,7 @@ internal static class BlueprintPropertyReferenceTraceCommand
         string manifestSha256,
         FileIdentity referencesIdentity,
         string targetPropertyName,
+        string selectionRule,
         MappingIdentity mappings,
         IReadOnlyList<BlueprintTracedFunction> functions)
     {
@@ -206,7 +219,7 @@ internal static class BlueprintPropertyReferenceTraceCommand
             RequestedFunctionPaths: functions
                 .Select(function => function.FunctionPath)
                 .ToArray(),
-            SelectionRule,
+            selectionRule,
             Mappings: mappings,
             Engine: manifest.Engine,
             Extractor: new ExtractorIdentity(
@@ -369,9 +382,13 @@ internal static class BlueprintPropertyReferenceTraceCommand
     {
         writer.WriteLine("Usage: NeonRetroRewind.StaticExtractor blueprint-property-reference-trace --build-manifest <path> --property-references <path> --function-path <path> [--function-path <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine();
-        writer.WriteLine("The command rereads selected functions with recorded property reads into typed Kismet nodes and rechecks every recorded reference in those functions.");
+        writer.WriteLine("The command rereads selected functions with recorded property references into typed Kismet nodes and rechecks every recorded reference in those functions.");
         writer.WriteLine("The output directory must already exist, and different existing content is never overwritten.");
     }
+
+    private sealed record PropertyReferenceTraceSelection(
+        IReadOnlyList<BlueprintFunctionTraceSelection> Functions,
+        string Rule);
 
     private sealed record BlueprintPropertyReferenceTraceOptions(
         string BuildManifestPath,

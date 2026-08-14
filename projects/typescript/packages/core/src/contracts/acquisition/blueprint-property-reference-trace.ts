@@ -176,7 +176,10 @@ export const BlueprintPropertyReferenceTraceSchema = type({
       type("string").atLeastLength(1).atMostLength(1024).array(),
     ]).readonly(),
   ),
-  selectionRule: type.unit("explicit-functions-with-read-references"),
+  selectionRule: type.enumerated(
+    "explicit-functions-with-read-references",
+    "explicit-functions-with-recorded-references",
+  ),
   mappings: $definitionMappingIdentity,
   engine: $definitionEngineIdentity,
   extractor: $definitionExtractorIdentity,

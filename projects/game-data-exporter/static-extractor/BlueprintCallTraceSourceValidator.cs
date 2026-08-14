@@ -61,7 +61,8 @@ internal static class BlueprintCallTraceSourceValidator
         }
 
         var nodes = source.Functions.SelectMany(function => function.Nodes).ToArray();
-        if (source.SelectionRule != BlueprintPropertyReferenceTraceCommand.SelectionRule ||
+        if (!BlueprintPropertyReferenceTraceCommand.IsSupportedSelectionRule(
+                source.SelectionRule) ||
             string.IsNullOrWhiteSpace(source.BlueprintPropertyReferences.TargetPropertyName) ||
             source.BlueprintPropertyReferences.TargetPropertyName.Length > 1024 ||
             source.BlueprintPropertyReferences.TargetPropertyName.Any(char.IsControl) ||
