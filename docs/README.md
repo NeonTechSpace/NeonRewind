@@ -7,12 +7,15 @@ The goal is to answer player questions with information checked against the game
 > There is no public NeonRetroRewind guide or website yet.
 > This repository currently contains the software and research instructions used to discover and verify guide information.
 
-## What you can find here
+## Current project state
 
-The repository contains tools that help contributors study a copy of the game they own.
-Those tools can identify the installed game version, collect focused facts, and check selected rules while the game is running.
+NeonRetroRewind is currently a research and validation codebase.
+It is not yet a player-facing product.
 
-The project has already researched parts of the film catalog, rentals, fees, movie returns, and new releases.
+The repository contains tools that identify an installed game build, collect focused facts from game files, convert selected evidence into stable project records, and check one bounded movie-return case while the game runs.
+Implemented records cover the film catalog, console returns, membership fees, movie returns, and new releases.
+Level-progression research has identified the XP table and part of the XP update path, but no normalized progression record exists yet.
+
 The generated research artifacts are kept private because they contain information from game files.
 Supported findings can later be written as guide information.
 The public repository contains NeonRetroRewind's own source code, documentation, and tests made with invented examples.
@@ -23,12 +26,12 @@ You do not need to understand the research tools to follow the project or contri
 
 ### I want to understand the project
 
-Read the [contributor and repository guide](docs/repository-reference.md).
+Read the [contributor and repository guide](/docs/repository-reference.md).
 It explains what is built, what is not built, and where the main parts live.
 
 ### I want to understand how the research works
 
-Read [How NeonRetroRewind researches the game](docs/research-overview.md).
+Read [How NeonRetroRewind researches the game](/docs/research-overview.md).
 It introduces every important term without assuming knowledge of Unreal Engine, data extraction, or runtime tools.
 
 ### I want to run the research tools
@@ -36,14 +39,14 @@ It introduces every important term without assuming knowledge of Unreal Engine, 
 Start with the research overview before following any command guide.
 The command guides are ordered from the most generally useful workflow to the most specialized one.
 
-1. [Prepare portable local tools](docs/portable-tool-setup.md)
-2. [Collect evidence from game files](docs/static-acquisition-workflow.md)
-3. [Analyze selected visual game scripts](docs/blueprint-analysis-workflow.md)
-4. [Convert evidence into stable project records](docs/domain-compilation-workflow.md)
-5. [Prepare a runtime check when file research is not enough](docs/runtime-preparation-workflow.md)
+1. [Prepare portable local tools](/docs/portable-tool-setup.md)
+2. [Collect evidence from game files](/docs/static-acquisition-workflow.md)
+3. [Analyze selected visual game scripts](/docs/blueprint-analysis-workflow.md)
+4. [Convert evidence into stable project records](/docs/domain-compilation-workflow.md)
+5. [Prepare a runtime check when file research is not enough](/docs/runtime-preparation-workflow.md)
 
 Runtime validation is optional and advanced.
-The [movie-return observation](docs/movie-return-runtime-observation.md), [runtime-host design](docs/movie-return-runtime-host.md), and [native collector build](projects/game-data-exporter/runtime-collector/README.md) document the first implemented case.
+The [movie-return observation](/docs/movie-return-runtime-observation.md), [runtime-host design](/docs/movie-return-runtime-host.md), and [native collector build](/projects/game-data-exporter/runtime-collector/README.md) document the first implemented case.
 
 ## How an answer reaches the future guide
 
@@ -71,7 +74,7 @@ Do not commit or publish:
 
 ## License
 
-Original NeonRetroRewind source code is licensed under the [Apache License 2.0](LICENSE).
+Original NeonRetroRewind source code is licensed under the [Apache License 2.0](/LICENSE).
 
 ## Disclaimer
 

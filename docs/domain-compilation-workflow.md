@@ -17,6 +17,8 @@ It then writes a normalized record for one area such as movie returns or the fil
 
 Normalized means the record uses a consistent NeonRetroRewind shape instead of copying the layout used inside the game.
 The output is still derived from the game, so it remains private and uncommitted.
+The implemented commands cover the film catalog, console returns, membership fees, movie returns, and new releases.
+Level-progression acquisition is in progress, and no progression compilation command exists yet.
 
 ## Before you start
 
