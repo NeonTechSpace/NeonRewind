@@ -261,6 +261,9 @@ internal static class BlueprintFunctionTraceBuilder
             case EX_ByteConst integer:
                 value = integer.Value;
                 return true;
+            case EX_SkipOffsetConst offset:
+                value = offset.Value;
+                return true;
             default:
                 if (expression.GetType().Name == "EX_IntZero")
                 {
