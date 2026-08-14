@@ -199,7 +199,7 @@ function assertCallTargetBinding(
   const { binding } = trace;
   if (
     binding.bindingRule !== "exact-context-object-class-and-declaration" ||
-    !("contextStatementIndex" in binding.receiver)
+    !("objectName" in binding.receiver)
   ) {
     throw new Error("Candidate predicate target identity changed.");
   }

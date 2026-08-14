@@ -392,7 +392,7 @@ internal static class BlueprintCallTargetTraceCommand
     {
         writer.WriteLine("Usage: NeonRetroRewind.StaticExtractor blueprint-call-target-trace --build-manifest <path> --source-trace <path> --declarations <path> --caller-function-path <path> --statement-index <integer> --expected-call-kind <kind> --expected-call-function <name> --expected-argument-count <integer> --target-function-path <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine();
-        writer.WriteLine("The command verifies an exact EX_Context object-constant receiver or an implicit same-class EX_LocalVirtualFunction receiver against one exact declaration owner, then writes the target signature and typed Kismet body.");
+        writer.WriteLine("The command verifies an exact EX_Context object-constant receiver, an exact scalar object instance-variable receiver, or an implicit same-class EX_LocalVirtualFunction receiver against one exact declaration owner, then writes the target signature and typed Kismet body.");
         writer.WriteLine("A relationship is verified only when the receiver class, call signature, declaration, and traced function all match. Different existing output content is never overwritten.");
     }
 

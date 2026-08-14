@@ -320,8 +320,8 @@ The output contains game-specific declaration evidence and must remain in the ig
 ## 18. Verify and trace an exact call target
 
 This step binds one exact call node to one exact cooked declaration and traces the bound function body.
-It accepts an `EX_Context` call with an `EX_ObjectConst` receiver or an implicit-receiver `EX_LocalVirtualFunction` call whose caller class is the declaration owner.
-Calls through an instance-variable receiver are not currently supported by this command.
+It accepts an `EX_Context` call with an `EX_ObjectConst` receiver, an `EX_Context` call whose `EX_InstanceVariable` resolves to one scalar object property on the caller class, or an implicit-receiver `EX_LocalVirtualFunction` call whose caller class is the declaration owner.
+For an instance-variable receiver, the loaded property class must exactly match the declaration owner.
 The resolved receiver class path must equal the declaration owner, and the call's argument count must equal the declaration's parameter count.
 The command also verifies the declaration against the loaded class function map, package export, signature, flags, and bytecode-expression count.
 It fails closed instead of emitting an unproven relationship.

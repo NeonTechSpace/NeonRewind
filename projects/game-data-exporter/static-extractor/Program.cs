@@ -167,7 +167,7 @@ internal static class Program
         writer.WriteLine("The blueprint-function-trace command rereads exact caller functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The blueprint-call-candidate-trace command compares one recorded call with an explicitly selected same-class candidate without asserting that they are related.");
         writer.WriteLine("The blueprint-function-declarations command scans raw cooked Function exports for one exact object name and records declaration signatures and owner linkage.");
-        writer.WriteLine("The blueprint-call-target-trace command verifies an object-constant or implicit same-class local-virtual call receiver against one exact declaration and traces the bound function.");
+        writer.WriteLine("The blueprint-call-target-trace command verifies an object-constant, scalar object instance-variable, or implicit same-class local-virtual call receiver against one exact declaration and traces the bound function.");
         writer.WriteLine("The rental-function-trace command rereads selected rental functions into typed Kismet nodes without parsing pseudocode.");
     }
 }

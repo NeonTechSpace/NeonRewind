@@ -16,6 +16,8 @@ internal static class BlueprintCallTargetTracer
         "exact-context-object-class-and-declaration";
     public const string CallerClassBindingRule =
         "exact-local-virtual-caller-class-and-declaration";
+    public const string InstanceVariableBindingRule =
+        "exact-context-instance-variable-class-and-declaration";
 
     private const string KismetNamespacePrefix = "CUE4Parse.UE4.Kismet";
 
@@ -123,10 +125,21 @@ internal static class BlueprintCallTargetTracer
         var match = matches[0];
         if (match.Parent is EX_Context context &&
             match.Edge == nameof(EX_Context.ContextExpression) &&
-            ReferenceEquals(context.ContextExpression, match.Expression) &&
-            context.ObjectExpression is EX_ObjectConst objectConstant)
+            ReferenceEquals(context.ContextExpression, match.Expression))
         {
-            return ResolveObjectConstantReceiver(context, objectConstant);
+            if (context.ObjectExpression is EX_ObjectConst objectConstant)
+            {
+                return ResolveObjectConstantReceiver(context, objectConstant);
+            }
+
+            if (context.ObjectExpression is EX_InstanceVariable instanceVariable)
+            {
+                return ResolveInstanceVariableReceiver(
+                    context,
+                    instanceVariable,
+                    blueprintClass,
+                    caller);
+            }
         }
 
         if (match.Parent is not EX_Context &&
@@ -144,7 +157,54 @@ internal static class BlueprintCallTargetTracer
         }
 
         throw new InvalidDataException(
-            "The recorded call has neither a verified object-constant receiver nor a same-class local-virtual receiver.");
+            "The recorded call has no supported verified receiver.");
+    }
+
+    private static ResolvedReceiver ResolveInstanceVariableReceiver(
+        EX_Context context,
+        EX_InstanceVariable instanceVariable,
+        UBlueprintGeneratedClass callerClass,
+        BlueprintFunctionTraceSelection caller)
+    {
+        var propertyName = instanceVariable.Variable.ToString();
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            throw new InvalidDataException("The call receiver instance variable has no property name.");
+        }
+
+        var matches = callerClass.ChildProperties
+            .Where(field => field.Name.Text == propertyName)
+            .ToArray();
+        if (matches.Length != 1)
+        {
+            throw new InvalidDataException(
+                $"The call receiver property is absent or not unique on the caller class: {propertyName}");
+        }
+
+        if (matches[0] is not FObjectProperty property || property.ArrayDim != 1)
+        {
+            throw new InvalidDataException(
+                $"The call receiver property is not a scalar object property: {propertyName}");
+        }
+
+        var propertyClass = property.PropertyClass.Load<UClass>() ??
+            throw new InvalidDataException(
+                $"The call receiver property class did not resolve: {propertyName}");
+
+        return new ResolvedReceiver(
+            InstanceVariableBindingRule,
+            new BlueprintCallReceiver(
+                ClassPath: propertyClass.GetPathName(),
+                ContextStatementIndex: context.StatementIndex,
+                ContextOpcode: nameof(EX_Context),
+                CallEdge: nameof(EX_Context.ContextExpression),
+                ReceiverStatementIndex: instanceVariable.StatementIndex,
+                ReceiverOpcode: nameof(EX_InstanceVariable),
+                ReceiverEdge: nameof(EX_Context.ObjectExpression),
+                PropertyName: propertyName,
+                PropertyType: nameof(FObjectProperty),
+                CallerClassPath: caller.ClassPath,
+                CallerFunctionPath: caller.FunctionPath));
     }
 
     private static ResolvedReceiver ResolveObjectConstantReceiver(

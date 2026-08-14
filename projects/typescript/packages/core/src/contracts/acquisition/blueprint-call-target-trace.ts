@@ -222,6 +222,20 @@ const $definitionCallerClassReceiver = type({
   callerFunctionPath: $definitionNonEmptyString,
   "+": "reject",
 }).readonly();
+const $definitionInstanceVariableReceiver = type({
+  contextStatementIndex: type("number.integer").atLeast(0),
+  contextOpcode: type.unit("EX_Context"),
+  callEdge: type.unit("ContextExpression"),
+  receiverStatementIndex: type("number.integer").atLeast(0),
+  receiverOpcode: type.unit("EX_InstanceVariable"),
+  receiverEdge: type.unit("ObjectExpression"),
+  propertyName: $definitionNonEmptyString,
+  propertyType: type.unit("FObjectProperty"),
+  classPath: $definitionNonEmptyString,
+  callerClassPath: $definitionNonEmptyString,
+  callerFunctionPath: $definitionNonEmptyString,
+  "+": "reject",
+}).readonly();
 const $definitionTargetDeclaration = type({
   packagePath: type("string")
     .matching(new RegExp("\\.uasset$"))
@@ -252,9 +266,22 @@ const $definitionCallerClassBinding = type({
   function: $definitionFunction,
   "+": "reject",
 }).readonly();
+const $definitionInstanceVariableBinding = type({
+  bindingRule: type.unit(
+    "exact-context-instance-variable-class-and-declaration",
+  ),
+  relationship: type.unit("verified"),
+  receiverClassMatchesDeclarationOwner: type.unit(true),
+  argumentCountMatchesParameterCount: type.unit(true),
+  receiver: $definitionInstanceVariableReceiver,
+  declaration: $definitionTargetDeclaration,
+  function: $definitionFunction,
+  "+": "reject",
+}).readonly();
 const $definitionBinding = type.or(
   $definitionObjectConstantBinding,
   $definitionCallerClassBinding,
+  $definitionInstanceVariableBinding,
 );
 
 export const BlueprintCallTargetTraceSchema = type({

@@ -53,6 +53,60 @@ test("accepts a same-class local-virtual call-target trace", () => {
   assert.deepEqual(BlueprintCallTargetTraceSchema.assert(artifact), artifact);
 });
 
+test("accepts an exactly typed instance-variable call-target trace", () => {
+  const objectArtifact = createArtifact();
+  const artifact = {
+    ...objectArtifact,
+    binding: {
+      ...objectArtifact.binding,
+      bindingRule:
+        "exact-context-instance-variable-class-and-declaration" as const,
+      receiver: {
+        contextStatementIndex: 224,
+        contextOpcode: "EX_Context" as const,
+        callEdge: "ContextExpression" as const,
+        receiverStatementIndex: 225,
+        receiverOpcode: "EX_InstanceVariable" as const,
+        receiverEdge: "ObjectExpression" as const,
+        propertyName: "UI Game Interface",
+        propertyType: "FObjectProperty" as const,
+        classPath: filmDataClassPath,
+        callerClassPath: marketClassPath,
+        callerFunctionPath: `${marketClassPath}:Apply Example Progress`,
+      },
+    },
+  };
+
+  assert.deepEqual(BlueprintCallTargetTraceSchema.assert(artifact), artifact);
+});
+
+test("rejects a non-object instance-variable receiver", () => {
+  const objectArtifact = createArtifact();
+  const artifact = {
+    ...objectArtifact,
+    binding: {
+      ...objectArtifact.binding,
+      bindingRule:
+        "exact-context-instance-variable-class-and-declaration" as const,
+      receiver: {
+        contextStatementIndex: 224,
+        contextOpcode: "EX_Context" as const,
+        callEdge: "ContextExpression" as const,
+        receiverStatementIndex: 225,
+        receiverOpcode: "EX_InstanceVariable" as const,
+        receiverEdge: "ObjectExpression" as const,
+        propertyName: "UI Game Interface",
+        propertyType: "FInterfaceProperty",
+        classPath: filmDataClassPath,
+        callerClassPath: marketClassPath,
+        callerFunctionPath: `${marketClassPath}:Apply Example Progress`,
+      },
+    },
+  };
+
+  assert.throws(() => BlueprintCallTargetTraceSchema.assert(artifact));
+});
+
 test("rejects a caller-class receiver under the object-constant binding rule", () => {
   const objectArtifact = createArtifact();
   const artifact = {
