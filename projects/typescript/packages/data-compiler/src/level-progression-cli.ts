@@ -8,6 +8,7 @@ import {
   BlueprintFunctionTraceSchema,
   BlueprintPropertyReferenceTraceSchema,
   GameplayUnlockEnumSchema,
+  LevelProgressionCategoryEnumsSchema,
   LevelProgressionTargetProfileSchema,
   StructuredValuesSchema,
   type LevelProgressionArtifactIdentity,
@@ -27,6 +28,7 @@ interface Options {
   readonly targetProfilePath: string;
   readonly structuredValuesPath: string;
   readonly gameplayUnlockEnumPath: string;
+  readonly categoryEnumsPath: string;
   readonly changeXpTracePath: string;
   readonly maximumCallerTracePath: string;
   readonly maximumTargetTracePath: string;
@@ -50,6 +52,7 @@ export async function runLevelProgression(
       targetProfile,
       structuredValues,
       gameplayUnlockEnum,
+      categoryEnums,
       changeXp,
       maximumCaller,
       maximumTarget,
@@ -59,6 +62,7 @@ export async function runLevelProgression(
         readInput(options.targetProfilePath, "Level-progression target profile"),
         readInput(options.structuredValuesPath, "Structured-values"),
         readInput(options.gameplayUnlockEnumPath, "Gameplay-unlock enum"),
+        readInput(options.categoryEnumsPath, "Level-progression category enums"),
         readInput(options.changeXpTracePath, "Change-XP trace"),
         readInput(options.maximumCallerTracePath, "Maximum-XP caller trace"),
         readInput(options.maximumTargetTracePath, "Maximum-XP target trace"),
@@ -75,6 +79,10 @@ export async function runLevelProgression(
       gameplayUnlockEnum: createIdentity(
         gameplayUnlockEnum,
         "gameplay-unlock-enum",
+      ),
+      categoryEnums: createIdentity(
+        categoryEnums,
+        "level-progression-category-enums",
       ),
       changeXpTrace: createIdentity(changeXp, "blueprint-function-trace"),
       maximumCallerTrace: createIdentity(
@@ -107,6 +115,11 @@ export async function runLevelProgression(
         "Gameplay-unlock enum input",
       ),
       assertArtifactContract(
+        LevelProgressionCategoryEnumsSchema,
+        categoryEnums.value,
+        "Level-progression category-enums input",
+      ),
+      assertArtifactContract(
         BlueprintFunctionTraceSchema,
         changeXp.value,
         "Change-XP trace input",
@@ -135,6 +148,7 @@ export async function runLevelProgression(
         targetProfile,
         structuredValues,
         gameplayUnlockEnum,
+        categoryEnums,
         changeXp,
         maximumCaller,
         maximumTarget,
@@ -163,7 +177,7 @@ export function writeLevelProgressionUsage(
   stream: NodeJS.WritableStream,
 ): void {
   stream.write(
-    "  neonretrorewind-data-compiler level-progression --target-profile <path> --structured-values <path> --gameplay-unlock-enum <path> --change-xp-trace <path> --maximum-caller-trace <path> --maximum-target-trace <path> --end-of-day-trace <path> --output <path>\n",
+    "  neonretrorewind-data-compiler level-progression --target-profile <path> --structured-values <path> --gameplay-unlock-enum <path> --category-enums <path> --change-xp-trace <path> --maximum-caller-trace <path> --maximum-target-trace <path> --end-of-day-trace <path> --output <path>\n",
   );
 }
 
@@ -172,6 +186,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     "--target-profile",
     "--structured-values",
     "--gameplay-unlock-enum",
+    "--category-enums",
     "--change-xp-trace",
     "--maximum-caller-trace",
     "--maximum-target-trace",
@@ -202,6 +217,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     targetProfilePath: values.get("--target-profile")!,
     structuredValuesPath: values.get("--structured-values")!,
     gameplayUnlockEnumPath: values.get("--gameplay-unlock-enum")!,
+    categoryEnumsPath: values.get("--category-enums")!,
     changeXpTracePath: values.get("--change-xp-trace")!,
     maximumCallerTracePath: values.get("--maximum-caller-trace")!,
     maximumTargetTracePath: values.get("--maximum-target-trace")!,

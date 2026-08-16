@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   GameplayUnlockEnumSchema,
+  LevelProgressionCategoryEnumsSchema,
   LevelProgressionSchema,
   LevelProgressionTargetProfileSchema,
 } from "@neonretrorewind/core";
@@ -15,6 +16,7 @@ import {
   createEndOfDayTrace,
   createGameplayUnlockEnum,
   createLevelStructuredValues,
+  createLevelProgressionCategoryEnums,
   createLevelProgressionTargetProfile,
   createMaximumCallerTrace,
   createMaximumTargetTrace,
@@ -68,6 +70,46 @@ test("compiles normalized level thresholds and progression behavior", () => {
         displayName: `Fixture unlock ${value}`,
       },
     ]),
+  );
+  assert.equal(
+    LevelProgressionCategoryEnumsSchema.allows(
+      createLevelProgressionCategoryEnums(),
+    ),
+    true,
+  );
+  assert.deepEqual(
+    progression.thresholds.map((threshold) => threshold.movieCategoryUnlocks),
+    [
+      [],
+      [
+        {
+          enumValue: 0,
+          internalName: "ExampleMovieCategory::Value0",
+          displayName: "Fixture movie category 0",
+        },
+      ],
+      [
+        {
+          enumValue: 1,
+          internalName: "ExampleMovieCategory::Value1",
+          displayName: "Fixture movie category 1",
+        },
+      ],
+    ],
+  );
+  assert.deepEqual(
+    progression.thresholds.map((threshold) => threshold.gameCategoryUnlocks),
+    [
+      [],
+      [],
+      [
+        {
+          enumValue: 0,
+          internalName: "ExampleGameCategory::Value0",
+          displayName: "Fixture game category 0",
+        },
+      ],
+    ],
   );
   assert.deepEqual(
     progression.thresholds.map((threshold) => ({
@@ -185,7 +227,18 @@ test("rejects duplicate target-profile field roles", () => {
     targetProfile.xpTable.fields.gameCategories;
   assert.throws(
     () => compileCurrent({ targetProfile }),
-    /duplicate field or function roles/u,
+    /duplicate target roles/u,
+  );
+});
+
+test("rejects duplicate target-profile enum roles", () => {
+  const targetProfile = createLevelProgressionTargetProfile();
+  targetProfile.categoryEnums.movie = {
+    ...targetProfile.gameplayUnlockEnum,
+  };
+  assert.throws(
+    () => compileCurrent({ targetProfile }),
+    /duplicate target roles/u,
   );
 });
 
@@ -200,6 +253,44 @@ test("rejects a gameplay-unlock enum linked to another target profile", () => {
 
 test("accepts the gameplay-unlock enum fixture contract", () => {
   assert.equal(GameplayUnlockEnumSchema.allows(createGameplayUnlockEnum()), true);
+});
+
+test("rejects category enums linked to another target profile", () => {
+  const categoryEnums = createLevelProgressionCategoryEnums();
+  categoryEnums.targetProfile.sha256 = "9".repeat(64);
+  assert.throws(
+    () => compileCurrent({ categoryEnums }),
+    /do not identify the supplied target profile/u,
+  );
+});
+
+test("rejects a movie-category unlock without an enum definition", () => {
+  const categoryEnums = createLevelProgressionCategoryEnums();
+  categoryEnums.categories.movie.enumerators[0]!.internalName =
+    "ExampleMovieCategory::Different";
+  assert.throws(
+    () => compileCurrent({ categoryEnums }),
+    /movie-category.*has no enum definition/ui,
+  );
+});
+
+test("rejects a changed movie-category enum target", () => {
+  const categoryEnums = createLevelProgressionCategoryEnums();
+  categoryEnums.categories.movie.source.objectPath =
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/Different.Different";
+  assert.throws(
+    () => compileCurrent({ categoryEnums }),
+    /Movie-category enum identity changed/u,
+  );
+});
+
+test("rejects inconsistent category-enum totals", () => {
+  const categoryEnums = createLevelProgressionCategoryEnums();
+  categoryEnums.categories.game.totals.enumeratorCount = 2;
+  assert.throws(
+    () => compileCurrent({ categoryEnums }),
+    /Game-category enum totals do not match/u,
+  );
 });
 
 test("rejects a gameplay unlock without an enum definition", () => {
@@ -272,6 +363,7 @@ interface CompileOptions {
   readonly targetProfile?: ReturnType<typeof createLevelProgressionTargetProfile>;
   readonly structuredValues?: Parameters<typeof createLevelStructuredValues>[0];
   readonly gameplayUnlockEnum?: ReturnType<typeof createGameplayUnlockEnum>;
+  readonly categoryEnums?: ReturnType<typeof createLevelProgressionCategoryEnums>;
   readonly changeXp?: ReturnType<typeof createChangeXpTrace>;
   readonly maximumCaller?: ReturnType<typeof createMaximumCallerTrace>;
   readonly maximumTarget?: ReturnType<typeof createMaximumTargetTrace>;
@@ -309,6 +401,7 @@ function compileCurrent(options: CompileOptions = {}) {
     options.targetProfile ?? levelProgressionTargetProfile,
     createLevelStructuredValues(options.structuredValues),
     options.gameplayUnlockEnum ?? createGameplayUnlockEnum(),
+    options.categoryEnums ?? createLevelProgressionCategoryEnums(),
     options.changeXp ?? createChangeXpTrace(),
     options.maximumCaller ?? createMaximumCallerTrace(),
     options.maximumTarget ?? createMaximumTargetTrace(),

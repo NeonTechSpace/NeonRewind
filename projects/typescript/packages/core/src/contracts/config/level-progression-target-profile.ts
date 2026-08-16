@@ -38,11 +38,17 @@ const engine = type({
   "+": "reject",
 }).readonly();
 
-const gameplayUnlockEnum = type({
+const userDefinedEnumTarget = type({
   packagePath,
   objectPath,
   enumName: identifier,
   internalNamePrefix: nonEmptyString,
+  "+": "reject",
+}).readonly();
+
+const categoryEnums = type({
+  movie: userDefinedEnumTarget,
+  game: userDefinedEnumTarget,
   "+": "reject",
 }).readonly();
 
@@ -287,7 +293,8 @@ export const LevelProgressionTargetProfileSchema = type({
   build,
   mappings,
   engine,
-  gameplayUnlockEnum,
+  gameplayUnlockEnum: userDefinedEnumTarget,
+  categoryEnums,
   xpTable,
   traces: type({
     experienceUpdate,

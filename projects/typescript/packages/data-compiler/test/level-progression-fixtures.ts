@@ -2,6 +2,7 @@ import type {
   GameplayUnlockEnum,
   LevelProgression,
   LevelProgressionArtifactIdentity,
+  LevelProgressionCategoryEnums,
   LevelProgressionTargetProfile,
 } from "@neonretrorewind/core";
 
@@ -36,6 +37,24 @@ export const levelProgressionTargetProfile: LevelProgressionTargetProfile = {
       "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.ExampleUnlockKind",
     enumName: "ExampleUnlockKind",
     internalNamePrefix: "ExampleUnlockKind::",
+  },
+  categoryEnums: {
+    movie: {
+      packagePath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleMovieCategory.uasset",
+      objectPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleMovieCategory.ExampleMovieCategory",
+      enumName: "ExampleMovieCategory",
+      internalNamePrefix: "ExampleMovieCategory::",
+    },
+    game: {
+      packagePath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleGameCategory.uasset",
+      objectPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleGameCategory.ExampleGameCategory",
+      enumName: "ExampleGameCategory",
+      internalNamePrefix: "ExampleGameCategory::",
+    },
   },
   xpTable: {
     packagePath: xpTablePath,
@@ -279,6 +298,11 @@ export const levelProgressionSources: LevelProgressionSources = {
     "gameplay-unlock-enum",
     "f",
   ),
+  categoryEnums: identity(
+    "level-progression-category-enums.json",
+    "level-progression-category-enums",
+    "9",
+  ),
   changeXpTrace: identity(
     "blueprint-function-trace.change-xp.json",
     "blueprint-function-trace",
@@ -332,8 +356,10 @@ export function createLevelStructuredValues(
           values: {
             ExampleLevel_test: options.duplicateLevel && index === 1 ? 0 : index,
             ExampleUnlocks_test: [gameplayUnlockInternalName(index)],
-            ExampleMovieCategories_test: [],
-            ExampleGameCategories_test: [],
+            ExampleMovieCategories_test:
+              index === 0 ? [] : [movieCategoryInternalName(index - 1)],
+            ExampleGameCategories_test:
+              index === 2 ? [gameCategoryInternalName(0)] : [],
             ExampleRequiredProgress_test:
               options.nonPositiveXp && index === 1 ? 0 : requiredXp,
             ...(options.unexpectedField && index === 1 ? { Unexpected_test: 1 } : {}),
@@ -358,7 +384,7 @@ export function createGameplayUnlockEnum(): Mutable<GameplayUnlockEnum> {
     targetProfile: { ...levelProgressionSources.targetProfile },
     extractor: {
       name: "NeonRetroRewind.StaticExtractor",
-      version: "0.0.6",
+      version: "0.0.7",
       cue4ParseVersion: "1.2.2.202607",
     },
     source: {
@@ -377,6 +403,68 @@ export function createGameplayUnlockEnum(): Mutable<GameplayUnlockEnum> {
       displayName: `Fixture unlock ${value}`,
     })),
   };
+}
+
+export function createLevelProgressionCategoryEnums(): Mutable<LevelProgressionCategoryEnums> {
+  return {
+    artifactType: "level-progression-category-enums",
+    build: createBuild(),
+    staticCensus: {
+      fileName: "static-census.v1.json",
+      sizeBytes: 100,
+      sha256: "1".repeat(64),
+    },
+    mappings: createMappings(),
+    engine: engine(),
+    targetProfile: { ...levelProgressionSources.targetProfile },
+    extractor: {
+      name: "NeonRetroRewind.StaticExtractor",
+      version: "0.0.7",
+      cue4ParseVersion: "1.2.2.202607",
+    },
+    categories: {
+      movie: createCategoryEnum(
+        levelProgressionTargetProfile.categoryEnums.movie,
+        movieCategoryInternalName,
+        "Fixture movie category",
+      ),
+      game: createCategoryEnum(
+        levelProgressionTargetProfile.categoryEnums.game,
+        gameCategoryInternalName,
+        "Fixture game category",
+      ),
+    },
+  };
+}
+
+function createCategoryEnum(
+  target: LevelProgressionTargetProfile["categoryEnums"]["movie"],
+  internalName: (value: number) => string,
+  displayName: string,
+): Mutable<LevelProgressionCategoryEnums["categories"]["movie"]> {
+  return {
+    source: {
+      packagePath: target.packagePath,
+      objectPath: target.objectPath,
+      enumName: target.enumName,
+      cppForm: "Namespaced",
+      underlyingType: "int64",
+    },
+    totals: { enumeratorCount: 3 },
+    enumerators: [0, 1, 2].map((value) => ({
+      value,
+      internalName: internalName(value),
+      displayName: `${displayName} ${value}`,
+    })),
+  };
+}
+
+function movieCategoryInternalName(value: number): string {
+  return `ExampleMovieCategory::Value${value}`;
+}
+
+function gameCategoryInternalName(value: number): string {
+  return `ExampleGameCategory::Value${value}`;
 }
 
 function gameplayUnlockInternalName(value: number): string {

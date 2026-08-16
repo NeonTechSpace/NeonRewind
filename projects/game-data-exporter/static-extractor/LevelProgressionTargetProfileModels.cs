@@ -7,7 +7,8 @@ internal sealed record LevelProgressionTargetProfile(
     TargetProfileBuild Build,
     MappingIdentity Mappings,
     EngineIdentity Engine,
-    GameplayUnlockEnumTarget GameplayUnlockEnum,
+    UserDefinedEnumTarget GameplayUnlockEnum,
+    LevelProgressionCategoryEnumTargets CategoryEnums,
     JsonElement XpTable,
     JsonElement Traces);
 
@@ -16,11 +17,15 @@ internal sealed record TargetProfileBuild(
     string SteamAppId,
     string SteamBuildId);
 
-internal sealed record GameplayUnlockEnumTarget(
+internal sealed record UserDefinedEnumTarget(
     string PackagePath,
     string ObjectPath,
     string EnumName,
     string InternalNamePrefix);
+
+internal sealed record LevelProgressionCategoryEnumTargets(
+    UserDefinedEnumTarget Movie,
+    UserDefinedEnumTarget Game);
 
 internal sealed record TargetProfileIdentity(
     string FileName,

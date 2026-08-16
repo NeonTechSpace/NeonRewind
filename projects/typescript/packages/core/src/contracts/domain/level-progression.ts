@@ -15,6 +15,7 @@ const $definitionSourceIdentity = type({
   artifactType: type.enumerated(
     "structured-values",
     "gameplay-unlock-enum",
+    "level-progression-category-enums",
     "blueprint-function-trace",
     "blueprint-property-reference-trace",
     "blueprint-call-target-trace",
@@ -37,6 +38,12 @@ const $definitionSources = type({
   gameplayUnlockEnum: type.and(
     $definitionSourceIdentity,
     type({ "artifactType?": type.unit("gameplay-unlock-enum") }).readonly(),
+  ),
+  categoryEnums: type.and(
+    $definitionSourceIdentity,
+    type({
+      "artifactType?": type.unit("level-progression-category-enums"),
+    }).readonly(),
   ),
   changeXpTrace: type.and(
     $definitionSourceIdentity,
@@ -66,7 +73,7 @@ const $definitionThresholdEvidence = type({
   rowKey: type("string").atLeastLength(1),
   "+": "reject",
 }).readonly();
-const $definitionGameplayUnlock = type({
+const $definitionEnumUnlock = type({
   enumValue: $definitionNonNegativeInteger,
   internalName: type("string").atLeastLength(1),
   displayName: type("string").atLeastLength(1),
@@ -77,7 +84,9 @@ const $definitionThreshold = type({
   nextRuntimeLevel: $definitionPositiveInteger,
   requiredXp: $definitionPositiveInteger,
   cumulativeXp: $definitionPositiveInteger,
-  gameplayUnlocks: $definitionGameplayUnlock.array().readonly(),
+  gameplayUnlocks: $definitionEnumUnlock.array().readonly(),
+  movieCategoryUnlocks: $definitionEnumUnlock.array().readonly(),
+  gameCategoryUnlocks: $definitionEnumUnlock.array().readonly(),
   evidence: $definitionThresholdEvidence,
   "+": "reject",
 }).readonly();
@@ -87,6 +96,8 @@ const $definitionTable = type({
   levelField: type("string").atLeastLength(1),
   xpField: type("string").atLeastLength(1),
   gameplayUnlockField: type("string").atLeastLength(1),
+  movieCategoryField: type("string").atLeastLength(1),
+  gameCategoryField: type("string").atLeastLength(1),
   rowCount: $definitionPositiveInteger,
   "+": "reject",
 }).readonly();
@@ -96,6 +107,11 @@ const $definitionGameplayUnlockEnum = type({
   enumName: type("string").atLeastLength(1),
   enumeratorCount: $definitionPositiveInteger,
   referencedEnumeratorCount: $definitionPositiveInteger,
+  "+": "reject",
+}).readonly();
+const $definitionCategoryEnums = type({
+  movie: $definitionGameplayUnlockEnum,
+  game: $definitionGameplayUnlockEnum,
   "+": "reject",
 }).readonly();
 const $definitionExperienceUpdateStatements = type({
@@ -268,6 +284,7 @@ export const LevelProgressionSchema = type({
   runtimeValidation: type.unit("not-run"),
   table: $definitionTable,
   gameplayUnlockEnum: $definitionGameplayUnlockEnum,
+  categoryEnums: $definitionCategoryEnums,
   thresholds: $definitionThreshold.array().readonly(),
   experienceUpdate: $definitionExperienceUpdate,
   maximum: $definitionMaximum,

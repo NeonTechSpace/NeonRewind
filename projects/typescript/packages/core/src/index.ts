@@ -46,6 +46,10 @@ export {
   type GameplayUnlockEnum,
 } from "./contracts/acquisition/gameplay-unlock-enum.ts";
 export {
+  LevelProgressionCategoryEnumsSchema,
+  type LevelProgressionCategoryEnums,
+} from "./contracts/acquisition/level-progression-category-enums.ts";
+export {
   RentalBlueprintBodiesSchema,
   type RentalBlueprintBodies,
 } from "./contracts/acquisition/rental-blueprint-bodies.ts";

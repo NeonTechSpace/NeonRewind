@@ -52,6 +52,11 @@ internal static class Program
             return GameplayUnlockEnumCommand.Run(gameplayUnlockEnumArguments);
         }
 
+        if (args is ["level-progression-category-enums", .. var categoryEnumArguments])
+        {
+            return LevelProgressionCategoryEnumsCommand.Run(categoryEnumArguments);
+        }
+
         if (args is ["unlockable-function-trace", .. var unlockableFunctionTraceArguments])
         {
             return UnlockableFunctionTraceCommand.Run(unlockableFunctionTraceArguments);
@@ -140,6 +145,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor statistic-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor gameplay-unlock-enum --build-manifest <path> --static-census <path> --mappings <path> --target-profile <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor level-progression-category-enums --build-manifest <path> --static-census <path> --mappings <path> --target-profile <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-function-trace --build-manifest <path> --unlockable-evidence <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-implementation-sites --build-manifest <path> --static-census <path> --unlockable-evidence <path> --unlockable-function-trace <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-manager-trace --build-manifest <path> --unlockable-implementation-sites <path> --mappings <path> --package-directory <path> --output <path>");
@@ -163,6 +169,7 @@ internal static class Program
         writer.WriteLine("The unlockable-evidence command writes mapped class defaults and references for the unlockable-system package cluster.");
         writer.WriteLine("The statistic-evidence command writes mapped class defaults and references for the statistic package cluster.");
         writer.WriteLine("The gameplay-unlock-enum command writes the exact internal values and display labels from the gameplay-unlock enum.");
+        writer.WriteLine("The level-progression-category-enums command writes the exact internal values and display labels from the movie and game category enums used by level progression.");
         writer.WriteLine("The unlockable-function-trace command rereads the four unlock eligibility and mutation functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The unlockable-implementation-sites command locates unlock-item descendants, overrides, manager event graphs, and calls to the four selected hooks.");
         writer.WriteLine("The unlockable-manager-trace command rereads the discovered manager event graph into typed Kismet nodes without parsing pseudocode.");

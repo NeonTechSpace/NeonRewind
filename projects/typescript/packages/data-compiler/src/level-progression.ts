@@ -2,6 +2,7 @@ import {
   LevelProgressionSchema,
   type GameplayUnlockEnum,
   type LevelProgression,
+  type LevelProgressionCategoryEnums,
   type LevelProgressionTargetProfile,
   type StructuredValues,
 } from "@neonretrorewind/core";
@@ -24,10 +25,17 @@ export type LevelStructuredValuesArtifact = Pick<
   "artifactType" | "build" | "mappings" | "engine" | "dataTables"
 >;
 
+type EnumValue = {
+  readonly value: number;
+  readonly internalName: string;
+  readonly displayName: string;
+};
+
 export function compileLevelProgression(
   profile: LevelProgressionTargetProfile,
   structuredValues: LevelStructuredValuesArtifact,
   gameplayUnlockEnum: GameplayUnlockEnum,
+  categoryEnums: LevelProgressionCategoryEnums,
   changeXpTrace: BlueprintFunctionTraceArtifact,
   maximumCallerTrace: BlueprintPropertyReferenceTraceArtifact,
   maximumTargetTrace: BlueprintCallTargetTraceArtifact,
@@ -37,12 +45,19 @@ export function compileLevelProgression(
   assertInputContracts(
     structuredValues,
     gameplayUnlockEnum,
+    categoryEnums,
     changeXpTrace,
     maximumCallerTrace,
     maximumTargetTrace,
     endOfDayTrace,
   );
-  assertProfileContracts(profile, structuredValues, gameplayUnlockEnum, sources);
+  assertProfileContracts(
+    profile,
+    structuredValues,
+    gameplayUnlockEnum,
+    categoryEnums,
+    sources,
+  );
   assertChangeXpTrace(changeXpTrace, profile);
   assertMaximumTraces(
     maximumCallerTrace,
@@ -53,9 +68,26 @@ export function compileLevelProgression(
   assertEndOfDayTrace(endOfDayTrace, profile);
 
   const gameplayUnlocks = compileGameplayUnlocks(gameplayUnlockEnum, profile);
-  const { thresholds, referencedGameplayUnlocks } = compileThresholds(
+  const movieCategories = compileCategoryEnum(
+    categoryEnums.categories.movie,
+    profile.categoryEnums.movie,
+    "Movie-category",
+  );
+  const gameCategories = compileCategoryEnum(
+    categoryEnums.categories.game,
+    profile.categoryEnums.game,
+    "Game-category",
+  );
+  const {
+    thresholds,
+    referencedGameplayUnlocks,
+    referencedMovieCategories,
+    referencedGameCategories,
+  } = compileThresholds(
     structuredValues,
     gameplayUnlocks,
+    movieCategories,
+    gameCategories,
     profile,
   );
   const maximumExperience = thresholds.at(-1)?.cumulativeXp;
@@ -79,6 +111,8 @@ export function compileLevelProgression(
       levelField: profile.xpTable.fields.level,
       xpField: profile.xpTable.fields.requiredProgress,
       gameplayUnlockField: profile.xpTable.fields.gameplayUnlocks,
+      movieCategoryField: profile.xpTable.fields.movieCategories,
+      gameCategoryField: profile.xpTable.fields.gameCategories,
       rowCount: thresholds.length,
     },
     gameplayUnlockEnum: {
@@ -87,6 +121,22 @@ export function compileLevelProgression(
       enumName: gameplayUnlockEnum.source.enumName,
       enumeratorCount: gameplayUnlockEnum.enumerators.length,
       referencedEnumeratorCount: referencedGameplayUnlocks,
+    },
+    categoryEnums: {
+      movie: {
+        packagePath: categoryEnums.categories.movie.source.packagePath,
+        objectPath: categoryEnums.categories.movie.source.objectPath,
+        enumName: categoryEnums.categories.movie.source.enumName,
+        enumeratorCount: categoryEnums.categories.movie.enumerators.length,
+        referencedEnumeratorCount: referencedMovieCategories,
+      },
+      game: {
+        packagePath: categoryEnums.categories.game.source.packagePath,
+        objectPath: categoryEnums.categories.game.source.objectPath,
+        enumName: categoryEnums.categories.game.source.enumName,
+        enumeratorCount: categoryEnums.categories.game.enumerators.length,
+        referencedEnumeratorCount: referencedGameCategories,
+      },
     },
     thresholds,
     experienceUpdate: {
@@ -237,14 +287,15 @@ export function compileLevelProgression(
 
 function compileThresholds(
   input: LevelStructuredValuesArtifact,
-  gameplayUnlocks: ReadonlyMap<
-    string,
-    GameplayUnlockEnum["enumerators"][number]
-  >,
+  gameplayUnlocks: ReadonlyMap<string, EnumValue>,
+  movieCategories: ReadonlyMap<string, EnumValue>,
+  gameCategories: ReadonlyMap<string, EnumValue>,
   profile: LevelProgressionTargetProfile,
 ): {
   readonly thresholds: LevelProgression["thresholds"];
   readonly referencedGameplayUnlocks: number;
+  readonly referencedMovieCategories: number;
+  readonly referencedGameCategories: number;
 } {
   const matchingTables = input.dataTables.filter(
     (table) =>
@@ -270,6 +321,8 @@ function compileThresholds(
   }
 
   const referencedNames = new Set<string>();
+  const referencedMovieCategories = new Set<string>();
+  const referencedGameCategories = new Set<string>();
   const rows = table.rows.map((row) => {
     assertSourceFields(row.values, row.key, profile);
     const level = readInteger(
@@ -289,16 +342,6 @@ function compileThresholds(
         `Expected positive XP in ${profile.xpTable.packagePath} row ${row.key}.`,
       );
     }
-    for (const field of [
-      profile.xpTable.fields.movieCategories,
-      profile.xpTable.fields.gameCategories,
-    ]) {
-      if (!Array.isArray(readSourceValue(row.values, row.key, field, profile))) {
-        throw new Error(
-          `Expected ${field} array in ${profile.xpTable.packagePath} row ${row.key}.`,
-        );
-      }
-    }
     const unlocks = readGameplayUnlocks(
       row.values,
       row.key,
@@ -306,12 +349,45 @@ function compileThresholds(
       referencedNames,
       profile,
     );
-    return { row, level, requiredXp, unlocks };
+    const movieCategoryUnlocks = readEnumUnlocks(
+      row.values,
+      row.key,
+      profile.xpTable.fields.movieCategories,
+      movieCategories,
+      referencedMovieCategories,
+      profile,
+      "movie-category",
+    );
+    const gameCategoryUnlocks = readEnumUnlocks(
+      row.values,
+      row.key,
+      profile.xpTable.fields.gameCategories,
+      gameCategories,
+      referencedGameCategories,
+      profile,
+      "game-category",
+    );
+    return {
+      row,
+      level,
+      requiredXp,
+      unlocks,
+      movieCategoryUnlocks,
+      gameCategoryUnlocks,
+    };
   });
   rows.sort((left, right) => left.level - right.level);
 
   let cumulativeXp = 0;
-  const thresholds = rows.map(({ row, level, requiredXp, unlocks }, index) => {
+  const thresholds = rows.map((entry, index) => {
+    const {
+      row,
+      level,
+      requiredXp,
+      unlocks,
+      movieCategoryUnlocks,
+      gameCategoryUnlocks,
+    } = entry;
     if (level !== index || row.key !== String(index)) {
       throw new Error(
         `XP progression rows must use consecutive numeric levels from zero, found ${row.key}.`,
@@ -327,6 +403,8 @@ function compileThresholds(
       requiredXp,
       cumulativeXp,
       gameplayUnlocks: unlocks,
+      movieCategoryUnlocks,
+      gameCategoryUnlocks,
       evidence: {
         kind: "data-table-row" as const,
         tablePath: table.path,
@@ -340,6 +418,8 @@ function compileThresholds(
   return {
     thresholds,
     referencedGameplayUnlocks: referencedNames.size,
+    referencedMovieCategories: referencedMovieCategories.size,
+    referencedGameCategories: referencedGameCategories.size,
   };
 }
 
@@ -386,6 +466,42 @@ function compileGameplayUnlocks(
   return byName;
 }
 
+function compileCategoryEnum(
+  input: LevelProgressionCategoryEnums["categories"]["movie"],
+  target: LevelProgressionTargetProfile["categoryEnums"]["movie"],
+  label: string,
+): ReadonlyMap<string, EnumValue> {
+  if (
+    input.source.packagePath !== target.packagePath ||
+    input.source.objectPath !== target.objectPath ||
+    input.source.enumName !== target.enumName
+  ) {
+    throw new Error(`${label} enum identity changed.`);
+  }
+  if (
+    input.totals.enumeratorCount !== input.enumerators.length ||
+    input.enumerators.length === 0
+  ) {
+    throw new Error(`${label} enum totals do not match its values.`);
+  }
+
+  const byName = new Map<string, EnumValue>();
+  const displayNames = new Set<string>();
+  for (const [index, enumerator] of input.enumerators.entries()) {
+    if (
+      enumerator.value !== index ||
+      !enumerator.internalName.startsWith(target.internalNamePrefix) ||
+      byName.has(enumerator.internalName) ||
+      displayNames.has(enumerator.displayName)
+    ) {
+      throw new Error(`${label} enum is not consecutive and unique.`);
+    }
+    byName.set(enumerator.internalName, enumerator);
+    displayNames.add(enumerator.displayName);
+  }
+  return byName;
+}
+
 function readGameplayUnlocks(
   values: object,
   rowKey: string,
@@ -396,24 +512,43 @@ function readGameplayUnlocks(
   referencedNames: Set<string>,
   profile: LevelProgressionTargetProfile,
 ): LevelProgression["thresholds"][number]["gameplayUnlocks"] {
-  const field = profile.xpTable.fields.gameplayUnlocks;
+  return readEnumUnlocks(
+    values,
+    rowKey,
+    profile.xpTable.fields.gameplayUnlocks,
+    gameplayUnlocks,
+    referencedNames,
+    profile,
+    "gameplay unlock",
+  );
+}
+
+function readEnumUnlocks(
+  values: object,
+  rowKey: string,
+  field: string,
+  enumValues: ReadonlyMap<string, EnumValue>,
+  referencedNames: Set<string>,
+  profile: LevelProgressionTargetProfile,
+  label: string,
+): LevelProgression["thresholds"][number]["gameplayUnlocks"] {
   const source = readSourceValue(values, rowKey, field, profile);
   if (!Array.isArray(source)) {
     throw new Error(
-      `Expected ${field} array in ${profile.xpTable.packagePath} row ${rowKey}.`,
+      `Expected ${label} array in level-progression row ${rowKey}.`,
     );
   }
 
   return source.map((value) => {
     if (typeof value !== "string" || !referencedNames.add(value)) {
       throw new Error(
-        `Expected unique gameplay unlock names in ${profile.xpTable.packagePath} row ${rowKey}.`,
+        `Expected unique ${label} names in level-progression row ${rowKey}.`,
       );
     }
-    const enumerator = gameplayUnlocks.get(value);
+    const enumerator = enumValues.get(value);
     if (enumerator === undefined) {
       throw new Error(
-        `Gameplay unlock in ${profile.xpTable.packagePath} row ${rowKey} has no enum definition.`,
+        `${label} in level-progression row ${rowKey} has no enum definition.`,
       );
     }
     return {
@@ -481,6 +616,7 @@ function readSourceValue(
 function assertInputContracts(
   structuredValues: LevelStructuredValuesArtifact,
   gameplayUnlockEnum: GameplayUnlockEnum,
+  categoryEnums: LevelProgressionCategoryEnums,
   changeXpTrace: BlueprintFunctionTraceArtifact,
   maximumCallerTrace: BlueprintPropertyReferenceTraceArtifact,
   maximumTargetTrace: BlueprintCallTargetTraceArtifact,
@@ -488,6 +624,9 @@ function assertInputContracts(
 ): void {
   if (structuredValues.artifactType !== "structured-values") {
     throw new Error("Expected a structured-values input.");
+  }
+  if (categoryEnums.artifactType !== "level-progression-category-enums") {
+    throw new Error("Expected level-progression category enums.");
   }
   if (changeXpTrace.artifactType !== "blueprint-function-trace") {
     throw new Error("Expected the configured experience-update Blueprint function trace.");
@@ -504,6 +643,7 @@ function assertInputContracts(
 
   const inputs = [
     gameplayUnlockEnum,
+    categoryEnums,
     changeXpTrace,
     maximumCallerTrace,
     maximumTargetTrace,
@@ -526,6 +666,7 @@ function assertProfileContracts(
   profile: LevelProgressionTargetProfile,
   structuredValues: LevelStructuredValuesArtifact,
   gameplayUnlockEnum: GameplayUnlockEnum,
+  categoryEnums: LevelProgressionCategoryEnums,
   sources: LevelProgressionSources,
 ): void {
   if (profile.profileType !== "level-progression-target-profile") {
@@ -533,15 +674,24 @@ function assertProfileContracts(
   }
   if (
     profile.gameplayUnlockEnum.internalNamePrefix !==
-      `${profile.gameplayUnlockEnum.enumName}::`
+      `${profile.gameplayUnlockEnum.enumName}::` ||
+    profile.categoryEnums.movie.internalNamePrefix !==
+      `${profile.categoryEnums.movie.enumName}::` ||
+    profile.categoryEnums.game.internalNamePrefix !==
+      `${profile.categoryEnums.game.enumName}::`
   ) {
-    throw new Error("Target profile has an inconsistent gameplay-unlock enum prefix.");
+    throw new Error("Target profile has an inconsistent enum prefix.");
   }
   if (
     new Set(Object.values(profile.xpTable.fields)).size !== 5 ||
-    new Set(Object.values(profile.traces.endOfDay.functions)).size !== 5
+    new Set(Object.values(profile.traces.endOfDay.functions)).size !== 5 ||
+    new Set([
+      profile.gameplayUnlockEnum.objectPath,
+      profile.categoryEnums.movie.objectPath,
+      profile.categoryEnums.game.objectPath,
+    ]).size !== 3
   ) {
-    throw new Error("Target profile contains duplicate field or function roles.");
+    throw new Error("Target profile contains duplicate target roles.");
   }
   if (
     profile.traces.requirementLookup.classPath !==
@@ -574,6 +724,16 @@ function assertProfileContracts(
   ) {
     throw new Error(
       "Gameplay-unlock enum does not identify the supplied target profile.",
+    );
+  }
+  if (
+    categoryEnums.targetProfile.fileName !== sources.targetProfile.fileName ||
+    categoryEnums.targetProfile.sizeBytes !== sources.targetProfile.sizeBytes ||
+    categoryEnums.targetProfile.sha256 !== sources.targetProfile.sha256 ||
+    categoryEnums.targetProfile.profileType !== sources.targetProfile.profileType
+  ) {
+    throw new Error(
+      "Category enums do not identify the supplied target profile.",
     );
   }
 }

@@ -5,7 +5,7 @@ using CUE4Parse.UE4.Versions;
 
 namespace NeonRetroRewind.StaticExtractor;
 
-internal static class GameplayUnlockEnumCommand
+internal static class LevelProgressionCategoryEnumsCommand
 {
     private const int InvalidArgumentsExitCode = 2;
     private const int InputFailureExitCode = 6;
@@ -44,11 +44,18 @@ internal static class GameplayUnlockEnumCommand
             var censusIdentity = FileIdentityFactory.Create(options.StaticCensusPath);
             var mappingIdentity = AcquisitionValidator.ReadMappingIdentity(options.MappingsPath);
             BlueprintClusterEvidenceReader.ValidateCensus(census, manifest, manifestIdentity.Sha256);
-            ValidateTargetProfile(targetProfile, manifest, manifestIdentity, mappingIdentity);
+            GameplayUnlockEnumCommand.ValidateTargetProfile(
+                targetProfile,
+                manifest,
+                manifestIdentity,
+                mappingIdentity);
             BlueprintClusterEvidenceReader.ValidateTargets(
                 census,
-                [new(targetProfile.GameplayUnlockEnum.PackagePath, "UserDefinedEnum")],
-                "gameplay-unlock enum");
+                [
+                    new(targetProfile.CategoryEnums.Movie.PackagePath, "UserDefinedEnum"),
+                    new(targetProfile.CategoryEnums.Game.PackagePath, "UserDefinedEnum"),
+                ],
+                "level-progression category enums");
             var packagePaths = AcquisitionValidator.VerifyPackageFiles(manifest, options.PackageDirectory);
 
             var evidence = CreateEvidence(
@@ -71,32 +78,35 @@ internal static class GameplayUnlockEnumCommand
                 "Level-progression target profile");
 
             var json = JsonSerializer.Serialize(evidence, JsonOptions) + "\n";
-            var writeStatus = ImmutableArtifactWriter.Write(options.OutputPath, json, "Gameplay-unlock enum");
+            var writeStatus = ImmutableArtifactWriter.Write(
+                options.OutputPath,
+                json,
+                "Level-progression category enums");
             return writeStatus == ArtifactWriteStatus.Conflict ? OutputConflictExitCode : 0;
         }
-        catch (IOException exception)
+        catch (IOException)
         {
-            Console.Error.WriteLine($"Gameplay-unlock-enum operation failed: {exception.Message}");
+            Console.Error.WriteLine("Level-progression-category-enums operation failed.");
             return InputFailureExitCode;
         }
-        catch (InvalidDataException exception)
+        catch (InvalidDataException)
         {
-            Console.Error.WriteLine($"Gameplay-unlock-enum input failed: {exception.Message}");
+            Console.Error.WriteLine("Level-progression-category-enums input failed.");
             return InputFailureExitCode;
         }
-        catch (System.Text.Json.JsonException exception)
+        catch (JsonException)
         {
-            Console.Error.WriteLine($"Gameplay-unlock-enum input failed: {exception.Message}");
+            Console.Error.WriteLine("Level-progression-category-enums input is not valid JSON.");
             return InputFailureExitCode;
         }
-        catch (UnauthorizedAccessException exception)
+        catch (UnauthorizedAccessException)
         {
-            Console.Error.WriteLine($"Gameplay-unlock-enum access failed: {exception.Message}");
+            Console.Error.WriteLine("Level-progression-category-enums access failed.");
             return InputFailureExitCode;
         }
     }
 
-    private static GameplayUnlockEnumEvidence CreateEvidence(
+    private static LevelProgressionCategoryEnumsEvidence CreateEvidence(
         BuildManifest manifest,
         string manifestSha256,
         FileIdentity censusIdentity,
@@ -124,13 +134,17 @@ internal static class GameplayUnlockEnumCommand
             throw new InvalidDataException("Package containers did not mount completely.");
         }
 
-        var extracted = UserDefinedEnumExtractor.Extract(
+        var movie = UserDefinedEnumExtractor.Extract(
             provider,
-            targetProfile.GameplayUnlockEnum,
-            "Gameplay-unlock enum");
+            targetProfile.CategoryEnums.Movie,
+            "Movie-category enum");
+        var game = UserDefinedEnumExtractor.Extract(
+            provider,
+            targetProfile.CategoryEnums.Game,
+            "Game-category enum");
 
-        return new GameplayUnlockEnumEvidence(
-            ArtifactType: "gameplay-unlock-enum",
+        return new LevelProgressionCategoryEnumsEvidence(
+            ArtifactType: "level-progression-category-enums",
             Build: new CensusBuildReference(
                 ManifestSha256: manifestSha256,
                 SteamAppId: manifest.Steam.AppId,
@@ -150,69 +164,12 @@ internal static class GameplayUnlockEnumCommand
                 Name: "NeonRetroRewind.StaticExtractor",
                 Version: AcquisitionValidator.ReadAssemblyMetadata("ExtractorVersion"),
                 Cue4ParseVersion: AcquisitionValidator.ReadAssemblyMetadata("Cue4ParsePackageVersion")),
-            Source: extracted.Source,
-            Totals: extracted.Totals,
-            Enumerators: extracted.Enumerators);
-    }
-
-    internal static void ValidateTargetProfile(
-        LevelProgressionTargetProfile profile,
-        BuildManifest manifest,
-        FileIdentity manifestIdentity,
-        MappingIdentity mappings)
-    {
-        if (profile.ProfileType != "level-progression-target-profile" ||
-            profile.Build is null ||
-            profile.Mappings is null ||
-            profile.Engine is null ||
-            profile.GameplayUnlockEnum is null ||
-            profile.CategoryEnums is null ||
-            profile.CategoryEnums.Movie is null ||
-            profile.CategoryEnums.Game is null ||
-            profile.XpTable.ValueKind != JsonValueKind.Object ||
-            profile.Traces.ValueKind != JsonValueKind.Object)
-        {
-            throw new InvalidDataException("Level-progression target profile is incomplete or unsupported.");
-        }
-
-        if (profile.Build.ManifestSha256 != manifestIdentity.Sha256 ||
-            profile.Build.SteamAppId != manifest.Steam.AppId ||
-            profile.Build.SteamBuildId != manifest.Steam.BuildId)
-        {
-            throw new InvalidDataException("Level-progression target profile refers to a different game build.");
-        }
-
-        if (profile.Mappings != mappings || profile.Engine != manifest.Engine)
-        {
-            throw new InvalidDataException("Level-progression target profile refers to different mappings or engine configuration.");
-        }
-
-        ValidateEnumTarget(profile.GameplayUnlockEnum, "gameplay-unlock");
-        ValidateEnumTarget(profile.CategoryEnums.Movie, "movie-category");
-        ValidateEnumTarget(profile.CategoryEnums.Game, "game-category");
-        if (profile.GameplayUnlockEnum == profile.CategoryEnums.Movie ||
-            profile.GameplayUnlockEnum == profile.CategoryEnums.Game ||
-            profile.CategoryEnums.Movie == profile.CategoryEnums.Game)
-        {
-            throw new InvalidDataException("Level-progression target profile repeats a category enum target.");
-        }
-    }
-
-    private static void ValidateEnumTarget(UserDefinedEnumTarget enumTarget, string label)
-    {
-        if (string.IsNullOrWhiteSpace(enumTarget.PackagePath) ||
-            !enumTarget.PackagePath.EndsWith(".uasset", StringComparison.Ordinal) ||
-            string.IsNullOrWhiteSpace(enumTarget.ObjectPath) ||
-            string.IsNullOrWhiteSpace(enumTarget.EnumName) ||
-            enumTarget.InternalNamePrefix != $"{enumTarget.EnumName}::")
-        {
-            throw new InvalidDataException($"Level-progression target profile has an invalid {label} enum target.");
-        }
+            Categories: new LevelProgressionCategoryEnums(Movie: movie, Game: game));
     }
 
     private static bool TryParseArguments(
         string[] args,
-        out GameplayUnlockEnumOptions options,
+        out Options options,
         out string error)
     {
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -221,14 +178,14 @@ internal static class GameplayUnlockEnumCommand
             var option = args[index];
             if (index + 1 >= args.Length)
             {
-                options = GameplayUnlockEnumOptions.Empty;
+                options = Options.Empty;
                 error = $"Missing value for option '{option}'.";
                 return false;
             }
 
             if (!values.TryAdd(option, args[++index]))
             {
-                options = GameplayUnlockEnumOptions.Empty;
+                options = Options.Empty;
                 error = $"Duplicate option '{option}'.";
                 return false;
             }
@@ -238,14 +195,14 @@ internal static class GameplayUnlockEnumCommand
         var unknown = values.Keys.FirstOrDefault(key => !required.Contains(key, StringComparer.Ordinal));
         if (unknown is not null || required.Any(option => !values.ContainsKey(option)))
         {
-            options = GameplayUnlockEnumOptions.Empty;
+            options = Options.Empty;
             error = unknown is null
-                ? "Gameplay-unlock-enum generation requires all six input and output options."
+                ? "Level-progression-category-enums generation requires all six input and output options."
                 : $"Unknown option '{unknown}'.";
             return false;
         }
 
-        options = new GameplayUnlockEnumOptions(
+        options = new Options(
             values["--build-manifest"],
             values["--static-census"],
             values["--mappings"],
@@ -258,13 +215,13 @@ internal static class GameplayUnlockEnumCommand
 
     private static void WriteUsage(TextWriter writer)
     {
-        writer.WriteLine("Usage: NeonRetroRewind.StaticExtractor gameplay-unlock-enum --build-manifest <path> --static-census <path> --mappings <path> --target-profile <path> --package-directory <path> --output <path>");
+        writer.WriteLine("Usage: NeonRetroRewind.StaticExtractor level-progression-category-enums --build-manifest <path> --static-census <path> --mappings <path> --target-profile <path> --package-directory <path> --output <path>");
         writer.WriteLine();
-        writer.WriteLine("The command writes the exact internal values and display labels from the gameplay-unlock enum.");
+        writer.WriteLine("The command writes exact internal values and display labels for the movie and game category enums used by level progression.");
         writer.WriteLine("The output directory must already exist, and different existing content is never overwritten.");
     }
 
-    private sealed record GameplayUnlockEnumOptions(
+    private sealed record Options(
         string BuildManifestPath,
         string StaticCensusPath,
         string MappingsPath,
@@ -272,6 +229,6 @@ internal static class GameplayUnlockEnumCommand
         string PackageDirectory,
         string OutputPath)
     {
-        public static GameplayUnlockEnumOptions Empty { get; } = new("", "", "", "", "", "");
+        public static Options Empty { get; } = new("", "", "", "", "", "");
     }
 }

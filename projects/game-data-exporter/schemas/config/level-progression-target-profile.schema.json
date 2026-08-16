@@ -25,6 +25,76 @@
       ],
       "additionalProperties": false
     },
+    "categoryEnums": {
+      "type": "object",
+      "properties": {
+        "game": {
+          "type": "object",
+          "properties": {
+            "enumName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "internalNamePrefix": {
+              "type": "string",
+              "minLength": 1
+            },
+            "objectPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "packagePath": {
+              "type": "string",
+              "pattern": "\\.uasset$",
+              "minLength": 8
+            }
+          },
+          "required": [
+            "enumName",
+            "internalNamePrefix",
+            "objectPath",
+            "packagePath"
+          ],
+          "additionalProperties": false
+        },
+        "movie": {
+          "type": "object",
+          "properties": {
+            "enumName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "internalNamePrefix": {
+              "type": "string",
+              "minLength": 1
+            },
+            "objectPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "packagePath": {
+              "type": "string",
+              "pattern": "\\.uasset$",
+              "minLength": 8
+            }
+          },
+          "required": [
+            "enumName",
+            "internalNamePrefix",
+            "objectPath",
+            "packagePath"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "game",
+        "movie"
+      ],
+      "additionalProperties": false
+    },
     "engine": {
       "type": "object",
       "properties": {
@@ -1166,6 +1236,7 @@
   },
   "required": [
     "build",
+    "categoryEnums",
     "engine",
     "gameplayUnlockEnum",
     "mappings",
