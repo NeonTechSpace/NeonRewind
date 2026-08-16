@@ -13,8 +13,7 @@ NeonRetroRewind is currently a research and validation codebase.
 It is not yet a player-facing product.
 
 The repository contains tools that identify an installed game build, collect focused facts from game files, convert selected evidence into stable project records, and check one bounded movie-return case while the game runs.
-Implemented records cover the film catalog, console returns, membership fees, movie returns, and new releases.
-Level-progression research has identified the XP table and part of the XP update path, but no normalized progression record exists yet.
+Implemented records cover the film catalog, console returns, membership fees, movie returns, new releases, and level progression.
 
 The generated research artifacts are kept private because they contain information from game files.
 Supported findings can later be written as guide information.

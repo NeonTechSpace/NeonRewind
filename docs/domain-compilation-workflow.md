@@ -17,8 +17,7 @@ It then writes a normalized record for one area such as movie returns or the fil
 
 Normalized means the record uses a consistent NeonRetroRewind shape instead of copying the layout used inside the game.
 The output is still derived from the game, so it remains private and uncommitted.
-The implemented commands cover the film catalog, console returns, membership fees, movie returns, and new releases.
-Level-progression acquisition is in progress, and no progression compilation command exists yet.
+The implemented commands cover the film catalog, console returns, membership fees, movie returns, new releases, and level progression.
 
 ## Before you start
 
@@ -320,6 +319,65 @@ popd >/dev/null
 
 The compiler creates missing output directories, accepts identical existing output, and refuses to overwrite different content.
 The film catalog still contains extracted game text and remains private and uncommitted.
+
+## 25. Compile level progression
+
+This step joins the structured XP table with the typed experience-update, maximum-XP, and end-of-day traces.
+It requires the verified call-target trace that binds the maximum-XP call to its exact declaration.
+The compiler checks that every input uses the same build, mappings, and Unreal Engine configuration.
+
+The output records consecutive runtime-level thresholds, cumulative XP, the stored-experience cap, the raw daily-statistic update, the full-game requirement lookup, and the demo requirement override.
+It also records the repeated end-of-day level transition and the maximum-level stop established by the typed Blueprint flow and Unreal Engine 5.4 source.
+The compiler rejects changed table fields, nonconsecutive levels, nonpositive XP, changed trace scopes, changed data flow, changed continuation targets, or a call target derived from another caller trace.
+
+Move into the TypeScript workspace and install its locked dependencies.
+
+```powershell
+Push-Location projects/typescript
+pnpm install --frozen-lockfile
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm install --frozen-lockfile
+```
+
+Compile the private progression artifact.
+
+```powershell
+pnpm level-progression `
+  --structured-values (Join-Path $buildDirectory "structured-values.json") `
+  --change-xp-trace (Join-Path $buildDirectory "blueprint-function-trace.change-xp.json") `
+  --maximum-caller-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.xp-need-for-max-level.json") `
+  --maximum-target-trace (Join-Path $buildDirectory "blueprint-call-target-trace.return-xp-for-max-level.json") `
+  --end-of-day-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.end-of-day-level.json") `
+  --output (Join-Path $domainDirectory "level-progression.json")
+```
+
+```bash
+pnpm level-progression \
+  --structured-values "$buildDirectory/structured-values.json" \
+  --change-xp-trace "$buildDirectory/blueprint-function-trace.change-xp.json" \
+  --maximum-caller-trace "$buildDirectory/blueprint-property-reference-trace.xp-need-for-max-level.json" \
+  --maximum-target-trace "$buildDirectory/blueprint-call-target-trace.return-xp-for-max-level.json" \
+  --end-of-day-trace "$buildDirectory/blueprint-property-reference-trace.end-of-day-level.json" \
+  --output "$domainDirectory/level-progression.json"
+```
+
+Return to the repository root when the command finishes.
+
+```powershell
+Pop-Location
+```
+
+```bash
+popd >/dev/null
+```
+
+The output contract is the executable `LevelProgressionSchema` in `projects/typescript/packages/core/src/contracts/domain/level-progression.ts`.
+The artifact records `runtimeValidation: not-run` because the normalized state and control flow come from static evidence.
+It does not claim the exact player-visible maximum-level presentation.
+The generated artifact remains private and is not committed.
 
 ## Next step
 

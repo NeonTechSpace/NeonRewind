@@ -19,9 +19,9 @@ The later research command guides are separate because they require a licensed g
 |---|---|
 | Public guide and website | Not built |
 | Reading game files while the game is closed | Implemented for focused data and selected game logic |
-| Stable NeonRetroRewind research records | Film catalog and console-return, membership-fee, movie-return, and new-release compilers exist |
+| Stable NeonRetroRewind research records | Film catalog, console-return, membership-fee, movie-return, new-release, and level-progression compilers exist |
 | Checking behavior while the game runs | One bounded movie-return collector and validator exist, with one passing user-operated observation |
-| Level progression | Acquisition groundwork exists, but no normalized progression record or compiler exists |
+| Level progression | A normalized compiler records XP thresholds, capped experience updates, requirement lookup, and end-of-day level transitions from typed evidence |
 | Public calculator | Not planned as part of the current read-only guide |
 
 The repository is useful today as a research and validation codebase.

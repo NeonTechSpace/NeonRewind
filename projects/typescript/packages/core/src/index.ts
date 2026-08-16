@@ -105,6 +105,12 @@ export {
   type StructFieldEvidence,
 } from "./contracts/domain/membership-fee-mechanics.ts";
 export {
+  LevelProgressionSchema,
+  type LevelProgression,
+  type LevelProgressionArtifactIdentity,
+  type LevelProgressionThreshold,
+} from "./contracts/domain/level-progression.ts";
+export {
   MovieReturnMechanicsSchema,
   type BlueprintTraceEvidence,
   type MovieReturnArtifactIdentity,

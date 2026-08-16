@@ -14,6 +14,10 @@ import {
 import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
+import {
+  runLevelProgression,
+  writeLevelProgressionUsage,
+} from "./level-progression-cli.ts";
 import { compileMembershipFeeMechanics } from "./membership-fee-mechanics.ts";
 import {
   runNewReleaseMechanics,
@@ -100,9 +104,14 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "level-progression") {
+    await runLevelProgression(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, or new-release-mechanics command.",
+      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, or level-progression command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -355,4 +364,5 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   writeMovieReturnUsage(stream);
   writeMovieReturnValidatedMechanicsUsage(stream);
   writeNewReleaseUsage(stream);
+  writeLevelProgressionUsage(stream);
 }
