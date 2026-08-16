@@ -1,4 +1,7 @@
-import type { LevelProgressionArtifactIdentity } from "@neonretrorewind/core";
+import type {
+  LevelProgressionArtifactIdentity,
+  LevelProgressionTargetProfile,
+} from "@neonretrorewind/core";
 
 import {
   assertTraceJump,
@@ -18,83 +21,73 @@ import type {
   BlueprintTraceNodeInput,
 } from "./blueprint-trace-inputs.ts";
 
-export const gameModeClassPath =
-  "ExampleGame/Content/ExampleProject/core/gamemode/ExampleMode.ExampleMode_C";
-export const changeXpFunctionName = "Apply Example Progress";
-export const gameModeEventGraphName = "ExecuteExampleGraph_ExampleMode";
-export const experienceClassPath =
-  "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleProgression.ExampleProgression_C";
-export const maximumFunctionName = "Get Example Progress Limit";
-export const endOfDayClassPath =
-  "ExampleGame/Content/ExampleProject/core/widget/dayUI/ExampleEndOfPeriod.ExampleEndOfPeriod_C";
-export const endOfDayEventGraphName = "ExecuteExampleGraph_ExampleEndOfPeriod";
-export const initAnimationFunctionName = "ExampleInitializeProgress";
-export const requirementFunctionName = "Get Example Threshold";
-export const cumulativeFunctionName = "Get Example Period Progress";
-
-const xpTableObjectPath =
-  "ExampleGame/Content/ExampleProject/core/gamesettings/ExampleThresholdTable.ExampleThresholdTable";
-
 export function assertChangeXpTrace(
   trace: BlueprintFunctionTraceArtifact,
+  profile: LevelProgressionTargetProfile,
 ): void {
+  const target = profile.traces.experienceUpdate;
   if (
     trace.functions.length !== 1 ||
-    trace.functions[0]?.functionPath !== `${gameModeClassPath}:${changeXpFunctionName}`
+    trace.functions[0]?.functionPath !== `${target.classPath}:${target.functionName}`
   ) {
     throw new Error("Change-XP trace scope changed.");
   }
-  const function_ = findTraceFunction(trace.functions, changeXpFunctionName);
-  assertFunctionIdentity(function_, gameModeClassPath, changeXpFunctionName);
+  const function_ = findTraceFunction(trace.functions, target.functionName);
+  assertFunctionIdentity(function_, target.classPath, target.functionName);
   assertTraceNodeTree(function_);
 
-  assertVariableAssignment(function_, 5, "Local Xp modification", "Example Progress Delta");
+  assertVariableAssignment(
+    function_,
+    target.statements.retainModification,
+    target.fields.localModification,
+    target.fields.modificationInput,
+  );
   assertCallArguments(
     function_,
-    50,
+    target.statements.addLifetimeExperience,
     "Add_IntInt",
     "final",
-    ["Example Lifetime Progress", "Local Xp modification"],
+    [target.fields.lifetimeExperience, target.fields.localModification],
   );
   assertVariableAssignment(
     function_,
-    78,
-    "Example Lifetime Progress",
-    "ExampleSymbol_fbf99360b7d0",
+    target.statements.storeLifetimeExperience,
+    target.fields.lifetimeExperience,
+    target.symbols.lifetimeAddResult,
   );
   assertCallArguments(
     function_,
-    123,
+    target.statements.addCurrentExperience,
     "Add_IntInt",
     "final",
-    ["Local Xp modification", "Example Current Progress"],
+    [target.fields.localModification, target.fields.currentExperience],
   );
   assertCallArguments(
     function_,
-    169,
+    target.statements.capCurrentExperience,
     "Min",
     "final",
-    ["ExampleSymbol_68a76c00e78c", "Example Progress Limit"],
+    [target.symbols.currentAddResult, target.fields.maximumExperience],
   );
   assertVariableAssignment(
     function_,
-    197,
-    "Example Current Progress",
-    "ExampleSymbol_560a86c90290",
+    target.statements.storeCurrentExperience,
+    target.fields.currentExperience,
+    target.symbols.cappedResult,
   );
   assertCallArguments(
     function_,
-    246,
-    "Apply Example Progress Value",
+    target.statements.publishUiValue,
+    target.functions.publishUiValue,
     "local-virtual",
-    ["Local Xp modification", "Example Current Progress"],
+    [target.fields.localModification, target.fields.currentExperience],
   );
   assertCallArguments(
     function_,
-    388,
-    "ExampleAccumulateProgress",
+    target.statements.addDailyStatistic,
+    target.functions.addDailyStatistic,
     "local-virtual",
-    ["Local Xp modification"],
+    [target.fields.localModification],
   );
 }
 
@@ -102,12 +95,15 @@ export function assertMaximumTraces(
   callerTrace: BlueprintPropertyReferenceTraceArtifact,
   targetTrace: BlueprintCallTargetTraceArtifact,
   callerSource: LevelProgressionArtifactIdentity,
+  profile: LevelProgressionTargetProfile,
 ): void {
-  const changePath = `${gameModeClassPath}:${changeXpFunctionName}`;
-  const eventGraphPath = `${gameModeClassPath}:${gameModeEventGraphName}`;
+  const change = profile.traces.experienceUpdate;
+  const target = profile.traces.maximum;
+  const changePath = `${change.classPath}:${change.functionName}`;
+  const eventGraphPath = `${target.callerClassPath}:${target.callerFunction}`;
   if (
     callerTrace.blueprintPropertyReferences.targetPropertyName !==
-      "Example Progress Limit" ||
+      target.destinationField ||
     callerTrace.selectionRule !== "explicit-functions-with-recorded-references" ||
     !sameStringSet(callerTrace.requestedFunctionPaths, [changePath, eventGraphPath]) ||
     !sameStringSet(
@@ -118,11 +114,11 @@ export function assertMaximumTraces(
     throw new Error("Maximum-XP caller trace scope changed.");
   }
 
-  const caller = findTraceFunction(callerTrace.functions, gameModeEventGraphName);
-  assertFunctionIdentity(caller, gameModeClassPath, gameModeEventGraphName);
+  const caller = findTraceFunction(callerTrace.functions, target.callerFunction);
+  assertFunctionIdentity(caller, target.callerClassPath, target.callerFunction);
   assertTraceNodeTree(caller);
-  const context = findTraceNode(caller, 30993);
-  assertTraceRootNode(caller, 30993, "EX_Context");
+  const context = findTraceNode(caller, target.statements.callerContext);
+  assertTraceRootNode(caller, target.statements.callerContext, "EX_Context");
   if (context.kind !== "context") {
     throw new Error("Maximum-XP caller context changed.");
   }
@@ -131,28 +127,34 @@ export function assertMaximumTraces(
     caller,
     "ObjectExpression",
     "object",
-    `${experienceClassPath.replace(".ExampleProgression_C", "")}.Default__ExampleProgression_C`,
+    target.receiverObjectPath,
   );
-  const call = findTraceCall(caller, 31015, maximumFunctionName, "local-virtual", 2);
+  const call = findTraceCall(
+    caller,
+    target.statements.callerCall,
+    target.targetFunction,
+    "local-virtual",
+    2,
+  );
   assertChild(context, call, "ContextExpression");
   assertTraceSymbolChild(
     call,
     caller,
     "Parameters[1]",
-    "ExampleSymbol_9f8e94efa4bd",
+    target.symbols.callerResult,
   );
   assertVariableAssignment(
     caller,
-    31039,
-    "Example Progress Limit",
-    "ExampleSymbol_9f8e94efa4bd",
+    target.statements.callerAssignment,
+    target.destinationField,
+    target.symbols.callerResult,
   );
 
   if (
     targetTrace.recordedCall.callerFunctionPath !== eventGraphPath ||
-    targetTrace.recordedCall.statementIndex !== 31015 ||
+    targetTrace.recordedCall.statementIndex !== target.statements.callerCall ||
     targetTrace.recordedCall.opcode !== "EX_LocalVirtualFunction" ||
-    targetTrace.recordedCall.call.functionName !== maximumFunctionName ||
+    targetTrace.recordedCall.call.functionName !== target.targetFunction ||
     targetTrace.recordedCall.call.callKind !== "local-virtual" ||
     targetTrace.recordedCall.call.argumentCount !== 2
   ) {
@@ -162,7 +164,7 @@ export function assertMaximumTraces(
     targetTrace.sourceTrace.fileName !== callerSource.fileName ||
     targetTrace.sourceTrace.sha256 !== callerSource.sha256 ||
     targetTrace.sourceTrace.sizeBytes !== callerSource.sizeBytes ||
-    targetTrace.sourceTrace.targetPropertyName !== "Example Progress Limit"
+    targetTrace.sourceTrace.targetPropertyName !== target.destinationField
   ) {
     throw new Error("Maximum-XP target trace does not identify the supplied caller trace.");
   }
@@ -171,30 +173,32 @@ export function assertMaximumTraces(
     targetTrace.binding.relationship !== "verified" ||
     targetTrace.binding.receiverClassMatchesDeclarationOwner !== true ||
     targetTrace.binding.argumentCountMatchesParameterCount !== true ||
-    targetTrace.binding.receiver.classPath !== experienceClassPath ||
-    targetTrace.binding.declaration.ownerPath !== experienceClassPath ||
+    targetTrace.binding.receiver.classPath !== target.targetClassPath ||
+    targetTrace.binding.declaration.ownerPath !== target.targetClassPath ||
     targetTrace.binding.declaration.objectPath !==
-      `${experienceClassPath}:${maximumFunctionName}`
+      `${target.targetClassPath}:${target.targetFunction}`
   ) {
     throw new Error("Maximum-XP call-target binding changed.");
   }
 
-  assertMaximumFunction(targetTrace.binding.function);
+  assertMaximumFunction(targetTrace.binding.function, profile);
 }
 
 export function assertEndOfDayTrace(
   trace: BlueprintPropertyReferenceTraceArtifact,
+  profile: LevelProgressionTargetProfile,
 ): void {
+  const target = profile.traces.endOfDay;
   const functionNames = [
-    "ExampleApplyProgressRewards",
-    endOfDayEventGraphName,
-    initAnimationFunctionName,
-    requirementFunctionName,
-    cumulativeFunctionName,
+    target.functions.applyRewards,
+    target.functions.eventGraph,
+    target.functions.initializeAnimation,
+    target.functions.requirementLookup,
+    target.functions.cumulativeProgress,
   ];
-  const functionPaths = functionNames.map((name) => `${endOfDayClassPath}:${name}`);
+  const functionPaths = functionNames.map((name) => `${target.classPath}:${name}`);
   if (
-    trace.blueprintPropertyReferences.targetPropertyName !== "ExampleLevel" ||
+    trace.blueprintPropertyReferences.targetPropertyName !== target.levelProperty ||
     trace.selectionRule !== "explicit-functions-with-recorded-references" ||
     !sameStringSet(trace.requestedFunctionPaths, functionPaths) ||
     !sameStringSet(
@@ -205,242 +209,306 @@ export function assertEndOfDayTrace(
     throw new Error("End-of-day Level trace scope changed.");
   }
 
-  const requirement = findTraceFunction(trace.functions, requirementFunctionName);
-  const cumulative = findTraceFunction(trace.functions, cumulativeFunctionName);
-  const init = findTraceFunction(trace.functions, initAnimationFunctionName);
-  const eventGraph = findTraceFunction(trace.functions, endOfDayEventGraphName);
+  const requirement = findTraceFunction(trace.functions, target.functions.requirementLookup);
+  const cumulative = findTraceFunction(trace.functions, target.functions.cumulativeProgress);
+  const init = findTraceFunction(trace.functions, target.functions.initializeAnimation);
+  const eventGraph = findTraceFunction(trace.functions, target.functions.eventGraph);
   for (const function_ of [requirement, cumulative, init, eventGraph]) {
-    assertFunctionIdentity(function_, endOfDayClassPath, function_.functionName);
+    assertFunctionIdentity(function_, target.classPath, function_.functionName);
     assertTraceNodeTree(function_);
   }
-  assertRequirementFunction(requirement);
-  assertCumulativeFunction(cumulative);
-  assertInitAnimationFunction(init);
-  assertEndOfDayEventGraph(eventGraph);
+  assertRequirementFunction(requirement, profile);
+  assertCumulativeFunction(cumulative, profile);
+  assertInitAnimationFunction(init, profile);
+  assertEndOfDayEventGraph(eventGraph, profile);
 }
 
-function assertMaximumFunction(function_: BlueprintTraceFunctionInput): void {
-  assertFunctionIdentity(function_, experienceClassPath, maximumFunctionName);
+function assertMaximumFunction(
+  function_: BlueprintTraceFunctionInput,
+  profile: LevelProgressionTargetProfile,
+): void {
+  const target = profile.traces.maximum;
+  assertFunctionIdentity(function_, target.targetClassPath, target.targetFunction);
   assertTraceNodeTree(function_);
-  assertObjectAssignment(function_, 99, "ExampleProgressTable", xpTableObjectPath);
+  assertObjectAssignment(
+    function_,
+    target.statements.targetTable,
+    target.tableVariable,
+    profile.xpTable.objectPath,
+  );
   assertCallWithLiteral(
     function_,
-    136,
+    target.statements.targetColumn,
     "GetDataTableColumnAsString",
     "final",
     "Parameters[1]",
     "name",
-    "ExampleRequiredProgress",
+    profile.xpTable.fields.requiredProgress,
   );
   assertCallArguments(
     function_,
-    254,
+    target.statements.targetArrayLength,
     "Array_Length",
     "final",
-    ["ExampleSymbol_d75d2a8b4564"],
+    [target.symbols.columnValues],
   );
   assertCallArguments(
     function_,
-    283,
+    target.statements.targetLoopCondition,
     "Less_IntInt",
     "final",
-    ["Temp_int_Loop_Counter_Variable", "ExampleSymbol_5546bd5cfb37"],
+    [target.symbols.loopCounter, target.symbols.arrayLength],
   );
-  assertTraceJump(function_, 311, "conditional-false", "codeOffset", 555);
+  assertTraceJump(
+    function_,
+    target.statements.targetLoopExit,
+    "conditional-false",
+    "codeOffset",
+    target.jumpTargets.loopExit,
+  );
   assertCallArguments(
     function_,
-    379,
+    target.statements.targetArrayGet,
     "Array_Get",
     "final",
     [
-      "ExampleSymbol_d75d2a8b4564",
-      "Temp_int_Array_Index_Variable",
-      "ExampleSymbol_4bb2d3edf81f",
+      target.symbols.columnValues,
+      target.symbols.arrayIndex,
+      target.symbols.arrayItem,
     ],
   );
   assertCallArguments(
     function_,
-    434,
+    target.statements.targetConvert,
     "Conv_StringToInt",
     "final",
-    ["ExampleSymbol_4bb2d3edf81f"],
+    [target.symbols.arrayItem],
   );
   assertCallArguments(
     function_,
-    471,
+    target.statements.targetAccumulate,
     "Add_IntInt",
     "final",
-    ["ExampleSymbol_abfd6d199e8b", "Accumulated XP"],
+    [target.symbols.convertedItem, target.accumulator],
   );
   assertVariableAssignment(
     function_,
-    499,
-    "Accumulated XP",
-    "ExampleSymbol_68a76c00e78c",
+    target.statements.targetStoreAccumulator,
+    target.accumulator,
+    target.symbols.accumulatedValue,
   );
   assertCallWithLiteral(
     function_,
-    605,
+    target.statements.targetIncrement,
     "Add_IntInt",
     "final",
     "Parameters[1]",
     "integer",
     "1",
   );
-  assertTraceJump(function_, 656, "unconditional", "codeOffset", 214);
-  assertVariableAssignment(function_, 555, "Example Required Progress", "Accumulated XP");
+  assertTraceJump(
+    function_,
+    target.statements.targetLoopBack,
+    "unconditional",
+    "codeOffset",
+    target.jumpTargets.loopBack,
+  );
+  assertVariableAssignment(
+    function_,
+    target.statements.targetOutput,
+    target.outputField,
+    target.accumulator,
+  );
 }
 
-function assertRequirementFunction(function_: BlueprintTraceFunctionInput): void {
+function assertRequirementFunction(
+  function_: BlueprintTraceFunctionInput,
+  profile: LevelProgressionTargetProfile,
+): void {
+  const target = profile.traces.requirementLookup;
   assertCallWithLiteral(
     function_,
-    18,
+    target.statements.readColumn,
     "GetDataTableColumnAsString",
     "final",
     "Parameters[1]",
     "name",
-    "ExampleRequiredProgress",
+    profile.xpTable.fields.requiredProgress,
   );
   assertCallWithLiteral(
     function_,
-    196,
+    target.statements.demoComparison,
     "GreaterEqual_IntInt",
     "final",
     "Parameters[1]",
     "integer",
-    "3",
+    String(target.demoOverride.atOrAboveRuntimeLevel),
   );
-  assertLiteralAssignment(function_, 234, "ExampleLevel", "integer", "99999");
-  assertTraceJump(function_, 150, "conditional-false", "codeOffset", 390);
-  assertCallArguments(
-    function_,
-    412,
-    "Array_Get",
-    "final",
-    [
-      "ExampleSymbol_d75d2a8b4564",
-      "ExampleCurrentTier",
-      "ExampleSymbol_4bb2d3edf81f",
-    ],
-  );
-  assertCallArguments(
-    function_,
-    467,
-    "Conv_StringToInt",
-    "final",
-    ["ExampleSymbol_4bb2d3edf81f"],
-  );
-  assertVariableAssignment(
-    function_,
-    486,
-    "ExampleLevel",
-    "ExampleSymbol_abfd6d199e8b",
-  );
-}
-
-function assertCumulativeFunction(function_: BlueprintTraceFunctionInput): void {
-  assertCallWithLiteral(
-    function_,
-    140,
-    "GetDataTableColumnAsString",
-    "final",
-    "Parameters[1]",
-    "name",
-    "ExampleLevel",
-  );
-  assertCallWithLiteral(
-    function_,
-    190,
-    "GetDataTableColumnAsString",
-    "final",
-    "Parameters[1]",
-    "name",
-    "ExampleRequiredProgress",
-  );
-  assertCallArguments(
-    function_,
-    348,
-    "Array_Length",
-    "final",
-    ["ExampleSymbol_d75d2a8b4564"],
-  );
-  assertCallArguments(
-    function_,
-    511,
-    "Array_Get",
-    "final",
-    [
-      "ExampleSymbol_d75d2a8b4564",
-      "Temp_int_Array_Index_Variable",
-      "ExampleSymbol_4bb2d3edf81f",
-    ],
-  );
-  assertCallArguments(
-    function_,
-    603,
-    "Add_IntInt",
-    "final",
-    ["ExampleSymbol_abfd6d199e8b", "Accumulated XP"],
-  );
-  assertCallArguments(
-    function_,
-    668,
-    "GreaterEqual_IntInt",
-    "final",
-    ["Temp_int_Array_Index_Variable", "local Level"],
-  );
-  assertVariableAssignment(function_, 746, "Example Required Progress", "Accumulated XP");
-}
-
-function assertInitAnimationFunction(function_: BlueprintTraceFunctionInput): void {
-  assertCallArgumentsBySymbol(
-    function_,
-    230,
-    cumulativeFunctionName,
-    "local-virtual",
-    ["ExampleLevel", "ExampleSymbol_a7c13f9116b9"],
-  );
-  assertCallArguments(
-    function_,
-    375,
-    cumulativeFunctionName,
-    "local-virtual",
-    ["ExampleSymbol_e786ddbe8538", "ExampleSymbol_526ef20c98db"],
-  );
-  assertCallArgumentsBySymbol(
-    function_,
-    452,
-    "Subtract_IntInt",
-    "final",
-    ["Example Current Progress", "ExampleDailyProgress"],
-  );
-  assertCallArguments(
-    function_,
-    586,
-    "Subtract_IntInt",
-    "final",
-    ["ExampleSymbol_0e5eff394dbb", "Example Cumulative Progress"],
-  );
-  assertVariableAssignment(
-    function_,
-    895,
-    "ExampleInitialProgress",
-    "ExampleSymbol_c65df1df8c08",
-  );
-  assertAssignmentSourceSymbol(function_, 922, "Example Remaining Progress", "ExampleDailyProgress");
-}
-
-function assertEndOfDayEventGraph(function_: BlueprintTraceFunctionInput): void {
   assertLiteralAssignment(
     function_,
-    15,
-    "ExampleProgressFraction",
+    target.statements.demoOverride,
+    target.outputField,
+    "integer",
+    String(target.demoOverride.requiredXp),
+  );
+  assertTraceJump(
+    function_,
+    target.statements.branch,
+    "conditional-false",
+    "codeOffset",
+    target.jumpTargets.fullGame,
+  );
+  assertCallArguments(
+    function_,
+    target.statements.fullGameArrayGet,
+    "Array_Get",
+    "final",
+    [
+      target.symbols.columnValues,
+      target.currentLevelSymbol,
+      target.symbols.arrayItem,
+    ],
+  );
+  assertCallArguments(
+    function_,
+    target.statements.fullGameConvert,
+    "Conv_StringToInt",
+    "final",
+    [target.symbols.arrayItem],
+  );
+  assertVariableAssignment(
+    function_,
+    target.statements.storeOutput,
+    target.outputField,
+    target.symbols.convertedItem,
+  );
+}
+
+function assertCumulativeFunction(
+  function_: BlueprintTraceFunctionInput,
+  profile: LevelProgressionTargetProfile,
+): void {
+  const target = profile.traces.endOfDay;
+  assertCallWithLiteral(
+    function_,
+    target.statements.cumulativeLevelColumn,
+    "GetDataTableColumnAsString",
+    "final",
+    "Parameters[1]",
+    "name",
+    profile.xpTable.fields.level,
+  );
+  assertCallWithLiteral(
+    function_,
+    target.statements.cumulativeXpColumn,
+    "GetDataTableColumnAsString",
+    "final",
+    "Parameters[1]",
+    "name",
+    profile.xpTable.fields.requiredProgress,
+  );
+  assertCallArguments(
+    function_,
+    target.statements.cumulativeArrayLength,
+    "Array_Length",
+    "final",
+    [target.symbols.cumulativeColumnValues],
+  );
+  assertCallArguments(
+    function_,
+    target.statements.cumulativeArrayGet,
+    "Array_Get",
+    "final",
+    [
+      target.symbols.cumulativeColumnValues,
+      target.symbols.cumulativeArrayIndex,
+      target.symbols.cumulativeArrayItem,
+    ],
+  );
+  assertCallArguments(
+    function_,
+    target.statements.cumulativeAccumulate,
+    "Add_IntInt",
+    "final",
+    [target.symbols.cumulativeConvertedItem, target.symbols.cumulativeAccumulator],
+  );
+  assertCallArguments(
+    function_,
+    target.statements.cumulativeStopComparison,
+    "GreaterEqual_IntInt",
+    "final",
+    [target.symbols.cumulativeLoopCounter, target.symbols.cumulativeLevelInput],
+  );
+  assertVariableAssignment(
+    function_,
+    target.statements.cumulativeOutput,
+    target.fields.requirementOutput,
+    target.symbols.cumulativeAccumulator,
+  );
+}
+
+function assertInitAnimationFunction(
+  function_: BlueprintTraceFunctionInput,
+  profile: LevelProgressionTargetProfile,
+): void {
+  const target = profile.traces.endOfDay;
+  assertCallArgumentsBySymbol(
+    function_,
+    target.statements.initializePreviousCumulative,
+    target.functions.cumulativeProgress,
+    "local-virtual",
+    [target.levelProperty, target.symbols.initialPreviousCumulative],
+  );
+  assertCallArguments(
+    function_,
+    target.statements.initializeCurrentCumulative,
+    target.functions.cumulativeProgress,
+    "local-virtual",
+    [target.symbols.initialPreviousLevel, target.symbols.initialCurrentCumulative],
+  );
+  assertCallArgumentsBySymbol(
+    function_,
+    target.statements.initializeSubtractDaily,
+    "Subtract_IntInt",
+    "final",
+    [target.fields.currentExperience, target.fields.dailyExperience],
+  );
+  assertCallArguments(
+    function_,
+    target.statements.initializeSubtractPrevious,
+    "Subtract_IntInt",
+    "final",
+    [target.symbols.initialStartingExperience, target.fields.cumulativeExperience],
+  );
+  assertVariableAssignment(
+    function_,
+    target.statements.initializeStoreInitial,
+    target.fields.initialExperience,
+    target.symbols.initialCurrentCumulativeResult,
+  );
+  assertAssignmentSourceSymbol(
+    function_,
+    target.statements.initializeStoreRemaining,
+    target.fields.remainingExperience,
+    target.fields.dailyExperience,
+  );
+}
+
+function assertEndOfDayEventGraph(
+  function_: BlueprintTraceFunctionInput,
+  profile: LevelProgressionTargetProfile,
+): void {
+  const target = profile.traces.endOfDay;
+  assertLiteralAssignment(
+    function_,
+    target.statements.resetProgress,
+    target.fields.progressFraction,
     "number",
     "0",
   );
   assertCallWithLiteral(
     function_,
-    114,
+    target.statements.previousLevelSubtract,
     "Subtract_IntInt",
     "final",
     "Parameters[1]",
@@ -449,49 +517,55 @@ function assertEndOfDayEventGraph(function_: BlueprintTraceFunctionInput): void 
   );
   assertCallArguments(
     function_,
-    160,
-    requirementFunctionName,
+    target.statements.initializePreviousRequirement,
+    target.functions.requirementLookup,
     "local-virtual",
-    ["ExampleSymbol_0e5eff394dbb", "ExampleSymbol_c98aa86e91ba"],
+    [target.symbols.previousLevel, target.symbols.previousRequirement],
   );
   assertCallArguments(
     function_,
-    210,
+    target.statements.floorInitialXp,
     "FFloor",
     "final",
-    ["ExampleInitialProgress"],
+    [target.fields.initialExperience],
   );
   assertCallArguments(
     function_,
-    247,
+    target.statements.calculateLevelCost,
     "Subtract_IntInt",
     "final",
-    ["ExampleSymbol_c98aa86e91ba", "ExampleSymbol_b4e18586ed51"],
+    [target.symbols.previousRequirement, target.symbols.flooredInitialExperience],
   );
   assertCallArguments(
     function_,
-    293,
+    target.statements.deductLevelCost,
     "Subtract_IntInt",
     "final",
-    ["Example Remaining Progress", "ExampleSymbol_d33b763b6534"],
+    [target.fields.remainingExperience, target.symbols.levelCost],
   );
   assertVariableAssignment(
     function_,
-    321,
-    "Example Remaining Progress",
-    "ExampleSymbol_be6409e14ce2",
+    target.statements.storeRemainingXp,
+    target.fields.remainingExperience,
+    target.symbols.remainingAfterDeduction,
   );
-  assertLiteralAssignment(function_, 348, "ExampleInitialProgress", "number", "0");
+  assertLiteralAssignment(
+    function_,
+    target.statements.resetInitialXp,
+    target.fields.initialExperience,
+    "number",
+    "0",
+  );
   assertCallArgumentsBySymbol(
     function_,
-    375,
-    requirementFunctionName,
+    target.statements.lookupNextRequirement,
+    target.functions.requirementLookup,
     "local-virtual",
-    ["ExampleLevel", "ExampleSymbol_2b6c8e733724"],
+    [target.levelProperty, target.symbols.nextRequirement],
   );
   assertCallWithLiteral(
     function_,
-    576,
+    target.statements.incrementLevel,
     "Add_IntInt",
     "final",
     "Parameters[1]",
@@ -500,57 +574,90 @@ function assertEndOfDayEventGraph(function_: BlueprintTraceFunctionInput): void 
   );
   assertVariableAssignment(
     function_,
-    622,
-    "ExampleLevel",
-    "ExampleSymbol_fbf99360b7d0",
+    target.statements.storeLevel,
+    target.levelProperty,
+    target.symbols.incrementedLevel,
   );
-  assertSkipOffset(function_, 953, "Delay", 15);
-  assertSkipOffset(function_, 1053, "DelayUntilNextTick", 558);
-  assertSkipOffset(function_, 1508, "DelayUntilNextTick", 1008);
+  assertSkipOffset(
+    function_,
+    target.statements.returnToInitialization,
+    "Delay",
+    target.jumpTargets.returnToInitialization,
+  );
+  assertSkipOffset(
+    function_,
+    target.statements.nextTickFirst,
+    "DelayUntilNextTick",
+    target.jumpTargets.nextTickFirst,
+  );
+  assertSkipOffset(
+    function_,
+    target.statements.nextTickSecond,
+    "DelayUntilNextTick",
+    target.jumpTargets.nextTickSecond,
+  );
 
   assertCallArgumentsBySymbol(
     function_,
-    2912,
-    requirementFunctionName,
+    target.statements.updateProgressText,
+    target.functions.requirementLookup,
     "local-virtual",
-    ["ExampleLevel", "ExampleSymbol_d226b81c5597"],
+    [target.levelProperty, target.symbols.displayedRequirement],
   );
   assertCallArguments(
     function_,
-    4034,
+    target.statements.progressDivide,
     "Divide_DoubleDouble",
     "final",
-    ["ExampleSymbol_05f5d19e94a0", "ExampleSymbol_c65df1df8c08"],
+    [target.symbols.progressNumerator, target.symbols.progressDenominator],
   );
-  const clamp = findTraceCall(function_, 4080, "FClamp", "final", 3);
+  const clamp = findTraceCall(
+    function_,
+    target.statements.progressClamp,
+    "FClamp",
+    "final",
+    3,
+  );
   assertTraceSymbolChild(
     clamp,
     function_,
     "Parameters[0]",
-    "ExampleSymbol_7fb9e119d7ae",
+    target.symbols.progressQuotient,
   );
   assertTraceLiteralChild(clamp, function_, "Parameters[1]", "number", "0");
   assertTraceLiteralChild(clamp, function_, "Parameters[2]", "number", "1");
   assertVariableAssignment(
     function_,
-    4117,
-    "ExampleProgressFraction",
-    "ExampleSymbol_993c5cdf8035",
+    target.statements.storeProgress,
+    target.fields.progressFraction,
+    target.symbols.clampedProgress,
   );
   assertCallWithLiteral(
     function_,
-    1786,
+    target.statements.compareProgress,
     "GreaterEqual_DoubleDouble",
     "final",
     "Parameters[1]",
     "number",
     "1",
   );
-  assertTraceJump(function_, 1814, "conditional-false", "codeOffset", 1833);
-  assertTraceJump(function_, 1828, "unconditional", "codeOffset", 1488);
+  assertTraceJump(
+    function_,
+    target.statements.progressBranch,
+    "conditional-false",
+    "codeOffset",
+    target.jumpTargets.progressIncomplete,
+  );
+  assertTraceJump(
+    function_,
+    target.statements.levelUpRoute,
+    "unconditional",
+    "codeOffset",
+    target.jumpTargets.levelUpRoute,
+  );
   assertCallWithLiteral(
     function_,
-    1843,
+    target.statements.compareTimer,
     "GreaterEqual_DoubleDouble",
     "final",
     "Parameters[1]",
@@ -559,7 +666,7 @@ function assertEndOfDayEventGraph(function_: BlueprintTraceFunctionInput): void 
   );
   assertCallWithLiteral(
     function_,
-    1881,
+    target.statements.compareRemainingXp,
     "LessEqual_IntInt",
     "final",
     "Parameters[1]",
@@ -568,15 +675,21 @@ function assertEndOfDayEventGraph(function_: BlueprintTraceFunctionInput): void 
   );
   assertCallArguments(
     function_,
-    1915,
+    target.statements.combineStopConditions,
     "BooleanOR",
     "final",
     [
-      "ExampleSymbol_a689c31c681f",
-      "ExampleSymbol_a3f5a084342d",
+      target.symbols.timerComplete,
+      target.symbols.remainingComplete,
     ],
   );
-  findTraceCall(function_, 1953, "K2_ClearAndInvalidateTimerHandle", "final", 2);
+  findTraceCall(
+    function_,
+    target.statements.clearTimer,
+    "K2_ClearAndInvalidateTimerHandle",
+    "final",
+    2,
+  );
 }
 
 function assertFunctionIdentity(

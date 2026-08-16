@@ -2,6 +2,7 @@ import {
   LevelProgressionSchema,
   type GameplayUnlockEnum,
   type LevelProgression,
+  type LevelProgressionTargetProfile,
   type StructuredValues,
 } from "@neonretrorewind/core";
 
@@ -14,14 +15,6 @@ import {
   assertChangeXpTrace,
   assertEndOfDayTrace,
   assertMaximumTraces,
-  changeXpFunctionName,
-  endOfDayClassPath,
-  endOfDayEventGraphName,
-  experienceClassPath,
-  gameModeClassPath,
-  gameModeEventGraphName,
-  maximumFunctionName,
-  requirementFunctionName,
 } from "./level-progression-traces.ts";
 
 export type LevelProgressionSources = LevelProgression["sources"];
@@ -31,19 +24,8 @@ export type LevelStructuredValuesArtifact = Pick<
   "artifactType" | "build" | "mappings" | "engine" | "dataTables"
 >;
 
-const xpTablePath =
-  "ExampleGame/Content/ExampleProject/core/gamesettings/ExampleThresholdTable.uasset";
-const xpTableName = "ExampleThresholdTable";
-const xpRowStruct = "ExampleThresholdStruct";
-const sourceFieldPrefixes = [
-  "ExampleLevel",
-  "ExampleUnlocks",
-  "ExampleMovieCategories",
-  "ExampleGameCategories",
-  "ExampleRequiredProgress",
-] as const;
-
 export function compileLevelProgression(
+  profile: LevelProgressionTargetProfile,
   structuredValues: LevelStructuredValuesArtifact,
   gameplayUnlockEnum: GameplayUnlockEnum,
   changeXpTrace: BlueprintFunctionTraceArtifact,
@@ -60,18 +42,21 @@ export function compileLevelProgression(
     maximumTargetTrace,
     endOfDayTrace,
   );
-  assertChangeXpTrace(changeXpTrace);
+  assertProfileContracts(profile, structuredValues, gameplayUnlockEnum, sources);
+  assertChangeXpTrace(changeXpTrace, profile);
   assertMaximumTraces(
     maximumCallerTrace,
     maximumTargetTrace,
     sources.maximumCallerTrace,
+    profile,
   );
-  assertEndOfDayTrace(endOfDayTrace);
+  assertEndOfDayTrace(endOfDayTrace, profile);
 
-  const gameplayUnlocks = compileGameplayUnlocks(gameplayUnlockEnum);
+  const gameplayUnlocks = compileGameplayUnlocks(gameplayUnlockEnum, profile);
   const { thresholds, referencedGameplayUnlocks } = compileThresholds(
     structuredValues,
     gameplayUnlocks,
+    profile,
   );
   const maximumExperience = thresholds.at(-1)?.cumulativeXp;
   if (maximumExperience === undefined) {
@@ -89,11 +74,11 @@ export function compileLevelProgression(
     evidenceLevel: "typed-blueprint-data-table-and-engine-source",
     runtimeValidation: "not-run",
     table: {
-      path: xpTablePath,
-      rowStruct: xpRowStruct,
-      levelField: "ExampleLevel",
-      xpField: "ExampleRequiredProgress",
-      gameplayUnlockField: "ExampleUnlocks",
+      path: profile.xpTable.packagePath,
+      rowStruct: profile.xpTable.rowStruct,
+      levelField: profile.xpTable.fields.level,
+      xpField: profile.xpTable.fields.requiredProgress,
+      gameplayUnlockField: profile.xpTable.fields.gameplayUnlocks,
       rowCount: thresholds.length,
     },
     gameplayUnlockEnum: {
@@ -105,7 +90,7 @@ export function compileLevelProgression(
     },
     thresholds,
     experienceUpdate: {
-      modificationInput: "Example Progress Delta",
+      modificationInput: profile.traces.experienceUpdate.fields.modificationInput,
       lifetimeExperience: "current-plus-raw-modification",
       storedExperience:
         "minimum-of-current-plus-raw-modification-and-maximum",
@@ -114,17 +99,24 @@ export function compileLevelProgression(
       evidence: {
         kind: "kismet-analysis",
         confidence: "direct",
-        classPath: gameModeClassPath,
-        functionName: changeXpFunctionName,
+        classPath: profile.traces.experienceUpdate.classPath,
+        functionName: profile.traces.experienceUpdate.functionName,
         statementIndexes: {
-          retainModification: 5,
-          addLifetimeExperience: 32,
-          storeLifetimeExperience: 78,
-          addCurrentExperience: 105,
-          capCurrentExperience: 151,
-          storeCurrentExperience: 197,
-          publishUiValue: 224,
-          addDailyStatistic: 344,
+          retainModification: profile.traces.experienceUpdate.statements.retainModification,
+          addLifetimeExperience:
+            profile.traces.experienceUpdate.statements.addLifetimeExperienceEvidence,
+          storeLifetimeExperience:
+            profile.traces.experienceUpdate.statements.storeLifetimeExperience,
+          addCurrentExperience:
+            profile.traces.experienceUpdate.statements.addCurrentExperienceEvidence,
+          capCurrentExperience:
+            profile.traces.experienceUpdate.statements.capCurrentExperienceEvidence,
+          storeCurrentExperience:
+            profile.traces.experienceUpdate.statements.storeCurrentExperience,
+          publishUiValue:
+            profile.traces.experienceUpdate.statements.publishUiValueEvidence,
+          addDailyStatistic:
+            profile.traces.experienceUpdate.statements.addDailyStatisticEvidence,
         },
       },
     },
@@ -135,45 +127,48 @@ export function compileLevelProgression(
       evidence: {
         kind: "verified-call-target-and-kismet-analysis",
         confidence: "direct",
-        callerClassPath: gameModeClassPath,
-        callerFunction: gameModeEventGraphName,
-        targetClassPath: experienceClassPath,
-        targetFunction: maximumFunctionName,
+        callerClassPath: profile.traces.maximum.callerClassPath,
+        callerFunction: profile.traces.maximum.callerFunction,
+        targetClassPath: profile.traces.maximum.targetClassPath,
+        targetFunction: profile.traces.maximum.targetFunction,
         bindingRule: "exact-context-object-class-and-declaration",
         relationship: "verified",
-        destinationField: "Example Progress Limit",
+        destinationField: profile.traces.maximum.destinationField,
         statementIndexes: {
-          callerCall: 31015,
-          callerAssignment: 31039,
-          targetColumn: 136,
-          targetArrayLength: 254,
-          targetLoopCondition: 283,
-          targetArrayGet: 379,
-          targetConvert: 434,
-          targetAccumulate: 471,
-          targetLoopBack: 656,
-          targetOutput: 555,
+          callerCall: profile.traces.maximum.statements.callerCall,
+          callerAssignment: profile.traces.maximum.statements.callerAssignment,
+          targetColumn: profile.traces.maximum.statements.targetColumn,
+          targetArrayLength: profile.traces.maximum.statements.targetArrayLength,
+          targetLoopCondition: profile.traces.maximum.statements.targetLoopCondition,
+          targetArrayGet: profile.traces.maximum.statements.targetArrayGet,
+          targetConvert: profile.traces.maximum.statements.targetConvert,
+          targetAccumulate: profile.traces.maximum.statements.targetAccumulate,
+          targetLoopBack: profile.traces.maximum.statements.targetLoopBack,
+          targetOutput: profile.traces.maximum.statements.targetOutput,
         },
       },
     },
     requirementLookup: {
       fullGame: "xp-table-row-at-current-runtime-level",
       demoOverride: {
-        atOrAboveRuntimeLevel: 3,
-        requiredXp: 99999,
+        atOrAboveRuntimeLevel:
+          profile.traces.requirementLookup.demoOverride.atOrAboveRuntimeLevel,
+        requiredXp: profile.traces.requirementLookup.demoOverride.requiredXp,
         belowThreshold: "xp-table-row-at-current-runtime-level",
       },
       evidence: {
         kind: "kismet-analysis",
         confidence: "direct",
-        classPath: endOfDayClassPath,
-        functionName: requirementFunctionName,
+        classPath: profile.traces.requirementLookup.classPath,
+        functionName: profile.traces.requirementLookup.functionName,
         statementIndexes: {
-          readColumn: 18,
-          demoComparison: 196,
-          demoOverride: 234,
-          fullGameArrayGet: 412,
-          fullGameConvert: 467,
+          readColumn: profile.traces.requirementLookup.statements.readColumn,
+          demoComparison: profile.traces.requirementLookup.statements.demoComparison,
+          demoOverride: profile.traces.requirementLookup.statements.demoOverride,
+          fullGameArrayGet:
+            profile.traces.requirementLookup.statements.fullGameArrayGet,
+          fullGameConvert:
+            profile.traces.requirementLookup.statements.fullGameConvert,
         },
       },
     },
@@ -207,28 +202,33 @@ export function compileLevelProgression(
       evidence: {
         kind: "kismet-and-engine-source-analysis",
         confidence: "direct",
-        classPath: endOfDayClassPath,
-        eventGraphFunction: endOfDayEventGraphName,
+        classPath: profile.traces.endOfDay.classPath,
+        eventGraphFunction: profile.traces.endOfDay.functions.eventGraph,
         statementIndexes: {
-          initializePreviousRequirement: 160,
-          floorInitialXp: 210,
-          deductLevelCost: 293,
-          storeRemainingXp: 321,
-          resetInitialXp: 348,
-          lookupNextRequirement: 375,
-          incrementLevel: 576,
-          storeLevel: 622,
-          returnToInitialization: 953,
-          updateProgressText: 2912,
-          progressDivide: 4034,
-          progressClamp: 4080,
-          storeProgress: 4117,
-          compareProgress: 1786,
-          levelUpRoute: 1828,
-          compareTimer: 1843,
-          compareRemainingXp: 1881,
-          combineStopConditions: 1915,
-          clearTimer: 1953,
+          initializePreviousRequirement:
+            profile.traces.endOfDay.statements.initializePreviousRequirement,
+          floorInitialXp: profile.traces.endOfDay.statements.floorInitialXp,
+          deductLevelCost: profile.traces.endOfDay.statements.deductLevelCost,
+          storeRemainingXp: profile.traces.endOfDay.statements.storeRemainingXp,
+          resetInitialXp: profile.traces.endOfDay.statements.resetInitialXp,
+          lookupNextRequirement:
+            profile.traces.endOfDay.statements.lookupNextRequirement,
+          incrementLevel: profile.traces.endOfDay.statements.incrementLevel,
+          storeLevel: profile.traces.endOfDay.statements.storeLevel,
+          returnToInitialization:
+            profile.traces.endOfDay.statements.returnToInitialization,
+          updateProgressText: profile.traces.endOfDay.statements.updateProgressText,
+          progressDivide: profile.traces.endOfDay.statements.progressDivide,
+          progressClamp: profile.traces.endOfDay.statements.progressClamp,
+          storeProgress: profile.traces.endOfDay.statements.storeProgress,
+          compareProgress: profile.traces.endOfDay.statements.compareProgress,
+          levelUpRoute: profile.traces.endOfDay.statements.levelUpRoute,
+          compareTimer: profile.traces.endOfDay.statements.compareTimer,
+          compareRemainingXp:
+            profile.traces.endOfDay.statements.compareRemainingXp,
+          combineStopConditions:
+            profile.traces.endOfDay.statements.combineStopConditions,
+          clearTimer: profile.traces.endOfDay.statements.clearTimer,
         },
       },
     },
@@ -241,12 +241,15 @@ function compileThresholds(
     string,
     GameplayUnlockEnum["enumerators"][number]
   >,
+  profile: LevelProgressionTargetProfile,
 ): {
   readonly thresholds: LevelProgression["thresholds"];
   readonly referencedGameplayUnlocks: number;
 } {
   const matchingTables = input.dataTables.filter(
-    (table) => table.path === xpTablePath || table.name === xpTableName,
+    (table) =>
+      table.path === profile.xpTable.packagePath ||
+      table.name === profile.xpTable.name,
   );
   if (matchingTables.length !== 1) {
     throw new Error(
@@ -255,10 +258,10 @@ function compileThresholds(
   }
   const table = matchingTables[0]!;
   if (
-    table.path !== xpTablePath ||
-    table.name !== xpTableName ||
+    table.path !== profile.xpTable.packagePath ||
+    table.name !== profile.xpTable.name ||
     table.type !== "DataTable" ||
-    table.rowStruct !== xpRowStruct
+    table.rowStruct !== profile.xpTable.rowStruct
   ) {
     throw new Error("XP progression table identity changed.");
   }
@@ -268,15 +271,32 @@ function compileThresholds(
 
   const referencedNames = new Set<string>();
   const rows = table.rows.map((row) => {
-    assertSourceFields(row.values, row.key);
-    const level = readInteger(row.values, row.key, "ExampleLevel");
-    const requiredXp = readInteger(row.values, row.key, "ExampleRequiredProgress");
+    assertSourceFields(row.values, row.key, profile);
+    const level = readInteger(
+      row.values,
+      row.key,
+      profile.xpTable.fields.level,
+      profile,
+    );
+    const requiredXp = readInteger(
+      row.values,
+      row.key,
+      profile.xpTable.fields.requiredProgress,
+      profile,
+    );
     if (requiredXp <= 0) {
-      throw new Error(`Expected positive XP in ${xpTablePath} row ${row.key}.`);
+      throw new Error(
+        `Expected positive XP in ${profile.xpTable.packagePath} row ${row.key}.`,
+      );
     }
-    for (const field of ["ExampleMovieCategories", "ExampleGameCategories"] as const) {
-      if (!Array.isArray(readSourceValue(row.values, row.key, field))) {
-        throw new Error(`Expected ${field} array in ${xpTablePath} row ${row.key}.`);
+    for (const field of [
+      profile.xpTable.fields.movieCategories,
+      profile.xpTable.fields.gameCategories,
+    ]) {
+      if (!Array.isArray(readSourceValue(row.values, row.key, field, profile))) {
+        throw new Error(
+          `Expected ${field} array in ${profile.xpTable.packagePath} row ${row.key}.`,
+        );
       }
     }
     const unlocks = readGameplayUnlocks(
@@ -284,6 +304,7 @@ function compileThresholds(
       row.key,
       gameplayUnlocks,
       referencedNames,
+      profile,
     );
     return { row, level, requiredXp, unlocks };
   });
@@ -324,9 +345,17 @@ function compileThresholds(
 
 function compileGameplayUnlocks(
   input: GameplayUnlockEnum,
+  profile: LevelProgressionTargetProfile,
 ): ReadonlyMap<string, GameplayUnlockEnum["enumerators"][number]> {
   if (input.artifactType !== "gameplay-unlock-enum") {
     throw new Error("Expected a gameplay-unlock-enum input.");
+  }
+  if (
+    input.source.packagePath !== profile.gameplayUnlockEnum.packagePath ||
+    input.source.objectPath !== profile.gameplayUnlockEnum.objectPath ||
+    input.source.enumName !== profile.gameplayUnlockEnum.enumName
+  ) {
+    throw new Error("Gameplay-unlock enum identity changed.");
   }
   if (
     input.totals.enumeratorCount !== input.enumerators.length ||
@@ -343,6 +372,9 @@ function compileGameplayUnlocks(
   for (const [index, enumerator] of input.enumerators.entries()) {
     if (
       enumerator.value !== index ||
+      !enumerator.internalName.startsWith(
+        profile.gameplayUnlockEnum.internalNamePrefix,
+      ) ||
       byName.has(enumerator.internalName) ||
       displayNames.has(enumerator.displayName)
     ) {
@@ -362,22 +394,26 @@ function readGameplayUnlocks(
     GameplayUnlockEnum["enumerators"][number]
   >,
   referencedNames: Set<string>,
+  profile: LevelProgressionTargetProfile,
 ): LevelProgression["thresholds"][number]["gameplayUnlocks"] {
-  const source = readSourceValue(values, rowKey, "ExampleUnlocks");
+  const field = profile.xpTable.fields.gameplayUnlocks;
+  const source = readSourceValue(values, rowKey, field, profile);
   if (!Array.isArray(source)) {
-    throw new Error(`Expected ExampleUnlocks array in ${xpTablePath} row ${rowKey}.`);
+    throw new Error(
+      `Expected ${field} array in ${profile.xpTable.packagePath} row ${rowKey}.`,
+    );
   }
 
   return source.map((value) => {
     if (typeof value !== "string" || !referencedNames.add(value)) {
       throw new Error(
-        `Expected unique gameplay unlock names in ${xpTablePath} row ${rowKey}.`,
+        `Expected unique gameplay unlock names in ${profile.xpTable.packagePath} row ${rowKey}.`,
       );
     }
     const enumerator = gameplayUnlocks.get(value);
     if (enumerator === undefined) {
       throw new Error(
-        `Gameplay unlock in ${xpTablePath} row ${rowKey} has no enum definition.`,
+        `Gameplay unlock in ${profile.xpTable.packagePath} row ${rowKey} has no enum definition.`,
       );
     }
     return {
@@ -391,18 +427,20 @@ function readGameplayUnlocks(
 function assertSourceFields(
   values: object,
   rowKey: string,
+  profile: LevelProgressionTargetProfile,
 ): void {
+  const sourceFields = Object.values(profile.xpTable.fields);
   const keys = Object.keys(values);
-  if (keys.length !== sourceFieldPrefixes.length) {
+  if (keys.length !== sourceFields.length) {
     throw new Error(
-      `Expected ${sourceFieldPrefixes.length} fields in ${xpTablePath} row ${rowKey}.`,
+      `Expected ${sourceFields.length} fields in ${profile.xpTable.packagePath} row ${rowKey}.`,
     );
   }
-  for (const prefix of sourceFieldPrefixes) {
+  for (const prefix of sourceFields) {
     const matches = keys.filter((key) => key.startsWith(`${prefix}_`));
     if (matches.length !== 1) {
       throw new Error(
-        `Expected one ${prefix} field in ${xpTablePath} row ${rowKey}.`,
+        `Expected one ${prefix} field in ${profile.xpTable.packagePath} row ${rowKey}.`,
       );
     }
   }
@@ -411,11 +449,14 @@ function assertSourceFields(
 function readInteger(
   values: object,
   rowKey: string,
-  prefix: "ExampleLevel" | "ExampleRequiredProgress",
+  prefix: string,
+  profile: LevelProgressionTargetProfile,
 ): number {
-  const value = readSourceValue(values, rowKey, prefix);
+  const value = readSourceValue(values, rowKey, prefix, profile);
   if (typeof value !== "number" || !Number.isSafeInteger(value)) {
-    throw new Error(`Expected safe integer ${prefix} in ${xpTablePath} row ${rowKey}.`);
+    throw new Error(
+      `Expected safe integer ${prefix} in ${profile.xpTable.packagePath} row ${rowKey}.`,
+    );
   }
   return value;
 }
@@ -423,13 +464,16 @@ function readInteger(
 function readSourceValue(
   values: object,
   rowKey: string,
-  prefix: (typeof sourceFieldPrefixes)[number],
+  prefix: string,
+  profile: LevelProgressionTargetProfile,
 ): unknown {
   const matches = Object.entries(values).filter(([key]) =>
     key.startsWith(`${prefix}_`),
   );
   if (matches.length !== 1) {
-    throw new Error(`Expected one ${prefix} field in ${xpTablePath} row ${rowKey}.`);
+    throw new Error(
+      `Expected one ${prefix} field in ${profile.xpTable.packagePath} row ${rowKey}.`,
+    );
   }
   return matches[0]![1];
 }
@@ -446,7 +490,7 @@ function assertInputContracts(
     throw new Error("Expected a structured-values input.");
   }
   if (changeXpTrace.artifactType !== "blueprint-function-trace") {
-    throw new Error("Expected a Blueprint function trace for Apply Example Progress.");
+    throw new Error("Expected the configured experience-update Blueprint function trace.");
   }
   if (
     maximumCallerTrace.artifactType !== "blueprint-property-reference-trace" ||
@@ -475,6 +519,62 @@ function assertInputContracts(
   }
   if (inputs.some((input) => !sameEngine(structuredValues.engine, input.engine))) {
     throw new Error("Level-progression inputs refer to different engine configurations.");
+  }
+}
+
+function assertProfileContracts(
+  profile: LevelProgressionTargetProfile,
+  structuredValues: LevelStructuredValuesArtifact,
+  gameplayUnlockEnum: GameplayUnlockEnum,
+  sources: LevelProgressionSources,
+): void {
+  if (profile.profileType !== "level-progression-target-profile") {
+    throw new Error("Expected a level-progression target profile.");
+  }
+  if (
+    profile.gameplayUnlockEnum.internalNamePrefix !==
+      `${profile.gameplayUnlockEnum.enumName}::`
+  ) {
+    throw new Error("Target profile has an inconsistent gameplay-unlock enum prefix.");
+  }
+  if (
+    new Set(Object.values(profile.xpTable.fields)).size !== 5 ||
+    new Set(Object.values(profile.traces.endOfDay.functions)).size !== 5
+  ) {
+    throw new Error("Target profile contains duplicate field or function roles.");
+  }
+  if (
+    profile.traces.requirementLookup.classPath !==
+      profile.traces.endOfDay.classPath ||
+    profile.traces.requirementLookup.functionName !==
+      profile.traces.endOfDay.functions.requirementLookup ||
+    profile.traces.maximum.callerClassPath !==
+      profile.traces.experienceUpdate.classPath ||
+    profile.traces.maximum.destinationField !==
+      profile.traces.experienceUpdate.fields.maximumExperience
+  ) {
+    throw new Error("Target profile contains inconsistent trace relationships.");
+  }
+  if (
+    profile.build.manifestSha256 !== structuredValues.build.manifestSha256 ||
+    profile.build.steamAppId !== structuredValues.build.steamAppId ||
+    profile.build.steamBuildId !== structuredValues.build.steamBuildId ||
+    !sameMappings(profile.mappings, structuredValues.mappings) ||
+    !sameEngine(profile.engine, structuredValues.engine)
+  ) {
+    throw new Error(
+      "Level-progression target profile refers to a different build, mappings, or engine configuration.",
+    );
+  }
+  if (
+    gameplayUnlockEnum.targetProfile.fileName !== sources.targetProfile.fileName ||
+    gameplayUnlockEnum.targetProfile.sizeBytes !== sources.targetProfile.sizeBytes ||
+    gameplayUnlockEnum.targetProfile.sha256 !== sources.targetProfile.sha256 ||
+    gameplayUnlockEnum.targetProfile.profileType !== sources.targetProfile.profileType
+  ) {
+    throw new Error(
+      "Gameplay-unlock enum does not identify the supplied target profile.",
+    );
   }
 }
 

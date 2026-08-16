@@ -1,0 +1,1177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "build": {
+      "type": "object",
+      "properties": {
+        "manifestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      },
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
+      "additionalProperties": false
+    },
+    "engine": {
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "const": "probable"
+        },
+        "cue4ParseProfile": {
+          "const": "GAME_UE5_4"
+        },
+        "source": {
+          "const": "configured"
+        },
+        "version": {
+          "const": "5.4"
+        }
+      },
+      "required": [
+        "confidence",
+        "cue4ParseProfile",
+        "source",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "gameplayUnlockEnum": {
+      "type": "object",
+      "properties": {
+        "enumName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "internalNamePrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "objectPath": {
+          "type": "string",
+          "pattern": "\\.[^./:]+$",
+          "minLength": 3
+        },
+        "packagePath": {
+          "type": "string",
+          "pattern": "\\.uasset$",
+          "minLength": 8
+        }
+      },
+      "required": [
+        "enumName",
+        "internalNamePrefix",
+        "objectPath",
+        "packagePath"
+      ],
+      "additionalProperties": false
+    },
+    "mappings": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "pattern": "^[^/\\\\]+\\.usmap$",
+          "minLength": 7
+        },
+        "formatVersion": {
+          "const": 4
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "fileName",
+        "formatVersion",
+        "sha256",
+        "sizeBytes"
+      ],
+      "additionalProperties": false
+    },
+    "profileType": {
+      "const": "level-progression-target-profile"
+    },
+    "traces": {
+      "type": "object",
+      "properties": {
+        "endOfDay": {
+          "type": "object",
+          "properties": {
+            "classPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "cumulativeExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "currentExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "dailyExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "initialExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "progressFraction": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "remainingExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requirementOutput": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "cumulativeExperience",
+                "currentExperience",
+                "dailyExperience",
+                "initialExperience",
+                "progressFraction",
+                "remainingExperience",
+                "requirementOutput"
+              ],
+              "additionalProperties": false
+            },
+            "functions": {
+              "type": "object",
+              "properties": {
+                "applyRewards": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeProgress": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "eventGraph": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "initializeAnimation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "requirementLookup": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "applyRewards",
+                "cumulativeProgress",
+                "eventGraph",
+                "initializeAnimation",
+                "requirementLookup"
+              ],
+              "additionalProperties": false
+            },
+            "jumpTargets": {
+              "type": "object",
+              "properties": {
+                "levelUpRoute": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nextTickFirst": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nextTickSecond": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "progressIncomplete": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "returnToInitialization": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "levelUpRoute",
+                "nextTickFirst",
+                "nextTickSecond",
+                "progressIncomplete",
+                "returnToInitialization"
+              ],
+              "additionalProperties": false
+            },
+            "levelProperty": {
+              "type": "string",
+              "minLength": 1
+            },
+            "statements": {
+              "type": "object",
+              "properties": {
+                "calculateLevelCost": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "clearTimer": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "combineStopConditions": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "compareProgress": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "compareRemainingXp": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "compareTimer": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cumulativeAccumulate": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cumulativeArrayGet": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cumulativeArrayLength": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cumulativeLevelColumn": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cumulativeOutput": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cumulativeStopComparison": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "cumulativeXpColumn": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "deductLevelCost": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "floorInitialXp": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "incrementLevel": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "initializeCurrentCumulative": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "initializePreviousCumulative": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "initializePreviousRequirement": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "initializeStoreInitial": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "initializeStoreRemaining": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "initializeSubtractDaily": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "initializeSubtractPrevious": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "levelUpRoute": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "lookupNextRequirement": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nextTickFirst": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "nextTickSecond": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "previousLevelSubtract": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "progressBranch": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "progressClamp": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "progressDivide": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "resetInitialXp": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "resetProgress": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "returnToInitialization": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "storeLevel": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "storeProgress": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "storeRemainingXp": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "updateProgressText": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "calculateLevelCost",
+                "clearTimer",
+                "combineStopConditions",
+                "compareProgress",
+                "compareRemainingXp",
+                "compareTimer",
+                "cumulativeAccumulate",
+                "cumulativeArrayGet",
+                "cumulativeArrayLength",
+                "cumulativeLevelColumn",
+                "cumulativeOutput",
+                "cumulativeStopComparison",
+                "cumulativeXpColumn",
+                "deductLevelCost",
+                "floorInitialXp",
+                "incrementLevel",
+                "initializeCurrentCumulative",
+                "initializePreviousCumulative",
+                "initializePreviousRequirement",
+                "initializeStoreInitial",
+                "initializeStoreRemaining",
+                "initializeSubtractDaily",
+                "initializeSubtractPrevious",
+                "levelUpRoute",
+                "lookupNextRequirement",
+                "nextTickFirst",
+                "nextTickSecond",
+                "previousLevelSubtract",
+                "progressBranch",
+                "progressClamp",
+                "progressDivide",
+                "resetInitialXp",
+                "resetProgress",
+                "returnToInitialization",
+                "storeLevel",
+                "storeProgress",
+                "storeRemainingXp",
+                "updateProgressText"
+              ],
+              "additionalProperties": false
+            },
+            "symbols": {
+              "type": "object",
+              "properties": {
+                "clampedProgress": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeAccumulator": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeArrayIndex": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeArrayItem": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeColumnValues": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeConvertedItem": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeLevelInput": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "cumulativeLoopCounter": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "displayedRequirement": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "flooredInitialExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "incrementedLevel": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "initialCurrentCumulative": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "initialCurrentCumulativeResult": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "initialPreviousCumulative": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "initialPreviousLevel": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "initialStartingExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "levelCost": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "nextRequirement": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "previousLevel": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "previousRequirement": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "progressDenominator": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "progressNumerator": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "progressQuotient": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "remainingAfterDeduction": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "remainingComplete": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "timerComplete": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "clampedProgress",
+                "cumulativeAccumulator",
+                "cumulativeArrayIndex",
+                "cumulativeArrayItem",
+                "cumulativeColumnValues",
+                "cumulativeConvertedItem",
+                "cumulativeLevelInput",
+                "cumulativeLoopCounter",
+                "displayedRequirement",
+                "flooredInitialExperience",
+                "incrementedLevel",
+                "initialCurrentCumulative",
+                "initialCurrentCumulativeResult",
+                "initialPreviousCumulative",
+                "initialPreviousLevel",
+                "initialStartingExperience",
+                "levelCost",
+                "nextRequirement",
+                "previousLevel",
+                "previousRequirement",
+                "progressDenominator",
+                "progressNumerator",
+                "progressQuotient",
+                "remainingAfterDeduction",
+                "remainingComplete",
+                "timerComplete"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "classPath",
+            "fields",
+            "functions",
+            "jumpTargets",
+            "levelProperty",
+            "statements",
+            "symbols"
+          ],
+          "additionalProperties": false
+        },
+        "experienceUpdate": {
+          "type": "object",
+          "properties": {
+            "classPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "currentExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "lifetimeExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "localModification": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "maximumExperience": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "modificationInput": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "currentExperience",
+                "lifetimeExperience",
+                "localModification",
+                "maximumExperience",
+                "modificationInput"
+              ],
+              "additionalProperties": false
+            },
+            "functionName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "functions": {
+              "type": "object",
+              "properties": {
+                "addDailyStatistic": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "publishUiValue": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "addDailyStatistic",
+                "publishUiValue"
+              ],
+              "additionalProperties": false
+            },
+            "statements": {
+              "type": "object",
+              "properties": {
+                "addCurrentExperience": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "addCurrentExperienceEvidence": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "addDailyStatistic": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "addDailyStatisticEvidence": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "addLifetimeExperience": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "addLifetimeExperienceEvidence": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "capCurrentExperience": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "capCurrentExperienceEvidence": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "publishUiValue": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "publishUiValueEvidence": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "retainModification": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "storeCurrentExperience": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "storeLifetimeExperience": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "addCurrentExperience",
+                "addCurrentExperienceEvidence",
+                "addDailyStatistic",
+                "addDailyStatisticEvidence",
+                "addLifetimeExperience",
+                "addLifetimeExperienceEvidence",
+                "capCurrentExperience",
+                "capCurrentExperienceEvidence",
+                "publishUiValue",
+                "publishUiValueEvidence",
+                "retainModification",
+                "storeCurrentExperience",
+                "storeLifetimeExperience"
+              ],
+              "additionalProperties": false
+            },
+            "symbols": {
+              "type": "object",
+              "properties": {
+                "cappedResult": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "currentAddResult": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "lifetimeAddResult": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "cappedResult",
+                "currentAddResult",
+                "lifetimeAddResult"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "classPath",
+            "fields",
+            "functionName",
+            "functions",
+            "statements",
+            "symbols"
+          ],
+          "additionalProperties": false
+        },
+        "maximum": {
+          "type": "object",
+          "properties": {
+            "accumulator": {
+              "type": "string",
+              "minLength": 1
+            },
+            "callerClassPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "callerFunction": {
+              "type": "string",
+              "minLength": 1
+            },
+            "destinationField": {
+              "type": "string",
+              "minLength": 1
+            },
+            "jumpTargets": {
+              "type": "object",
+              "properties": {
+                "loopBack": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "loopExit": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "loopBack",
+                "loopExit"
+              ],
+              "additionalProperties": false
+            },
+            "outputField": {
+              "type": "string",
+              "minLength": 1
+            },
+            "receiverObjectPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "statements": {
+              "type": "object",
+              "properties": {
+                "callerAssignment": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "callerCall": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "callerContext": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetAccumulate": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetArrayGet": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetArrayLength": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetColumn": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetConvert": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetIncrement": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetLoopBack": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetLoopCondition": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetLoopExit": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetOutput": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetStoreAccumulator": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "targetTable": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "callerAssignment",
+                "callerCall",
+                "callerContext",
+                "targetAccumulate",
+                "targetArrayGet",
+                "targetArrayLength",
+                "targetColumn",
+                "targetConvert",
+                "targetIncrement",
+                "targetLoopBack",
+                "targetLoopCondition",
+                "targetLoopExit",
+                "targetOutput",
+                "targetStoreAccumulator",
+                "targetTable"
+              ],
+              "additionalProperties": false
+            },
+            "symbols": {
+              "type": "object",
+              "properties": {
+                "accumulatedValue": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "arrayIndex": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "arrayItem": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "arrayLength": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "callerResult": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "columnValues": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "convertedItem": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "loopCounter": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "accumulatedValue",
+                "arrayIndex",
+                "arrayItem",
+                "arrayLength",
+                "callerResult",
+                "columnValues",
+                "convertedItem",
+                "loopCounter"
+              ],
+              "additionalProperties": false
+            },
+            "tableVariable": {
+              "type": "string",
+              "minLength": 1
+            },
+            "targetClassPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "targetFunction": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "accumulator",
+            "callerClassPath",
+            "callerFunction",
+            "destinationField",
+            "jumpTargets",
+            "outputField",
+            "receiverObjectPath",
+            "statements",
+            "symbols",
+            "tableVariable",
+            "targetClassPath",
+            "targetFunction"
+          ],
+          "additionalProperties": false
+        },
+        "requirementLookup": {
+          "type": "object",
+          "properties": {
+            "classPath": {
+              "type": "string",
+              "pattern": "\\.[^./:]+$",
+              "minLength": 3
+            },
+            "currentLevelSymbol": {
+              "type": "string",
+              "minLength": 1
+            },
+            "demoOverride": {
+              "type": "object",
+              "properties": {
+                "atOrAboveRuntimeLevel": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "requiredXp": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "atOrAboveRuntimeLevel",
+                "requiredXp"
+              ],
+              "additionalProperties": false
+            },
+            "functionName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "jumpTargets": {
+              "type": "object",
+              "properties": {
+                "fullGame": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "fullGame"
+              ],
+              "additionalProperties": false
+            },
+            "outputField": {
+              "type": "string",
+              "minLength": 1
+            },
+            "statements": {
+              "type": "object",
+              "properties": {
+                "branch": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "demoComparison": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "demoOverride": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "fullGameArrayGet": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "fullGameConvert": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "readColumn": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "storeOutput": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "branch",
+                "demoComparison",
+                "demoOverride",
+                "fullGameArrayGet",
+                "fullGameConvert",
+                "readColumn",
+                "storeOutput"
+              ],
+              "additionalProperties": false
+            },
+            "symbols": {
+              "type": "object",
+              "properties": {
+                "arrayItem": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "columnValues": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "convertedItem": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "arrayItem",
+                "columnValues",
+                "convertedItem"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "classPath",
+            "currentLevelSymbol",
+            "demoOverride",
+            "functionName",
+            "jumpTargets",
+            "outputField",
+            "statements",
+            "symbols"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "endOfDay",
+        "experienceUpdate",
+        "maximum",
+        "requirementLookup"
+      ],
+      "additionalProperties": false
+    },
+    "xpTable": {
+      "type": "object",
+      "properties": {
+        "fields": {
+          "type": "object",
+          "properties": {
+            "gameCategories": {
+              "type": "string",
+              "minLength": 1
+            },
+            "gameplayUnlocks": {
+              "type": "string",
+              "minLength": 1
+            },
+            "level": {
+              "type": "string",
+              "minLength": 1
+            },
+            "movieCategories": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requiredProgress": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "gameCategories",
+            "gameplayUnlocks",
+            "level",
+            "movieCategories",
+            "requiredProgress"
+          ],
+          "additionalProperties": false
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "objectPath": {
+          "type": "string",
+          "pattern": "\\.[^./:]+$",
+          "minLength": 3
+        },
+        "packagePath": {
+          "type": "string",
+          "pattern": "\\.uasset$",
+          "minLength": 8
+        },
+        "rowStruct": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "fields",
+        "name",
+        "objectPath",
+        "packagePath",
+        "rowStruct"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "build",
+    "engine",
+    "gameplayUnlockEnum",
+    "mappings",
+    "profileType",
+    "traces",
+    "xpTable"
+  ],
+  "additionalProperties": false
+}

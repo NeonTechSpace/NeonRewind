@@ -1,21 +1,48 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
   GameplayUnlockEnumSchema,
   LevelProgressionSchema,
+  LevelProgressionTargetProfileSchema,
 } from "@neonretrorewind/core";
 
 import { compileLevelProgression } from "../src/level-progression.ts";
+import { validateJsonSchema } from "./json-schema-validation.ts";
 import {
   createChangeXpTrace,
   createEndOfDayTrace,
   createGameplayUnlockEnum,
   createLevelStructuredValues,
+  createLevelProgressionTargetProfile,
   createMaximumCallerTrace,
   createMaximumTargetTrace,
   levelProgressionSources,
+  levelProgressionTargetProfile,
 } from "./level-progression-fixtures.ts";
+
+test("accepts the target profile through both public contracts", async () => {
+  const schemaPath = new URL(
+    "../../../../game-data-exporter/schemas/config/level-progression-target-profile.schema.json",
+    import.meta.url,
+  );
+  const schema = JSON.parse(await readFile(schemaPath, "utf8")) as object;
+
+  assert.deepEqual(
+    schema,
+    LevelProgressionTargetProfileSchema.toJsonSchema(),
+  );
+  assert.equal(
+    LevelProgressionTargetProfileSchema.allows(levelProgressionTargetProfile),
+    true,
+  );
+  validateJsonSchema(
+    levelProgressionTargetProfile,
+    schema,
+    "Level-progression target profile",
+  );
+});
 
 test("compiles normalized level thresholds and progression behavior", () => {
   const progression = compileCurrent();
@@ -143,6 +170,34 @@ test("rejects inputs from different builds", () => {
   );
 });
 
+test("rejects a target profile for another build", () => {
+  const targetProfile = createLevelProgressionTargetProfile();
+  targetProfile.build.steamBuildId = "different";
+  assert.throws(
+    () => compileCurrent({ targetProfile }),
+    /target profile refers to a different build/u,
+  );
+});
+
+test("rejects duplicate target-profile field roles", () => {
+  const targetProfile = createLevelProgressionTargetProfile();
+  targetProfile.xpTable.fields.movieCategories =
+    targetProfile.xpTable.fields.gameCategories;
+  assert.throws(
+    () => compileCurrent({ targetProfile }),
+    /duplicate field or function roles/u,
+  );
+});
+
+test("rejects a gameplay-unlock enum linked to another target profile", () => {
+  const gameplayUnlockEnum = createGameplayUnlockEnum();
+  gameplayUnlockEnum.targetProfile.sha256 = "9".repeat(64);
+  assert.throws(
+    () => compileCurrent({ gameplayUnlockEnum }),
+    /does not identify the supplied target profile/u,
+  );
+});
+
 test("accepts the gameplay-unlock enum fixture contract", () => {
   assert.equal(GameplayUnlockEnumSchema.allows(createGameplayUnlockEnum()), true);
 });
@@ -169,7 +224,10 @@ test("rejects inconsistent gameplay-unlock enum totals", () => {
 test("rejects a changed current-experience cap input", () => {
   const changeXp = createChangeXpTrace();
   const maximumField = changeXp.functions[0]?.nodes.find(
-    (node) => node.statementIndex === 171,
+    (node) =>
+      node.statementIndex ===
+      levelProgressionTargetProfile.traces.experienceUpdate.statements
+        .capCurrentExperience + 2,
   );
   assert.ok(maximumField);
   maximumField.symbol = "Different Maximum";
@@ -195,7 +253,12 @@ test("rejects a changed end-of-day continuation target", () => {
   );
   const target = eventGraph?.nodes.find(
     (node) =>
-      node.opcode === "EX_SkipOffsetConst" && node.literal?.value === "15",
+      node.opcode === "EX_SkipOffsetConst" &&
+      node.literal?.value ===
+        String(
+          levelProgressionTargetProfile.traces.endOfDay.jumpTargets
+            .returnToInitialization,
+        ),
   );
   assert.ok(target?.literal);
   target.literal = { ...target.literal, value: "999" };
@@ -206,6 +269,7 @@ test("rejects a changed end-of-day continuation target", () => {
 });
 
 interface CompileOptions {
+  readonly targetProfile?: ReturnType<typeof createLevelProgressionTargetProfile>;
   readonly structuredValues?: Parameters<typeof createLevelStructuredValues>[0];
   readonly gameplayUnlockEnum?: ReturnType<typeof createGameplayUnlockEnum>;
   readonly changeXp?: ReturnType<typeof createChangeXpTrace>;
@@ -242,6 +306,7 @@ function modelEndOfDayTransition(
 
 function compileCurrent(options: CompileOptions = {}) {
   return compileLevelProgression(
+    options.targetProfile ?? levelProgressionTargetProfile,
     createLevelStructuredValues(options.structuredValues),
     options.gameplayUnlockEnum ?? createGameplayUnlockEnum(),
     options.changeXp ?? createChangeXpTrace(),

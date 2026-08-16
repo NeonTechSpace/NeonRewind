@@ -6,6 +6,7 @@ internal sealed record GameplayUnlockEnumEvidence(
     GameplayUnlockEnumInput StaticCensus,
     MappingIdentity Mappings,
     EngineIdentity Engine,
+    TargetProfileIdentity TargetProfile,
     ExtractorIdentity Extractor,
     GameplayUnlockEnumSource Source,
     GameplayUnlockEnumTotals Totals,

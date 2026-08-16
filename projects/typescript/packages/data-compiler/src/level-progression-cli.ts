@@ -8,7 +8,9 @@ import {
   BlueprintFunctionTraceSchema,
   BlueprintPropertyReferenceTraceSchema,
   GameplayUnlockEnumSchema,
+  LevelProgressionTargetProfileSchema,
   StructuredValuesSchema,
+  type LevelProgressionArtifactIdentity,
 } from "@neonretrorewind/core";
 
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
@@ -22,6 +24,7 @@ const inputFailureExitCode = 6;
 const outputConflictExitCode = 7;
 
 interface Options {
+  readonly targetProfilePath: string;
   readonly structuredValuesPath: string;
   readonly gameplayUnlockEnumPath: string;
   readonly changeXpTracePath: string;
@@ -44,6 +47,7 @@ export async function runLevelProgression(
 
   try {
     const [
+      targetProfile,
       structuredValues,
       gameplayUnlockEnum,
       changeXp,
@@ -52,6 +56,7 @@ export async function runLevelProgression(
       endOfDay,
     ] =
       await Promise.all([
+        readInput(options.targetProfilePath, "Level-progression target profile"),
         readInput(options.structuredValuesPath, "Structured-values"),
         readInput(options.gameplayUnlockEnumPath, "Gameplay-unlock enum"),
         readInput(options.changeXpTracePath, "Change-XP trace"),
@@ -60,6 +65,12 @@ export async function runLevelProgression(
         readInput(options.endOfDayTracePath, "End-of-day Level trace"),
       ]);
     const sources: LevelProgressionSources = {
+      targetProfile: {
+        fileName: basename(targetProfile.path),
+        sha256: targetProfile.sha256,
+        sizeBytes: targetProfile.bytes.length,
+        profileType: "level-progression-target-profile",
+      },
       structuredValues: createIdentity(structuredValues, "structured-values"),
       gameplayUnlockEnum: createIdentity(
         gameplayUnlockEnum,
@@ -80,6 +91,11 @@ export async function runLevelProgression(
       ),
     };
     const progression = compileLevelProgression(
+      assertArtifactContract(
+        LevelProgressionTargetProfileSchema,
+        targetProfile.value,
+        "Level-progression target profile input",
+      ),
       assertArtifactContract(
         StructuredValuesSchema,
         structuredValues.value,
@@ -116,6 +132,7 @@ export async function runLevelProgression(
 
     await Promise.all(
       [
+        targetProfile,
         structuredValues,
         gameplayUnlockEnum,
         changeXp,
@@ -146,12 +163,13 @@ export function writeLevelProgressionUsage(
   stream: NodeJS.WritableStream,
 ): void {
   stream.write(
-    "  neonretrorewind-data-compiler level-progression --structured-values <path> --gameplay-unlock-enum <path> --change-xp-trace <path> --maximum-caller-trace <path> --maximum-target-trace <path> --end-of-day-trace <path> --output <path>\n",
+    "  neonretrorewind-data-compiler level-progression --target-profile <path> --structured-values <path> --gameplay-unlock-enum <path> --change-xp-trace <path> --maximum-caller-trace <path> --maximum-target-trace <path> --end-of-day-trace <path> --output <path>\n",
   );
 }
 
 function parseOptions(arguments_: readonly string[]): Options | string {
   const names = [
+    "--target-profile",
     "--structured-values",
     "--gameplay-unlock-enum",
     "--change-xp-trace",
@@ -181,6 +199,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
     return `Expected all level-progression inputs and --output, missing ${missing.join(", ")}.`;
   }
   return {
+    targetProfilePath: values.get("--target-profile")!,
     structuredValuesPath: values.get("--structured-values")!,
     gameplayUnlockEnumPath: values.get("--gameplay-unlock-enum")!,
     changeXpTracePath: values.get("--change-xp-trace")!,
@@ -202,12 +221,12 @@ async function readInput(path: string, label: string): Promise<InputFile> {
 }
 
 function createIdentity<
-  ArtifactType extends LevelProgressionSources[keyof LevelProgressionSources]["artifactType"],
+  ArtifactType extends LevelProgressionArtifactIdentity["artifactType"],
 >(
   input: InputFile,
   artifactType: ArtifactType,
 ): Extract<
-  LevelProgressionSources[keyof LevelProgressionSources],
+  LevelProgressionArtifactIdentity,
   { readonly artifactType: ArtifactType }
 > {
   return {
@@ -216,7 +235,7 @@ function createIdentity<
     sizeBytes: input.bytes.length,
     artifactType,
   } as Extract<
-    LevelProgressionSources[keyof LevelProgressionSources],
+    LevelProgressionArtifactIdentity,
     { readonly artifactType: ArtifactType }
   >;
 }

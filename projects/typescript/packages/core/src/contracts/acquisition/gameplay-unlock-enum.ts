@@ -37,6 +37,16 @@ const $definitionEngine = type({
   confidence: type.unit("probable"),
   "+": "reject",
 }).readonly();
+const $definitionTargetProfile = type({
+  fileName: type.and(
+    $definitionFileName,
+    type("string").matching(new RegExp("\\.json$")),
+  ),
+  sizeBytes: type("number.integer").atLeast(1),
+  sha256: $definitionSha256,
+  profileType: type.unit("level-progression-target-profile"),
+  "+": "reject",
+}).readonly();
 const $definitionExtractor = type({
   name: type.unit("NeonRetroRewind.StaticExtractor"),
   version: $definitionNonEmptyString,
@@ -44,13 +54,9 @@ const $definitionExtractor = type({
   "+": "reject",
 }).readonly();
 const $definitionSource = type({
-  packagePath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.uasset",
-  ),
-  objectPath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.ExampleUnlockKind",
-  ),
-  enumName: type.unit("ExampleUnlockKind"),
+  packagePath: type("string").matching(new RegExp("\\.uasset$")),
+  objectPath: $definitionNonEmptyString,
+  enumName: $definitionNonEmptyString,
   cppForm: type.unit("Namespaced"),
   underlyingType: type.unit("int64"),
   "+": "reject",
@@ -72,6 +78,7 @@ export const GameplayUnlockEnumSchema = type({
   staticCensus: $definitionStaticCensus,
   mappings: $definitionMappings,
   engine: $definitionEngine,
+  targetProfile: $definitionTargetProfile,
   extractor: $definitionExtractor,
   source: $definitionSource,
   totals: $definitionTotals,

@@ -324,7 +324,8 @@ The film catalog still contains extracted game text and remains private and unco
 
 This step joins the structured XP table and gameplay-unlock enum with the typed experience-update, maximum-XP, and end-of-day traces.
 It requires the verified call-target trace that binds the maximum-XP call to its exact declaration.
-The compiler checks that every input uses the same build, mappings, and Unreal Engine configuration.
+It also requires the same ignored private level-progression target profile used to extract the gameplay-unlock enum.
+The compiler checks that every input uses the same build, mappings, Unreal Engine configuration, and target-profile identity.
 
 The output records consecutive runtime-level thresholds, cumulative XP, exact gameplay-unlock values and display labels, the stored-experience cap, the raw daily-statistic update, the full-game requirement lookup, and the demo requirement override.
 It also records the repeated end-of-day level transition and the maximum-level stop established by the typed Blueprint flow and Unreal Engine 5.4 source.
@@ -345,7 +346,16 @@ pnpm install --frozen-lockfile
 Compile the private progression artifact.
 
 ```powershell
+$targetProfile = "../game-data-exporter/.local/targets/level-progression-target-profile.json"
+```
+
+```bash
+targetProfile="../game-data-exporter/.local/targets/level-progression-target-profile.json"
+```
+
+```powershell
 pnpm level-progression `
+  --target-profile $targetProfile `
   --structured-values (Join-Path $buildDirectory "structured-values.json") `
   --gameplay-unlock-enum (Join-Path $buildDirectory "gameplay-unlock-enum.json") `
   --change-xp-trace (Join-Path $buildDirectory "blueprint-function-trace.change-xp.json") `
@@ -357,6 +367,7 @@ pnpm level-progression `
 
 ```bash
 pnpm level-progression \
+  --target-profile "$targetProfile" \
   --structured-values "$buildDirectory/structured-values.json" \
   --gameplay-unlock-enum "$buildDirectory/gameplay-unlock-enum.json" \
   --change-xp-trace "$buildDirectory/blueprint-function-trace.change-xp.json" \
@@ -377,6 +388,10 @@ popd >/dev/null
 ```
 
 The output contract is the executable `LevelProgressionSchema` in `projects/typescript/packages/core/src/contracts/domain/level-progression.ts`.
+The target-profile contract is the executable `LevelProgressionTargetProfileSchema` in `projects/typescript/packages/core/src/contracts/config/level-progression-target-profile.ts`.
+Its generated cross-language JSON Schema is `projects/game-data-exporter/schemas/config/level-progression-target-profile.schema.json`.
+The compiler rechecks the target profile and every evidence input immediately before writing the output.
+The output records the profile filename, byte length, SHA-256 hash, and profile type.
 The artifact records `runtimeValidation: not-run` because the normalized state and control flow come from static evidence.
 It does not claim the exact player-visible maximum-level presentation.
 The generated artifact remains private and is not committed.

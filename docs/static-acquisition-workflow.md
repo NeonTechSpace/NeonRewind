@@ -312,15 +312,29 @@ The output contains extracted game values and must remain in the ignored local a
 
 ## 7c. Extract the gameplay-unlock enum
 
-This step reads the exact `ExampleUnlockKind` user-defined enum.
+This step reads the gameplay-unlock user-defined enum selected by a private level-progression target profile.
 It records every nonterminal enum value with its internal name and authored display label.
-The command stops if the package or enum shape differs from the expected build evidence.
+The profile is a build-bound JSON file that records the exact build, mappings, engine, enum, table, function, symbol, and source-locator expectations used by the level-progression workflow.
+It must remain under `projects/game-data-exporter/.local/targets` or another ignored local directory.
+Its format is defined by `projects/game-data-exporter/schemas/config/level-progression-target-profile.schema.json`.
+The command stops if the profile, package, enum shape, build, mappings, or engine configuration differs from the supplied evidence.
+
+Set the private profile path before running the command.
+
+```powershell
+$targetProfile = "projects/game-data-exporter/.local/targets/level-progression-target-profile.json"
+```
+
+```bash
+targetProfile="projects/game-data-exporter/.local/targets/level-progression-target-profile.json"
+```
 
 ```powershell
 dotnet run --project $extractor -- gameplay-unlock-enum `
   --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
   --static-census (Join-Path $buildDirectory "static-census.json") `
   --mappings $mappings `
+  --target-profile $targetProfile `
   --package-directory $packageDirectory `
   --output (Join-Path $buildDirectory "gameplay-unlock-enum.json")
 ```
@@ -330,11 +344,13 @@ dotnet run --project "$extractor" -- gameplay-unlock-enum \
   --build-manifest "$buildDirectory/build-manifest.json" \
   --static-census "$buildDirectory/static-census.json" \
   --mappings "$mappings" \
+  --target-profile "$targetProfile" \
   --package-directory "$packageDirectory" \
   --output "$buildDirectory/gameplay-unlock-enum.json"
 ```
 
-The command verifies the package and input identities before and after extraction, accepts identical existing output, and refuses to overwrite different content.
+The command verifies the profile, package, and input identities before and after extraction, accepts identical existing output, and refuses to overwrite different content.
+The output records the profile filename, byte length, SHA-256 hash, and profile type.
 The display labels contain extracted game text, so the artifact must remain in the ignored local acquisition directory.
 
 ## 7d. Trace the unlock eligibility and mutation functions

@@ -1,4 +1,9 @@
-import type { GameplayUnlockEnum, LevelProgression } from "@neonretrorewind/core";
+import type {
+  GameplayUnlockEnum,
+  LevelProgression,
+  LevelProgressionArtifactIdentity,
+  LevelProgressionTargetProfile,
+} from "@neonretrorewind/core";
 
 import type {
   BlueprintCallTargetTraceArtifact,
@@ -11,26 +16,263 @@ import type {
   LevelProgressionSources,
   LevelStructuredValuesArtifact,
 } from "../src/level-progression.ts";
-import {
-  changeXpFunctionName,
-  cumulativeFunctionName,
-  endOfDayClassPath,
-  endOfDayEventGraphName,
-  experienceClassPath,
-  gameModeClassPath,
-  gameModeEventGraphName,
-  initAnimationFunctionName,
-  maximumFunctionName,
-  requirementFunctionName,
-} from "../src/level-progression-traces.ts";
 import { createBuild, createMappings, type Mutable } from "./rental-fixtures.ts";
 
 const xpTablePath =
   "ExampleGame/Content/ExampleProject/core/gamesettings/ExampleThresholdTable.uasset";
 const xpTableObjectPath =
   "ExampleGame/Content/ExampleProject/core/gamesettings/ExampleThresholdTable.ExampleThresholdTable";
+const syntheticSourceLocatorOffset = 100_000;
+
+export const levelProgressionTargetProfile: LevelProgressionTargetProfile = {
+  profileType: "level-progression-target-profile",
+  build: createBuild(),
+  mappings: createMappings(),
+  engine: engine(),
+  gameplayUnlockEnum: {
+    packagePath:
+      "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.uasset",
+    objectPath:
+      "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.ExampleUnlockKind",
+    enumName: "ExampleUnlockKind",
+    internalNamePrefix: "ExampleUnlockKind::",
+  },
+  xpTable: {
+    packagePath: xpTablePath,
+    objectPath: xpTableObjectPath,
+    name: "ExampleThresholdTable",
+    rowStruct: "ExampleThresholdStruct",
+    fields: {
+      level: "ExampleLevel",
+      gameplayUnlocks: "ExampleUnlocks",
+      movieCategories: "ExampleMovieCategories",
+      gameCategories: "ExampleGameCategories",
+      requiredProgress: "ExampleRequiredProgress",
+    },
+  },
+  traces: {
+    experienceUpdate: {
+      classPath:
+        "ExampleGame/Content/ExampleProject/core/gamemode/ExampleMode.ExampleMode_C",
+      functionName: "Apply Example Progress",
+      fields: {
+        modificationInput: "Example Progress Delta",
+        localModification: "Local Xp modification",
+        lifetimeExperience: "Example Lifetime Progress",
+        currentExperience: "Example Current Progress",
+        maximumExperience: "Example Progress Limit",
+      },
+      functions: {
+        publishUiValue: "Apply Example Progress Value",
+        addDailyStatistic: "ExampleAccumulateProgress",
+      },
+      symbols: {
+        lifetimeAddResult: "ExampleSymbol_fbf99360b7d0",
+        currentAddResult: "ExampleSymbol_68a76c00e78c",
+        cappedResult: "ExampleSymbol_560a86c90290",
+      },
+      statements: {
+        retainModification: 5,
+        addLifetimeExperience: 50,
+        addLifetimeExperienceEvidence: 32,
+        storeLifetimeExperience: 78,
+        addCurrentExperience: 123,
+        addCurrentExperienceEvidence: 105,
+        capCurrentExperience: 169,
+        capCurrentExperienceEvidence: 151,
+        storeCurrentExperience: 197,
+        publishUiValue: 246,
+        publishUiValueEvidence: 224,
+        addDailyStatistic: 388,
+        addDailyStatisticEvidence: 344,
+      },
+    },
+    maximum: {
+      callerClassPath:
+        "ExampleGame/Content/ExampleProject/core/gamemode/ExampleMode.ExampleMode_C",
+      callerFunction: "ExecuteExampleGraph_ExampleMode",
+      targetClassPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleProgression.ExampleProgression_C",
+      targetFunction: "Get Example Progress Limit",
+      destinationField: "Example Progress Limit",
+      receiverObjectPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleProgression.Default__ExampleProgression_C",
+      tableVariable: "ExampleProgressTable",
+      accumulator: "Accumulated XP",
+      outputField: "Example Required Progress",
+      symbols: {
+        callerResult: "ExampleSymbol_9f8e94efa4bd",
+        columnValues: "ExampleSymbol_d75d2a8b4564",
+        arrayLength: "ExampleSymbol_5546bd5cfb37",
+        arrayItem: "ExampleSymbol_4bb2d3edf81f",
+        convertedItem: "ExampleSymbol_abfd6d199e8b",
+        accumulatedValue: "ExampleSymbol_68a76c00e78c",
+        loopCounter: "Temp_int_Loop_Counter_Variable",
+        arrayIndex: "Temp_int_Array_Index_Variable",
+      },
+      statements: {
+        callerContext: 30993,
+        callerCall: 31015,
+        callerAssignment: 31039,
+        targetTable: 99,
+        targetColumn: 136,
+        targetArrayLength: 254,
+        targetLoopCondition: 283,
+        targetLoopExit: 311,
+        targetArrayGet: 379,
+        targetConvert: 434,
+        targetAccumulate: 471,
+        targetStoreAccumulator: 499,
+        targetIncrement: 605,
+        targetLoopBack: 656,
+        targetOutput: 555,
+      },
+      jumpTargets: { loopExit: 555, loopBack: 214 },
+    },
+    requirementLookup: {
+      classPath:
+        "ExampleGame/Content/ExampleProject/core/widget/dayUI/ExampleEndOfPeriod.ExampleEndOfPeriod_C",
+      functionName: "Get Example Threshold",
+      outputField: "ExampleLevel",
+      currentLevelSymbol: "ExampleCurrentTier",
+      symbols: {
+        columnValues: "ExampleSymbol_d75d2a8b4564",
+        arrayItem: "ExampleSymbol_4bb2d3edf81f",
+        convertedItem: "ExampleSymbol_abfd6d199e8b",
+      },
+      statements: {
+        readColumn: 18,
+        branch: 150,
+        demoComparison: 196,
+        demoOverride: 234,
+        fullGameArrayGet: 412,
+        fullGameConvert: 467,
+        storeOutput: 486,
+      },
+      jumpTargets: { fullGame: 390 },
+      demoOverride: { atOrAboveRuntimeLevel: 3, requiredXp: 99999 },
+    },
+    endOfDay: {
+      classPath:
+        "ExampleGame/Content/ExampleProject/core/widget/dayUI/ExampleEndOfPeriod.ExampleEndOfPeriod_C",
+      levelProperty: "ExampleLevel",
+      functions: {
+        applyRewards: "ExampleApplyProgressRewards",
+        eventGraph: "ExecuteExampleGraph_ExampleEndOfPeriod",
+        initializeAnimation: "ExampleInitializeProgress",
+        requirementLookup: "Get Example Threshold",
+        cumulativeProgress: "Get Example Period Progress",
+      },
+      fields: {
+        currentExperience: "Example Current Progress",
+        dailyExperience: "ExampleDailyProgress",
+        cumulativeExperience: "Example Cumulative Progress",
+        initialExperience: "ExampleInitialProgress",
+        remainingExperience: "Example Remaining Progress",
+        progressFraction: "ExampleProgressFraction",
+        requirementOutput: "Example Required Progress",
+      },
+      symbols: {
+        initialPreviousLevel: "ExampleSymbol_e786ddbe8538",
+        initialPreviousCumulative: "ExampleSymbol_a7c13f9116b9",
+        initialCurrentCumulative: "ExampleSymbol_526ef20c98db",
+        initialCurrentCumulativeResult: "ExampleSymbol_c65df1df8c08",
+        initialStartingExperience: "ExampleSymbol_0e5eff394dbb",
+        previousLevel: "ExampleSymbol_0e5eff394dbb",
+        previousRequirement: "ExampleSymbol_c98aa86e91ba",
+        flooredInitialExperience: "ExampleSymbol_b4e18586ed51",
+        levelCost: "ExampleSymbol_d33b763b6534",
+        remainingAfterDeduction: "ExampleSymbol_be6409e14ce2",
+        nextRequirement: "ExampleSymbol_2b6c8e733724",
+        incrementedLevel: "ExampleSymbol_fbf99360b7d0",
+        displayedRequirement: "ExampleSymbol_d226b81c5597",
+        progressNumerator: "ExampleSymbol_05f5d19e94a0",
+        progressDenominator: "ExampleSymbol_c65df1df8c08",
+        progressQuotient: "ExampleSymbol_7fb9e119d7ae",
+        clampedProgress: "ExampleSymbol_993c5cdf8035",
+        timerComplete: "ExampleSymbol_a689c31c681f",
+        remainingComplete: "ExampleSymbol_a3f5a084342d",
+        cumulativeColumnValues: "ExampleSymbol_d75d2a8b4564",
+        cumulativeArrayItem: "ExampleSymbol_4bb2d3edf81f",
+        cumulativeConvertedItem: "ExampleSymbol_abfd6d199e8b",
+        cumulativeLoopCounter: "Temp_int_Array_Index_Variable",
+        cumulativeArrayIndex: "Temp_int_Array_Index_Variable",
+        cumulativeAccumulator: "Accumulated XP",
+        cumulativeLevelInput: "local Level",
+      },
+      statements: {
+        cumulativeLevelColumn: 140,
+        cumulativeXpColumn: 190,
+        cumulativeArrayLength: 348,
+        cumulativeArrayGet: 511,
+        cumulativeAccumulate: 603,
+        cumulativeStopComparison: 668,
+        cumulativeOutput: 746,
+        initializePreviousCumulative: 230,
+        initializeCurrentCumulative: 375,
+        initializeSubtractDaily: 452,
+        initializeSubtractPrevious: 586,
+        initializeStoreInitial: 895,
+        initializeStoreRemaining: 922,
+        resetProgress: 15,
+        previousLevelSubtract: 114,
+        initializePreviousRequirement: 160,
+        floorInitialXp: 210,
+        calculateLevelCost: 247,
+        deductLevelCost: 293,
+        storeRemainingXp: 321,
+        resetInitialXp: 348,
+        lookupNextRequirement: 375,
+        incrementLevel: 576,
+        storeLevel: 622,
+        returnToInitialization: 953,
+        nextTickFirst: 1053,
+        nextTickSecond: 1508,
+        updateProgressText: 2912,
+        progressDivide: 4034,
+        progressClamp: 4080,
+        storeProgress: 4117,
+        compareProgress: 1786,
+        progressBranch: 1814,
+        levelUpRoute: 1828,
+        compareTimer: 1843,
+        compareRemainingXp: 1881,
+        combineStopConditions: 1915,
+        clearTimer: 1953,
+      },
+      jumpTargets: {
+        returnToInitialization: 15,
+        nextTickFirst: 558,
+        nextTickSecond: 1008,
+        progressIncomplete: 1833,
+        levelUpRoute: 1488,
+      },
+    },
+  },
+};
+
+shiftProfileSourceLocators(
+  levelProgressionTargetProfile as Mutable<LevelProgressionTargetProfile>,
+);
+
+const gameModeClassPath = levelProgressionTargetProfile.traces.experienceUpdate.classPath;
+const changeXpFunctionName = levelProgressionTargetProfile.traces.experienceUpdate.functionName;
+const gameModeEventGraphName = levelProgressionTargetProfile.traces.maximum.callerFunction;
+const experienceClassPath = levelProgressionTargetProfile.traces.maximum.targetClassPath;
+const maximumFunctionName = levelProgressionTargetProfile.traces.maximum.targetFunction;
+const endOfDayClassPath = levelProgressionTargetProfile.traces.endOfDay.classPath;
+const endOfDayEventGraphName = levelProgressionTargetProfile.traces.endOfDay.functions.eventGraph;
+const initAnimationFunctionName = levelProgressionTargetProfile.traces.endOfDay.functions.initializeAnimation;
+const requirementFunctionName = levelProgressionTargetProfile.traces.endOfDay.functions.requirementLookup;
+const cumulativeFunctionName = levelProgressionTargetProfile.traces.endOfDay.functions.cumulativeProgress;
 
 export const levelProgressionSources: LevelProgressionSources = {
+  targetProfile: {
+    fileName: "level-progression-target-profile.json",
+    sha256: "0".repeat(64),
+    sizeBytes: 100,
+    profileType: "level-progression-target-profile",
+  },
   structuredValues: identity("structured-values.json", "structured-values", "a"),
   gameplayUnlockEnum: identity(
     "gameplay-unlock-enum.json",
@@ -58,6 +300,10 @@ export const levelProgressionSources: LevelProgressionSources = {
     "e",
   ),
 };
+
+export function createLevelProgressionTargetProfile(): Mutable<LevelProgressionTargetProfile> {
+  return structuredClone(levelProgressionTargetProfile) as Mutable<LevelProgressionTargetProfile>;
+}
 
 interface StructuredValuesOptions {
   readonly duplicateLevel?: boolean;
@@ -109,9 +355,10 @@ export function createGameplayUnlockEnum(): Mutable<GameplayUnlockEnum> {
     },
     mappings: createMappings(),
     engine: engine(),
+    targetProfile: { ...levelProgressionSources.targetProfile },
     extractor: {
       name: "NeonRetroRewind.StaticExtractor",
-      version: "0.0.5",
+      version: "0.0.6",
       cue4ParseVersion: "1.2.2.202607",
     },
     source: {
@@ -279,7 +526,8 @@ export function createMaximumTargetTrace(): Mutable<BlueprintCallTargetTraceArti
     },
     recordedCall: {
       callerFunctionPath: `${gameModeClassPath}:${gameModeEventGraphName}`,
-      statementIndex: 31015,
+      statementIndex:
+        31015 + syntheticSourceLocatorOffset,
       opcode: "EX_LocalVirtualFunction",
       call: {
         callKind: "local-virtual",
@@ -626,6 +874,29 @@ function traceFunction(
   functionName: string,
   nodes: Mutable<BlueprintTraceNodeInput>[],
 ): Mutable<BlueprintTraceFunctionInput> {
+  for (const node of nodes) {
+    node.statementIndex += syntheticSourceLocatorOffset;
+    if (node.jump !== null) {
+      node.jump = {
+        ...node.jump,
+        targets: node.jump.targets.map((target) => ({
+          ...target,
+          offset: target.offset + syntheticSourceLocatorOffset,
+        })),
+      };
+    }
+    if (
+      node.opcode === "EX_SkipOffsetConst" &&
+      node.literal?.literalType === "integer"
+    ) {
+      node.literal = {
+        ...node.literal,
+        value: String(
+          Number(node.literal.value) + syntheticSourceLocatorOffset,
+        ),
+      };
+    }
+  }
   const packageRoot = classPath.slice(0, classPath.lastIndexOf("."));
   return {
     packagePath: `${packageRoot}.uasset`,
@@ -637,6 +908,24 @@ function traceFunction(
     bytecodeExpressionCount: Math.max(1, nodes.length),
     nodes,
   };
+}
+
+function shiftProfileSourceLocators(
+  profile: Mutable<LevelProgressionTargetProfile>,
+): void {
+  for (const trace of Object.values(profile.traces)) {
+    const containers: Record<string, number>[] = [
+      trace.statements as Record<string, number>,
+    ];
+    if ("jumpTargets" in trace) {
+      containers.push(trace.jumpTargets as Record<string, number>);
+    }
+    for (const container of containers) {
+      for (const [key, locator] of Object.entries(container)) {
+        container[key] = locator + syntheticSourceLocatorOffset;
+      }
+    }
+  }
 }
 
 function placeholderFunction(
@@ -940,13 +1229,13 @@ function extractor() {
 }
 
 function identity<
-  ArtifactType extends LevelProgression["sources"][keyof LevelProgression["sources"]]["artifactType"],
+  ArtifactType extends LevelProgressionArtifactIdentity["artifactType"],
 >(
   fileName: string,
   artifactType: ArtifactType,
   hashCharacter: string,
 ): Extract<
-  LevelProgression["sources"][keyof LevelProgression["sources"]],
+  LevelProgressionArtifactIdentity,
   { readonly artifactType: ArtifactType }
 > {
   return {
@@ -955,7 +1244,7 @@ function identity<
     sizeBytes: 100,
     sha256: hashCharacter.repeat(64),
   } as Extract<
-    LevelProgression["sources"][keyof LevelProgression["sources"]],
+    LevelProgressionArtifactIdentity,
     { readonly artifactType: ArtifactType }
   >;
 }

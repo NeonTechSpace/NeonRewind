@@ -1,6 +1,11 @@
 export { assertArtifactContract } from "./assert-artifact-contract.ts";
 
 export {
+  LevelProgressionTargetProfileSchema,
+  type LevelProgressionTargetProfile,
+} from "./contracts/config/level-progression-target-profile.ts";
+
+export {
   BlueprintCallCandidateTraceSchema,
   type BlueprintCallCandidateTrace,
 } from "./contracts/acquisition/blueprint-call-candidate-trace.ts";

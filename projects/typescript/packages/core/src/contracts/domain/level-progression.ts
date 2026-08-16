@@ -21,7 +21,15 @@ const $definitionSourceIdentity = type({
   ),
   "+": "reject",
 }).readonly();
+const $definitionTargetProfileIdentity = type({
+  fileName: type("string").matching(new RegExp("^[^/\\\\]+\\.json$")),
+  sha256: $definitionSha256,
+  sizeBytes: $definitionPositiveInteger,
+  profileType: type.unit("level-progression-target-profile"),
+  "+": "reject",
+}).readonly();
 const $definitionSources = type({
+  targetProfile: $definitionTargetProfileIdentity,
   structuredValues: type.and(
     $definitionSourceIdentity,
     type({ "artifactType?": type.unit("structured-values") }).readonly(),
@@ -74,51 +82,43 @@ const $definitionThreshold = type({
   "+": "reject",
 }).readonly();
 const $definitionTable = type({
-  path: type.unit(
-    "ExampleGame/Content/ExampleProject/core/gamesettings/ExampleThresholdTable.uasset",
-  ),
-  rowStruct: type.unit("ExampleThresholdStruct"),
-  levelField: type.unit("ExampleLevel"),
-  xpField: type.unit("ExampleRequiredProgress"),
-  gameplayUnlockField: type.unit("ExampleUnlocks"),
+  path: type("string").matching(new RegExp("\\.uasset$")),
+  rowStruct: type("string").atLeastLength(1),
+  levelField: type("string").atLeastLength(1),
+  xpField: type("string").atLeastLength(1),
+  gameplayUnlockField: type("string").atLeastLength(1),
   rowCount: $definitionPositiveInteger,
   "+": "reject",
 }).readonly();
 const $definitionGameplayUnlockEnum = type({
-  packagePath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.uasset",
-  ),
-  objectPath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.ExampleUnlockKind",
-  ),
-  enumName: type.unit("ExampleUnlockKind"),
+  packagePath: type("string").matching(new RegExp("\\.uasset$")),
+  objectPath: type("string").atLeastLength(1),
+  enumName: type("string").atLeastLength(1),
   enumeratorCount: $definitionPositiveInteger,
   referencedEnumeratorCount: $definitionPositiveInteger,
   "+": "reject",
 }).readonly();
 const $definitionExperienceUpdateStatements = type({
-  retainModification: type.unit(5),
-  addLifetimeExperience: type.unit(32),
-  storeLifetimeExperience: type.unit(78),
-  addCurrentExperience: type.unit(105),
-  capCurrentExperience: type.unit(151),
-  storeCurrentExperience: type.unit(197),
-  publishUiValue: type.unit(224),
-  addDailyStatistic: type.unit(344),
+  retainModification: $definitionNonNegativeInteger,
+  addLifetimeExperience: $definitionNonNegativeInteger,
+  storeLifetimeExperience: $definitionNonNegativeInteger,
+  addCurrentExperience: $definitionNonNegativeInteger,
+  capCurrentExperience: $definitionNonNegativeInteger,
+  storeCurrentExperience: $definitionNonNegativeInteger,
+  publishUiValue: $definitionNonNegativeInteger,
+  addDailyStatistic: $definitionNonNegativeInteger,
   "+": "reject",
 }).readonly();
 const $definitionExperienceUpdateEvidence = type({
   kind: type.unit("kismet-analysis"),
   confidence: type.unit("direct"),
-  classPath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/gamemode/ExampleMode.ExampleMode_C",
-  ),
-  functionName: type.unit("Apply Example Progress"),
+  classPath: type("string").atLeastLength(1),
+  functionName: type("string").atLeastLength(1),
   statementIndexes: $definitionExperienceUpdateStatements,
   "+": "reject",
 }).readonly();
 const $definitionExperienceUpdate = type({
-  modificationInput: type.unit("Example Progress Delta"),
+  modificationInput: type("string").atLeastLength(1),
   lifetimeExperience: type.unit("current-plus-raw-modification"),
   storedExperience: type.unit(
     "minimum-of-current-plus-raw-modification-and-maximum",
@@ -129,32 +129,28 @@ const $definitionExperienceUpdate = type({
   "+": "reject",
 }).readonly();
 const $definitionMaximumStatements = type({
-  callerCall: type.unit(31015),
-  callerAssignment: type.unit(31039),
-  targetColumn: type.unit(136),
-  targetArrayLength: type.unit(254),
-  targetLoopCondition: type.unit(283),
-  targetArrayGet: type.unit(379),
-  targetConvert: type.unit(434),
-  targetAccumulate: type.unit(471),
-  targetLoopBack: type.unit(656),
-  targetOutput: type.unit(555),
+  callerCall: $definitionNonNegativeInteger,
+  callerAssignment: $definitionNonNegativeInteger,
+  targetColumn: $definitionNonNegativeInteger,
+  targetArrayLength: $definitionNonNegativeInteger,
+  targetLoopCondition: $definitionNonNegativeInteger,
+  targetArrayGet: $definitionNonNegativeInteger,
+  targetConvert: $definitionNonNegativeInteger,
+  targetAccumulate: $definitionNonNegativeInteger,
+  targetLoopBack: $definitionNonNegativeInteger,
+  targetOutput: $definitionNonNegativeInteger,
   "+": "reject",
 }).readonly();
 const $definitionMaximumEvidence = type({
   kind: type.unit("verified-call-target-and-kismet-analysis"),
   confidence: type.unit("direct"),
-  callerClassPath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/gamemode/ExampleMode.ExampleMode_C",
-  ),
-  callerFunction: type.unit("ExecuteExampleGraph_ExampleMode"),
-  targetClassPath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleProgression.ExampleProgression_C",
-  ),
-  targetFunction: type.unit("Get Example Progress Limit"),
+  callerClassPath: type("string").atLeastLength(1),
+  callerFunction: type("string").atLeastLength(1),
+  targetClassPath: type("string").atLeastLength(1),
+  targetFunction: type("string").atLeastLength(1),
   bindingRule: type.unit("exact-context-object-class-and-declaration"),
   relationship: type.unit("verified"),
-  destinationField: type.unit("Example Progress Limit"),
+  destinationField: type("string").atLeastLength(1),
   statementIndexes: $definitionMaximumStatements,
   "+": "reject",
 }).readonly();
@@ -172,20 +168,18 @@ const $definitionDemoOverride = type({
   "+": "reject",
 }).readonly();
 const $definitionRequirementStatements = type({
-  readColumn: type.unit(18),
-  demoComparison: type.unit(196),
-  demoOverride: type.unit(234),
-  fullGameArrayGet: type.unit(412),
-  fullGameConvert: type.unit(467),
+  readColumn: $definitionNonNegativeInteger,
+  demoComparison: $definitionNonNegativeInteger,
+  demoOverride: $definitionNonNegativeInteger,
+  fullGameArrayGet: $definitionNonNegativeInteger,
+  fullGameConvert: $definitionNonNegativeInteger,
   "+": "reject",
 }).readonly();
 const $definitionRequirementEvidence = type({
   kind: type.unit("kismet-analysis"),
   confidence: type.unit("direct"),
-  classPath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/widget/dayUI/ExampleEndOfPeriod.ExampleEndOfPeriod_C",
-  ),
-  functionName: type.unit("Get Example Threshold"),
+  classPath: type("string").atLeastLength(1),
+  functionName: type("string").atLeastLength(1),
   statementIndexes: $definitionRequirementStatements,
   "+": "reject",
 }).readonly();
@@ -196,25 +190,25 @@ const $definitionRequirementLookup = type({
   "+": "reject",
 }).readonly();
 const $definitionEndOfDayStatements = type({
-  initializePreviousRequirement: type.unit(160),
-  floorInitialXp: type.unit(210),
-  deductLevelCost: type.unit(293),
-  storeRemainingXp: type.unit(321),
-  resetInitialXp: type.unit(348),
-  lookupNextRequirement: type.unit(375),
-  incrementLevel: type.unit(576),
-  storeLevel: type.unit(622),
-  returnToInitialization: type.unit(953),
-  updateProgressText: type.unit(2912),
-  progressDivide: type.unit(4034),
-  progressClamp: type.unit(4080),
-  storeProgress: type.unit(4117),
-  compareProgress: type.unit(1786),
-  levelUpRoute: type.unit(1828),
-  compareTimer: type.unit(1843),
-  compareRemainingXp: type.unit(1881),
-  combineStopConditions: type.unit(1915),
-  clearTimer: type.unit(1953),
+  initializePreviousRequirement: $definitionNonNegativeInteger,
+  floorInitialXp: $definitionNonNegativeInteger,
+  deductLevelCost: $definitionNonNegativeInteger,
+  storeRemainingXp: $definitionNonNegativeInteger,
+  resetInitialXp: $definitionNonNegativeInteger,
+  lookupNextRequirement: $definitionNonNegativeInteger,
+  incrementLevel: $definitionNonNegativeInteger,
+  storeLevel: $definitionNonNegativeInteger,
+  returnToInitialization: $definitionNonNegativeInteger,
+  updateProgressText: $definitionNonNegativeInteger,
+  progressDivide: $definitionNonNegativeInteger,
+  progressClamp: $definitionNonNegativeInteger,
+  storeProgress: $definitionNonNegativeInteger,
+  compareProgress: $definitionNonNegativeInteger,
+  levelUpRoute: $definitionNonNegativeInteger,
+  compareTimer: $definitionNonNegativeInteger,
+  compareRemainingXp: $definitionNonNegativeInteger,
+  combineStopConditions: $definitionNonNegativeInteger,
+  clearTimer: $definitionNonNegativeInteger,
   "+": "reject",
 }).readonly();
 const $definitionEngineSource = type({
@@ -244,10 +238,8 @@ const $definitionMaximumStop = type({
 const $definitionEndOfDayEvidence = type({
   kind: type.unit("kismet-and-engine-source-analysis"),
   confidence: type.unit("direct"),
-  classPath: type.unit(
-    "ExampleGame/Content/ExampleProject/core/widget/dayUI/ExampleEndOfPeriod.ExampleEndOfPeriod_C",
-  ),
-  eventGraphFunction: type.unit("ExecuteExampleGraph_ExampleEndOfPeriod"),
+  classPath: type("string").atLeastLength(1),
+  eventGraphFunction: type("string").atLeastLength(1),
   statementIndexes: $definitionEndOfDayStatements,
   "+": "reject",
 }).readonly();
@@ -286,5 +278,8 @@ export const LevelProgressionSchema = type({
 
 export type LevelProgression = typeof LevelProgressionSchema.infer;
 export type LevelProgressionArtifactIdentity =
-  LevelProgression["sources"][keyof LevelProgression["sources"]];
+  Exclude<
+    LevelProgression["sources"][keyof LevelProgression["sources"]],
+    { readonly profileType: "level-progression-target-profile" }
+  >;
 export type LevelProgressionThreshold = LevelProgression["thresholds"][number];

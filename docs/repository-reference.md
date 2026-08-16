@@ -51,7 +51,7 @@ The [research overview](research-overview.md) defines the specialist terms and e
 | `projects/game-data-exporter/static-extractor` | .NET 10 tools for build identity, focused rental, unlockable, statistic, and gameplay-enum extraction, and selected Blueprint analysis |
 | `projects/game-data-exporter/runtime-exporter` | Offline staging, installation preview, and cleanup commands for runtime probes and collectors |
 | `projects/game-data-exporter/runtime-collector` | The bounded native movie-return collector and its local build tools |
-| `projects/game-data-exporter/schemas` | JSON Schemas retained for real .NET and C++ boundaries |
+| `projects/game-data-exporter/schemas` | JSON Schemas retained for real .NET, C++, and cross-language configuration boundaries |
 | `projects/typescript/packages/core` | Canonical ArkType artifact contracts and inferred public types |
 | `projects/typescript/packages/data-compiler` | Validation and compilation of private evidence into normalized records |
 | `projects/typescript/packages/validator` | Comparison of runtime observations with normalized mechanics |
@@ -101,6 +101,12 @@ Run package build scripts where they exist:
 pnpm build
 ```
 
+When the level-progression target-profile contract changes, regenerate its cross-language JSON Schema:
+
+```text
+pnpm --filter @neonretrorewind/core generate:level-progression-target-profile-schema
+```
+
 There is no single repository-wide command that also builds both .NET projects and the native collector.
 Use the owning workflow for those components.
 
@@ -122,6 +128,7 @@ The [runtime-host design](movie-return-runtime-host.md) records its installation
 ## Local and boundary files
 
 - `projects/game-data-exporter/.local` contains private acquisition, runtime, and native-build state
+- `projects/game-data-exporter/.local/targets` contains private build-bound target profiles
 - `projects/typescript/.local` contains private compiled records and validation reports
 - `projects/typescript/node_modules` contains installed workspace dependencies
 - `projects/game-data-exporter/schemas` contains the observation and collector-config cross-language schemas
