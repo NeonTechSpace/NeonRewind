@@ -21,7 +21,7 @@ The later research command guides are separate because they require a licensed g
 | Reading game files while the game is closed | Implemented for focused data and selected game logic |
 | Stable NeonRetroRewind research records | Film catalog, console-return, membership-fee, movie-return, new-release, and level-progression compilers exist |
 | Checking behavior while the game runs | One bounded movie-return collector and validator exist, with one passing user-operated observation |
-| Level progression | A normalized compiler records XP thresholds, capped experience updates, requirement lookup, and end-of-day level transitions from typed evidence |
+| Level progression | A normalized compiler records XP thresholds, gameplay unlock labels, capped experience updates, requirement lookup, and end-of-day level transitions from typed evidence |
 | Public calculator | Not planned as part of the current read-only guide |
 
 The repository is useful today as a research and validation codebase.
@@ -38,6 +38,8 @@ NeonRetroRewind separates collecting information, turning it into project record
 
 Raw game-derived evidence does not become public repository content.
 Public tests use invented fixtures.
+Exact game identifiers, cooked paths, and source offsets are also private evidence.
+Public examples use synthetic values, while real target profiles stay in ignored `.local` directories.
 
 The [research overview](research-overview.md) defines the specialist terms and explains why each stage exists.
 
@@ -46,7 +48,7 @@ The [research overview](research-overview.md) defines the specialist terms and e
 | Path | Responsibility |
 |---|---|
 | `docs` | Public project, research, and validation documentation |
-| `projects/game-data-exporter/static-extractor` | .NET 10 tools for build identity, focused rental, unlockable, and statistic extraction, and selected Blueprint analysis |
+| `projects/game-data-exporter/static-extractor` | .NET 10 tools for build identity, focused rental, unlockable, statistic, and gameplay-enum extraction, and selected Blueprint analysis |
 | `projects/game-data-exporter/runtime-exporter` | Offline staging, installation preview, and cleanup commands for runtime probes and collectors |
 | `projects/game-data-exporter/runtime-collector` | The bounded native movie-return collector and its local build tools |
 | `projects/game-data-exporter/schemas` | JSON Schemas retained for real .NET and C++ boundaries |

@@ -67,9 +67,14 @@ Do not commit or publish:
 
 - Compiled extractor or collector binaries
 - Game binaries, package files, mappings, or saves
+- Exact game asset, object, class, function, property, enum, or table identifiers
+- Cooked package paths, statement indexes, entry points, or other source locators
 - Extracted values, game logic, runtime observations, or validation reports
 - Compiled catalogs or mechanic records derived from the game
 - Extracted or modified game assets or text
+
+Public source, documentation, and tests may use clearly synthetic identifiers and locators to exercise generic tooling and normalized algorithms.
+Real target profiles and source evidence belong only in ignored local directories.
 
 ## License
 

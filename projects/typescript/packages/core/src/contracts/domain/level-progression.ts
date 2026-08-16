@@ -14,6 +14,7 @@ const $definitionSourceIdentity = type({
   sizeBytes: $definitionPositiveInteger,
   artifactType: type.enumerated(
     "structured-values",
+    "gameplay-unlock-enum",
     "blueprint-function-trace",
     "blueprint-property-reference-trace",
     "blueprint-call-target-trace",
@@ -24,6 +25,10 @@ const $definitionSources = type({
   structuredValues: type.and(
     $definitionSourceIdentity,
     type({ "artifactType?": type.unit("structured-values") }).readonly(),
+  ),
+  gameplayUnlockEnum: type.and(
+    $definitionSourceIdentity,
+    type({ "artifactType?": type.unit("gameplay-unlock-enum") }).readonly(),
   ),
   changeXpTrace: type.and(
     $definitionSourceIdentity,
@@ -53,11 +58,18 @@ const $definitionThresholdEvidence = type({
   rowKey: type("string").atLeastLength(1),
   "+": "reject",
 }).readonly();
+const $definitionGameplayUnlock = type({
+  enumValue: $definitionNonNegativeInteger,
+  internalName: type("string").atLeastLength(1),
+  displayName: type("string").atLeastLength(1),
+  "+": "reject",
+}).readonly();
 const $definitionThreshold = type({
   runtimeLevel: $definitionNonNegativeInteger,
   nextRuntimeLevel: $definitionPositiveInteger,
   requiredXp: $definitionPositiveInteger,
   cumulativeXp: $definitionPositiveInteger,
+  gameplayUnlocks: $definitionGameplayUnlock.array().readonly(),
   evidence: $definitionThresholdEvidence,
   "+": "reject",
 }).readonly();
@@ -68,7 +80,20 @@ const $definitionTable = type({
   rowStruct: type.unit("ExampleThresholdStruct"),
   levelField: type.unit("ExampleLevel"),
   xpField: type.unit("ExampleRequiredProgress"),
+  gameplayUnlockField: type.unit("ExampleUnlocks"),
   rowCount: $definitionPositiveInteger,
+  "+": "reject",
+}).readonly();
+const $definitionGameplayUnlockEnum = type({
+  packagePath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.uasset",
+  ),
+  objectPath: type.unit(
+    "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.ExampleUnlockKind",
+  ),
+  enumName: type.unit("ExampleUnlockKind"),
+  enumeratorCount: $definitionPositiveInteger,
+  referencedEnumeratorCount: $definitionPositiveInteger,
   "+": "reject",
 }).readonly();
 const $definitionExperienceUpdateStatements = type({
@@ -250,6 +275,7 @@ export const LevelProgressionSchema = type({
   evidenceLevel: type.unit("typed-blueprint-data-table-and-engine-source"),
   runtimeValidation: type.unit("not-run"),
   table: $definitionTable,
+  gameplayUnlockEnum: $definitionGameplayUnlockEnum,
   thresholds: $definitionThreshold.array().readonly(),
   experienceUpdate: $definitionExperienceUpdate,
   maximum: $definitionMaximum,

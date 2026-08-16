@@ -322,13 +322,13 @@ The film catalog still contains extracted game text and remains private and unco
 
 ## 25. Compile level progression
 
-This step joins the structured XP table with the typed experience-update, maximum-XP, and end-of-day traces.
+This step joins the structured XP table and gameplay-unlock enum with the typed experience-update, maximum-XP, and end-of-day traces.
 It requires the verified call-target trace that binds the maximum-XP call to its exact declaration.
 The compiler checks that every input uses the same build, mappings, and Unreal Engine configuration.
 
-The output records consecutive runtime-level thresholds, cumulative XP, the stored-experience cap, the raw daily-statistic update, the full-game requirement lookup, and the demo requirement override.
+The output records consecutive runtime-level thresholds, cumulative XP, exact gameplay-unlock values and display labels, the stored-experience cap, the raw daily-statistic update, the full-game requirement lookup, and the demo requirement override.
 It also records the repeated end-of-day level transition and the maximum-level stop established by the typed Blueprint flow and Unreal Engine 5.4 source.
-The compiler rejects changed table fields, nonconsecutive levels, nonpositive XP, changed trace scopes, changed data flow, changed continuation targets, or a call target derived from another caller trace.
+The compiler rejects unresolved or duplicate gameplay unlocks, inconsistent enum data, changed table fields, nonconsecutive levels, nonpositive XP, changed trace scopes, changed data flow, changed continuation targets, or a call target derived from another caller trace.
 
 Move into the TypeScript workspace and install its locked dependencies.
 
@@ -347,6 +347,7 @@ Compile the private progression artifact.
 ```powershell
 pnpm level-progression `
   --structured-values (Join-Path $buildDirectory "structured-values.json") `
+  --gameplay-unlock-enum (Join-Path $buildDirectory "gameplay-unlock-enum.json") `
   --change-xp-trace (Join-Path $buildDirectory "blueprint-function-trace.change-xp.json") `
   --maximum-caller-trace (Join-Path $buildDirectory "blueprint-property-reference-trace.xp-need-for-max-level.json") `
   --maximum-target-trace (Join-Path $buildDirectory "blueprint-call-target-trace.return-xp-for-max-level.json") `
@@ -357,6 +358,7 @@ pnpm level-progression `
 ```bash
 pnpm level-progression \
   --structured-values "$buildDirectory/structured-values.json" \
+  --gameplay-unlock-enum "$buildDirectory/gameplay-unlock-enum.json" \
   --change-xp-trace "$buildDirectory/blueprint-function-trace.change-xp.json" \
   --maximum-caller-trace "$buildDirectory/blueprint-property-reference-trace.xp-need-for-max-level.json" \
   --maximum-target-trace "$buildDirectory/blueprint-call-target-trace.return-xp-for-max-level.json" \

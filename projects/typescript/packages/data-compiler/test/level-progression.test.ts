@@ -1,12 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { LevelProgressionSchema } from "@neonretrorewind/core";
+import {
+  GameplayUnlockEnumSchema,
+  LevelProgressionSchema,
+} from "@neonretrorewind/core";
 
 import { compileLevelProgression } from "../src/level-progression.ts";
 import {
   createChangeXpTrace,
   createEndOfDayTrace,
+  createGameplayUnlockEnum,
   createLevelStructuredValues,
   createMaximumCallerTrace,
   createMaximumTargetTrace,
@@ -19,6 +23,25 @@ test("compiles normalized level thresholds and progression behavior", () => {
   assert.equal(progression.artifactType, "level-progression");
   assert.equal(progression.scope, "level-progression");
   assert.deepEqual(progression.sources, levelProgressionSources);
+  assert.deepEqual(progression.gameplayUnlockEnum, {
+    packagePath:
+      "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.uasset",
+    objectPath:
+      "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.ExampleUnlockKind",
+    enumName: "ExampleUnlockKind",
+    enumeratorCount: 4,
+    referencedEnumeratorCount: 3,
+  });
+  assert.deepEqual(
+    progression.thresholds.map((threshold) => threshold.gameplayUnlocks),
+    [0, 1, 2].map((value) => [
+      {
+        enumValue: value,
+        internalName: `ExampleUnlockKind::Value${value}`,
+        displayName: `Fixture unlock ${value}`,
+      },
+    ]),
+  );
   assert.deepEqual(
     progression.thresholds.map((threshold) => ({
       runtimeLevel: threshold.runtimeLevel,
@@ -120,6 +143,29 @@ test("rejects inputs from different builds", () => {
   );
 });
 
+test("accepts the gameplay-unlock enum fixture contract", () => {
+  assert.equal(GameplayUnlockEnumSchema.allows(createGameplayUnlockEnum()), true);
+});
+
+test("rejects a gameplay unlock without an enum definition", () => {
+  const gameplayUnlockEnum = createGameplayUnlockEnum();
+  gameplayUnlockEnum.enumerators[1]!.internalName =
+    "ExampleUnlockKind::Different";
+  assert.throws(
+    () => compileCurrent({ gameplayUnlockEnum }),
+    /has no enum definition/u,
+  );
+});
+
+test("rejects inconsistent gameplay-unlock enum totals", () => {
+  const gameplayUnlockEnum = createGameplayUnlockEnum();
+  gameplayUnlockEnum.totals.enumeratorCount = 3;
+  assert.throws(
+    () => compileCurrent({ gameplayUnlockEnum }),
+    /totals do not match/u,
+  );
+});
+
 test("rejects a changed current-experience cap input", () => {
   const changeXp = createChangeXpTrace();
   const maximumField = changeXp.functions[0]?.nodes.find(
@@ -161,6 +207,7 @@ test("rejects a changed end-of-day continuation target", () => {
 
 interface CompileOptions {
   readonly structuredValues?: Parameters<typeof createLevelStructuredValues>[0];
+  readonly gameplayUnlockEnum?: ReturnType<typeof createGameplayUnlockEnum>;
   readonly changeXp?: ReturnType<typeof createChangeXpTrace>;
   readonly maximumCaller?: ReturnType<typeof createMaximumCallerTrace>;
   readonly maximumTarget?: ReturnType<typeof createMaximumTargetTrace>;
@@ -196,6 +243,7 @@ function modelEndOfDayTransition(
 function compileCurrent(options: CompileOptions = {}) {
   return compileLevelProgression(
     createLevelStructuredValues(options.structuredValues),
+    options.gameplayUnlockEnum ?? createGameplayUnlockEnum(),
     options.changeXp ?? createChangeXpTrace(),
     options.maximumCaller ?? createMaximumCallerTrace(),
     options.maximumTarget ?? createMaximumTargetTrace(),

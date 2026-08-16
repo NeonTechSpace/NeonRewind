@@ -310,7 +310,34 @@ dotnet run --project "$extractor" -- statistic-evidence \
 
 The output contains extracted game values and must remain in the ignored local acquisition directory.
 
-## 7c. Trace the unlock eligibility and mutation functions
+## 7c. Extract the gameplay-unlock enum
+
+This step reads the exact `ExampleUnlockKind` user-defined enum.
+It records every nonterminal enum value with its internal name and authored display label.
+The command stops if the package or enum shape differs from the expected build evidence.
+
+```powershell
+dotnet run --project $extractor -- gameplay-unlock-enum `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "gameplay-unlock-enum.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- gameplay-unlock-enum \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/gameplay-unlock-enum.json"
+```
+
+The command verifies the package and input identities before and after extraction, accepts identical existing output, and refuses to overwrite different content.
+The display labels contain extracted game text, so the artifact must remain in the ignored local acquisition directory.
+
+## 7d. Trace the unlock eligibility and mutation functions
 
 This step rereads `BP_ExampleItem_C.IsExampleEligible`, `BP_ExampleItem_C.ApplyExample`, `ExampleUnlockSystem_C.CanApplyExample`, and `ExampleUnlockSystem_C.TryApplyExample` from cooked Kismet bytecode.
 It accepts only unlockable evidence for the supplied build and mappings, confirms that each exact class and function remains present, and writes typed calls, branches, variables, literals, assignments, contexts, and returns without parsing decompiler pseudocode.
@@ -336,7 +363,7 @@ dotnet run --project "$extractor" -- unlockable-function-trace \
 The command verifies every package and input identity before and after tracing, accepts identical existing output, and refuses to overwrite different content.
 The output contains extracted game logic and must remain in the ignored local acquisition directory.
 
-## 7d. Discover unlock implementation sites
+## 7e. Discover unlock implementation sites
 
 This step scans every parsed package whose census metadata records a generated Blueprint class.
 It resolves Blueprint inheritance from `BP_ExampleItem_C`, records exact `IsExampleEligible` and `ApplyExample` overrides, identifies `ExecuteExampleGraph_ExampleUnlockSystem`, and scans each loaded function once for calls named `CanApplyExample`, `IsExampleEligible`, `ApplyExample`, or `TryApplyExample`.
@@ -369,7 +396,7 @@ Inheritance and override records use exact class paths.
 The command verifies all package and input identities before and after scanning, accepts identical existing output, and refuses to overwrite different content.
 The output contains extracted game metadata and must remain in the ignored local acquisition directory.
 
-## 7e. Trace the unlock-manager event graph
+## 7f. Trace the unlock-manager event graph
 
 This step rereads the one `ExecuteExampleGraph_ExampleUnlockSystem` function recorded by a complete implementation-site scan.
 It requires the exact build and mappings, confirms that the discovery artifact has complete coverage and exactly one expected manager event graph, and rechecks that function's path, flags, and bytecode-expression count while producing typed Kismet nodes.
@@ -395,7 +422,7 @@ dotnet run --project "$extractor" -- unlockable-manager-trace \
 The command verifies every package and input identity before and after tracing, accepts identical existing output, and refuses to overwrite different content.
 The output contains extracted game logic and must remain in the ignored local acquisition directory.
 
-## 7f. Discover references to the new-release flag
+## 7g. Discover references to the new-release flag
 
 This step uses the static census to scan every parsed package that exports Blueprint functions.
 It finds exact Kismet property-pointer names, classifies each occurrence as a read, write, or metadata reference, and records complete or partial coverage without copying the surrounding function bodies.
@@ -423,7 +450,7 @@ dotnet run --project "$extractor" -- blueprint-property-references \
 The command verifies every package and input identity before and after scanning, accepts identical existing output, and refuses to overwrite different content.
 The output contains game-specific function locations and must remain in the ignored local acquisition directory.
 
-## 7g. Trace discovered property-reference functions
+## 7h. Trace discovered property-reference functions
 
 This step accepts only a complete property-reference artifact for the supplied build and mappings.
 Each requested function must contain at least one recorded property reference.

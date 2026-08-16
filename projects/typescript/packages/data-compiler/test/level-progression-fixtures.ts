@@ -1,4 +1,4 @@
-import type { LevelProgression } from "@neonretrorewind/core";
+import type { GameplayUnlockEnum, LevelProgression } from "@neonretrorewind/core";
 
 import type {
   BlueprintCallTargetTraceArtifact,
@@ -32,6 +32,11 @@ const xpTableObjectPath =
 
 export const levelProgressionSources: LevelProgressionSources = {
   structuredValues: identity("structured-values.json", "structured-values", "a"),
+  gameplayUnlockEnum: identity(
+    "gameplay-unlock-enum.json",
+    "gameplay-unlock-enum",
+    "f",
+  ),
   changeXpTrace: identity(
     "blueprint-function-trace.change-xp.json",
     "blueprint-function-trace",
@@ -80,7 +85,7 @@ export function createLevelStructuredValues(
           key: options.mismatchRowKey && index === 1 ? "wrong" : String(index),
           values: {
             ExampleLevel_test: options.duplicateLevel && index === 1 ? 0 : index,
-            ExampleUnlocks_test: [],
+            ExampleUnlocks_test: [gameplayUnlockInternalName(index)],
             ExampleMovieCategories_test: [],
             ExampleGameCategories_test: [],
             ExampleRequiredProgress_test:
@@ -91,6 +96,44 @@ export function createLevelStructuredValues(
       },
     ],
   };
+}
+
+export function createGameplayUnlockEnum(): Mutable<GameplayUnlockEnum> {
+  return {
+    artifactType: "gameplay-unlock-enum",
+    build: createBuild(),
+    staticCensus: {
+      fileName: "static-census.v1.json",
+      sizeBytes: 100,
+      sha256: "1".repeat(64),
+    },
+    mappings: createMappings(),
+    engine: engine(),
+    extractor: {
+      name: "NeonRetroRewind.StaticExtractor",
+      version: "0.0.5",
+      cue4ParseVersion: "1.2.2.202607",
+    },
+    source: {
+      packagePath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.uasset",
+      objectPath:
+        "ExampleGame/Content/ExampleProject/core/blueprint/research/ExampleUnlockKind.ExampleUnlockKind",
+      enumName: "ExampleUnlockKind",
+      cppForm: "Namespaced",
+      underlyingType: "int64",
+    },
+    totals: { enumeratorCount: 4 },
+    enumerators: [0, 1, 2, 3].map((value) => ({
+      value,
+      internalName: gameplayUnlockInternalName(value),
+      displayName: `Fixture unlock ${value}`,
+    })),
+  };
+}
+
+function gameplayUnlockInternalName(value: number): string {
+  return `ExampleUnlockKind::Value${value}`;
 }
 
 export function createChangeXpTrace(): Mutable<BlueprintFunctionTraceArtifact> {
@@ -265,7 +308,7 @@ export function createMaximumTargetTrace(): Mutable<BlueprintCallTargetTraceArti
       },
       declaration: {
         packagePath:
-          "ExampleGame/Content/ExampleProject/core/blueprint/example/ExampleProgression.uasset",
+          "ExampleGame/Content/ExampleProject/core/blueprint/experience/ExampleProgression.uasset",
         packageExportIndex: 4,
         objectPath: functionPath,
         ownerPath: experienceClassPath,

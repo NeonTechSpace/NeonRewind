@@ -37,6 +37,10 @@ export {
   type BuildManifest,
 } from "./contracts/acquisition/build-manifest.ts";
 export {
+  GameplayUnlockEnumSchema,
+  type GameplayUnlockEnum,
+} from "./contracts/acquisition/gameplay-unlock-enum.ts";
+export {
   RentalBlueprintBodiesSchema,
   type RentalBlueprintBodies,
 } from "./contracts/acquisition/rental-blueprint-bodies.ts";

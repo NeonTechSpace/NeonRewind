@@ -7,6 +7,7 @@ import {
   BlueprintCallTargetTraceSchema,
   BlueprintFunctionTraceSchema,
   BlueprintPropertyReferenceTraceSchema,
+  GameplayUnlockEnumSchema,
   StructuredValuesSchema,
 } from "@neonretrorewind/core";
 
@@ -22,6 +23,7 @@ const outputConflictExitCode = 7;
 
 interface Options {
   readonly structuredValuesPath: string;
+  readonly gameplayUnlockEnumPath: string;
   readonly changeXpTracePath: string;
   readonly maximumCallerTracePath: string;
   readonly maximumTargetTracePath: string;
@@ -41,9 +43,17 @@ export async function runLevelProgression(
   }
 
   try {
-    const [structuredValues, changeXp, maximumCaller, maximumTarget, endOfDay] =
+    const [
+      structuredValues,
+      gameplayUnlockEnum,
+      changeXp,
+      maximumCaller,
+      maximumTarget,
+      endOfDay,
+    ] =
       await Promise.all([
         readInput(options.structuredValuesPath, "Structured-values"),
+        readInput(options.gameplayUnlockEnumPath, "Gameplay-unlock enum"),
         readInput(options.changeXpTracePath, "Change-XP trace"),
         readInput(options.maximumCallerTracePath, "Maximum-XP caller trace"),
         readInput(options.maximumTargetTracePath, "Maximum-XP target trace"),
@@ -51,6 +61,10 @@ export async function runLevelProgression(
       ]);
     const sources: LevelProgressionSources = {
       structuredValues: createIdentity(structuredValues, "structured-values"),
+      gameplayUnlockEnum: createIdentity(
+        gameplayUnlockEnum,
+        "gameplay-unlock-enum",
+      ),
       changeXpTrace: createIdentity(changeXp, "blueprint-function-trace"),
       maximumCallerTrace: createIdentity(
         maximumCaller,
@@ -70,6 +84,11 @@ export async function runLevelProgression(
         StructuredValuesSchema,
         structuredValues.value,
         "Structured-values input",
+      ),
+      assertArtifactContract(
+        GameplayUnlockEnumSchema,
+        gameplayUnlockEnum.value,
+        "Gameplay-unlock enum input",
       ),
       assertArtifactContract(
         BlueprintFunctionTraceSchema,
@@ -96,9 +115,14 @@ export async function runLevelProgression(
     const output = `${JSON.stringify(progression, undefined, 2)}\n`;
 
     await Promise.all(
-      [structuredValues, changeXp, maximumCaller, maximumTarget, endOfDay].map(
-        assertFileUnchanged,
-      ),
+      [
+        structuredValues,
+        gameplayUnlockEnum,
+        changeXp,
+        maximumCaller,
+        maximumTarget,
+        endOfDay,
+      ].map(assertFileUnchanged),
     );
     const status = await writeImmutableArtifact(options.outputPath, output);
     if (status === "conflict") {
@@ -122,13 +146,14 @@ export function writeLevelProgressionUsage(
   stream: NodeJS.WritableStream,
 ): void {
   stream.write(
-    "  neonretrorewind-data-compiler level-progression --structured-values <path> --change-xp-trace <path> --maximum-caller-trace <path> --maximum-target-trace <path> --end-of-day-trace <path> --output <path>\n",
+    "  neonretrorewind-data-compiler level-progression --structured-values <path> --gameplay-unlock-enum <path> --change-xp-trace <path> --maximum-caller-trace <path> --maximum-target-trace <path> --end-of-day-trace <path> --output <path>\n",
   );
 }
 
 function parseOptions(arguments_: readonly string[]): Options | string {
   const names = [
     "--structured-values",
+    "--gameplay-unlock-enum",
     "--change-xp-trace",
     "--maximum-caller-trace",
     "--maximum-target-trace",
@@ -157,6 +182,7 @@ function parseOptions(arguments_: readonly string[]): Options | string {
   }
   return {
     structuredValuesPath: values.get("--structured-values")!,
+    gameplayUnlockEnumPath: values.get("--gameplay-unlock-enum")!,
     changeXpTracePath: values.get("--change-xp-trace")!,
     maximumCallerTracePath: values.get("--maximum-caller-trace")!,
     maximumTargetTracePath: values.get("--maximum-target-trace")!,

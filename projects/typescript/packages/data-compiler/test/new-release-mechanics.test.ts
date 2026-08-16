@@ -693,7 +693,7 @@ test("rejects a different SKU field as the candidate key", () => {
     .find((function_) => function_.functionName === "Filter Example Schedule")!
     .nodes.find((node) => node.statementIndex === 436);
   assert.ok(key);
-  key.symbol = "ExampleField15_0_00000000000000000000000000000000";
+  key.symbol = "ExampleAlternateKey_0_00000000000000000000000000000000";
   assert.throws(() => compileCurrent({ candidateMap }), /trace context changed/u);
 });
 

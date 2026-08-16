@@ -1,5 +1,6 @@
 import {
   LevelProgressionSchema,
+  type GameplayUnlockEnum,
   type LevelProgression,
   type StructuredValues,
 } from "@neonretrorewind/core";
@@ -44,6 +45,7 @@ const sourceFieldPrefixes = [
 
 export function compileLevelProgression(
   structuredValues: LevelStructuredValuesArtifact,
+  gameplayUnlockEnum: GameplayUnlockEnum,
   changeXpTrace: BlueprintFunctionTraceArtifact,
   maximumCallerTrace: BlueprintPropertyReferenceTraceArtifact,
   maximumTargetTrace: BlueprintCallTargetTraceArtifact,
@@ -52,6 +54,7 @@ export function compileLevelProgression(
 ): LevelProgression {
   assertInputContracts(
     structuredValues,
+    gameplayUnlockEnum,
     changeXpTrace,
     maximumCallerTrace,
     maximumTargetTrace,
@@ -65,7 +68,11 @@ export function compileLevelProgression(
   );
   assertEndOfDayTrace(endOfDayTrace);
 
-  const thresholds = compileThresholds(structuredValues);
+  const gameplayUnlocks = compileGameplayUnlocks(gameplayUnlockEnum);
+  const { thresholds, referencedGameplayUnlocks } = compileThresholds(
+    structuredValues,
+    gameplayUnlocks,
+  );
   const maximumExperience = thresholds.at(-1)?.cumulativeXp;
   if (maximumExperience === undefined) {
     throw new Error("XP table does not contain a progression threshold.");
@@ -86,7 +93,15 @@ export function compileLevelProgression(
       rowStruct: xpRowStruct,
       levelField: "ExampleLevel",
       xpField: "ExampleRequiredProgress",
+      gameplayUnlockField: "ExampleUnlocks",
       rowCount: thresholds.length,
+    },
+    gameplayUnlockEnum: {
+      packagePath: gameplayUnlockEnum.source.packagePath,
+      objectPath: gameplayUnlockEnum.source.objectPath,
+      enumName: gameplayUnlockEnum.source.enumName,
+      enumeratorCount: gameplayUnlockEnum.enumerators.length,
+      referencedEnumeratorCount: referencedGameplayUnlocks,
     },
     thresholds,
     experienceUpdate: {
@@ -222,7 +237,14 @@ export function compileLevelProgression(
 
 function compileThresholds(
   input: LevelStructuredValuesArtifact,
-): LevelProgression["thresholds"] {
+  gameplayUnlocks: ReadonlyMap<
+    string,
+    GameplayUnlockEnum["enumerators"][number]
+  >,
+): {
+  readonly thresholds: LevelProgression["thresholds"];
+  readonly referencedGameplayUnlocks: number;
+} {
   const matchingTables = input.dataTables.filter(
     (table) => table.path === xpTablePath || table.name === xpTableName,
   );
@@ -244,6 +266,7 @@ function compileThresholds(
     throw new Error("XP progression table is empty.");
   }
 
+  const referencedNames = new Set<string>();
   const rows = table.rows.map((row) => {
     assertSourceFields(row.values, row.key);
     const level = readInteger(row.values, row.key, "ExampleLevel");
@@ -251,21 +274,23 @@ function compileThresholds(
     if (requiredXp <= 0) {
       throw new Error(`Expected positive XP in ${xpTablePath} row ${row.key}.`);
     }
-    for (const field of [
-      "ExampleUnlocks",
-      "ExampleMovieCategories",
-      "ExampleGameCategories",
-    ] as const) {
+    for (const field of ["ExampleMovieCategories", "ExampleGameCategories"] as const) {
       if (!Array.isArray(readSourceValue(row.values, row.key, field))) {
         throw new Error(`Expected ${field} array in ${xpTablePath} row ${row.key}.`);
       }
     }
-    return { row, level, requiredXp };
+    const unlocks = readGameplayUnlocks(
+      row.values,
+      row.key,
+      gameplayUnlocks,
+      referencedNames,
+    );
+    return { row, level, requiredXp, unlocks };
   });
   rows.sort((left, right) => left.level - right.level);
 
   let cumulativeXp = 0;
-  return rows.map(({ row, level, requiredXp }, index) => {
+  const thresholds = rows.map(({ row, level, requiredXp, unlocks }, index) => {
     if (level !== index || row.key !== String(index)) {
       throw new Error(
         `XP progression rows must use consecutive numeric levels from zero, found ${row.key}.`,
@@ -280,11 +305,85 @@ function compileThresholds(
       nextRuntimeLevel: level + 1,
       requiredXp,
       cumulativeXp,
+      gameplayUnlocks: unlocks,
       evidence: {
         kind: "data-table-row" as const,
         tablePath: table.path,
         rowKey: row.key,
       },
+    };
+  });
+  if (referencedNames.size === 0) {
+    throw new Error("XP progression table contains no gameplay unlocks.");
+  }
+  return {
+    thresholds,
+    referencedGameplayUnlocks: referencedNames.size,
+  };
+}
+
+function compileGameplayUnlocks(
+  input: GameplayUnlockEnum,
+): ReadonlyMap<string, GameplayUnlockEnum["enumerators"][number]> {
+  if (input.artifactType !== "gameplay-unlock-enum") {
+    throw new Error("Expected a gameplay-unlock-enum input.");
+  }
+  if (
+    input.totals.enumeratorCount !== input.enumerators.length ||
+    input.enumerators.length === 0
+  ) {
+    throw new Error("Gameplay-unlock enum totals do not match its values.");
+  }
+
+  const byName = new Map<
+    string,
+    GameplayUnlockEnum["enumerators"][number]
+  >();
+  const displayNames = new Set<string>();
+  for (const [index, enumerator] of input.enumerators.entries()) {
+    if (
+      enumerator.value !== index ||
+      byName.has(enumerator.internalName) ||
+      displayNames.has(enumerator.displayName)
+    ) {
+      throw new Error("Gameplay-unlock enum is not consecutive and unique.");
+    }
+    byName.set(enumerator.internalName, enumerator);
+    displayNames.add(enumerator.displayName);
+  }
+  return byName;
+}
+
+function readGameplayUnlocks(
+  values: object,
+  rowKey: string,
+  gameplayUnlocks: ReadonlyMap<
+    string,
+    GameplayUnlockEnum["enumerators"][number]
+  >,
+  referencedNames: Set<string>,
+): LevelProgression["thresholds"][number]["gameplayUnlocks"] {
+  const source = readSourceValue(values, rowKey, "ExampleUnlocks");
+  if (!Array.isArray(source)) {
+    throw new Error(`Expected ExampleUnlocks array in ${xpTablePath} row ${rowKey}.`);
+  }
+
+  return source.map((value) => {
+    if (typeof value !== "string" || !referencedNames.add(value)) {
+      throw new Error(
+        `Expected unique gameplay unlock names in ${xpTablePath} row ${rowKey}.`,
+      );
+    }
+    const enumerator = gameplayUnlocks.get(value);
+    if (enumerator === undefined) {
+      throw new Error(
+        `Gameplay unlock in ${xpTablePath} row ${rowKey} has no enum definition.`,
+      );
+    }
+    return {
+      enumValue: enumerator.value,
+      internalName: enumerator.internalName,
+      displayName: enumerator.displayName,
     };
   });
 }
@@ -337,6 +436,7 @@ function readSourceValue(
 
 function assertInputContracts(
   structuredValues: LevelStructuredValuesArtifact,
+  gameplayUnlockEnum: GameplayUnlockEnum,
   changeXpTrace: BlueprintFunctionTraceArtifact,
   maximumCallerTrace: BlueprintPropertyReferenceTraceArtifact,
   maximumTargetTrace: BlueprintCallTargetTraceArtifact,
@@ -358,21 +458,22 @@ function assertInputContracts(
     throw new Error("Expected a Blueprint call-target trace for maximum XP.");
   }
 
-  const traces = [
+  const inputs = [
+    gameplayUnlockEnum,
     changeXpTrace,
     maximumCallerTrace,
     maximumTargetTrace,
     endOfDayTrace,
   ];
-  if (traces.some((trace) => !sameBuild(structuredValues.build, trace.build))) {
+  if (inputs.some((input) => !sameBuild(structuredValues.build, input.build))) {
     throw new Error("Level-progression inputs refer to different game builds.");
   }
   if (
-    traces.some((trace) => !sameMappings(structuredValues.mappings, trace.mappings))
+    inputs.some((input) => !sameMappings(structuredValues.mappings, input.mappings))
   ) {
     throw new Error("Level-progression inputs refer to different mappings.");
   }
-  if (traces.some((trace) => !sameEngine(structuredValues.engine, trace.engine))) {
+  if (inputs.some((input) => !sameEngine(structuredValues.engine, input.engine))) {
     throw new Error("Level-progression inputs refer to different engine configurations.");
   }
 }
