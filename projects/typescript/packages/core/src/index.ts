@@ -46,6 +46,10 @@ export {
   type BlueprintPropertyReferenceTrace,
 } from "./contracts/acquisition/blueprint-property-reference-trace.ts";
 export {
+  BlueprintSelectedFunctionTraceSchema,
+  type BlueprintSelectedFunctionTrace,
+} from "./contracts/acquisition/blueprint-selected-function-trace.ts";
+export {
   BuildManifestSchema,
   type BuildManifest,
 } from "./contracts/acquisition/build-manifest.ts";

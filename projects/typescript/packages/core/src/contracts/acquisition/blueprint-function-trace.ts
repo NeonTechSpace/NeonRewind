@@ -138,9 +138,9 @@ const $definitionNode = type({
   ]),
   "+": "reject",
 }).readonly();
-const $definitionFunction = type({
+export const BlueprintTracedFunctionSchema = type({
   packagePath: type("string")
-    .matching(new RegExp("\\.uasset$"))
+    .matching(new RegExp("\\.u(asset|map)$"))
     .atLeastLength(1),
   className: $definitionNonEmptyString,
   classPath: $definitionNonEmptyString,
@@ -167,7 +167,11 @@ export const BlueprintFunctionTraceSchema = type({
   extractor: $definitionExtractorIdentity,
   totals: $definitionTotals,
   functions: withUniqueItems(
-    type([$definitionFunction, "...", $definitionFunction.array()]).readonly(),
+    type([
+      BlueprintTracedFunctionSchema,
+      "...",
+      BlueprintTracedFunctionSchema.array(),
+    ]).readonly(),
   ),
   "+": "reject",
 }).readonly();

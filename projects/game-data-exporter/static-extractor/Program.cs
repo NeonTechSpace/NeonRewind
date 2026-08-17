@@ -117,6 +117,11 @@ internal static class Program
             return BlueprintFunctionInventoryCommand.Run(inventoryArguments);
         }
 
+        if (args is ["blueprint-selected-function-trace", .. var selectedTraceArguments])
+        {
+            return BlueprintSelectedFunctionTraceCommand.Run(selectedTraceArguments);
+        }
+
         if (args is ["blueprint-function-declarations", .. var declarationArguments])
         {
             return BlueprintFunctionDeclarationsCommand.Run(declarationArguments);
@@ -168,6 +173,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-function-trace --build-manifest <path> --caller-bodies <path> [--caller-bodies <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-call-candidate-trace --build-manifest <path> --source-trace <path> --caller-function-path <path> --statement-index <integer> --expected-call-kind <kind> --expected-call-function <name> --expected-argument-count <integer> --candidate-function-path <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-function-inventory --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-selected-function-trace --build-manifest <path> --function-inventory <path> --function-path <path> [--function-path <path> ...] --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-function-declarations --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --target-function <name> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor blueprint-call-target-trace --build-manifest <path> --source-trace <path> --declarations <path> --caller-function-path <path> --statement-index <integer> --expected-call-kind <kind> --expected-call-function <name> --expected-argument-count <integer> --target-function-path <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-function-trace --build-manifest <path> --rental-blueprint-bodies <path> --function-path <path> [--function-path <path> ...] --mappings <path> --package-directory <path> --output <path>");
@@ -194,6 +200,7 @@ internal static class Program
         writer.WriteLine("The blueprint-function-trace command rereads exact caller functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The blueprint-call-candidate-trace command compares one recorded call with an explicitly selected same-class candidate without asserting that they are related.");
         writer.WriteLine("The blueprint-function-inventory command inventories every raw cooked Function export and records declaration signatures and owner linkage.");
+        writer.WriteLine("The blueprint-selected-function-trace command rereads exact inventoried functions into typed Kismet nodes without parsing pseudocode.");
         writer.WriteLine("The blueprint-function-declarations command scans raw cooked Function exports for one exact object name and records declaration signatures and owner linkage.");
         writer.WriteLine("The blueprint-call-target-trace command verifies an object-constant, scalar object instance-variable, or implicit same-class local-virtual call receiver against one exact declaration and traces the bound function.");
         writer.WriteLine("The rental-function-trace command rereads selected rental functions into typed Kismet nodes without parsing pseudocode.");
