@@ -140,12 +140,20 @@ internal static class BlueprintCallerBodiesCommand
                 throw new InvalidDataException($"Blueprint decompiler returned no text: {classGroup.Key.ClassPath}");
             }
 
+            var declaredFunctionNames = blueprintClass.FuncMap.Keys
+                .Select(name => name.Text)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
             foreach (var functionGroup in classGroup
                 .GroupBy(callSite => new CallerFunctionKey(callSite.FunctionName, callSite.FunctionPath))
                 .OrderBy(group => group.Key.FunctionPath, StringComparer.Ordinal))
             {
                 var function = LoadFunction(blueprintClass, functionGroup.Key);
-                var pseudoCode = BlueprintPseudoCode.ExtractFunction(classPseudoCode, function.Name);
+                var pseudoCode = BlueprintPseudoCode.ExtractFunction(
+                    classPseudoCode,
+                    function.Name,
+                    declaredFunctionNames);
                 functions.Add(new BlueprintCallerFunctionBody(
                     PackagePath: classGroup.Key.PackagePath,
                     ClassName: blueprintClass.Name,

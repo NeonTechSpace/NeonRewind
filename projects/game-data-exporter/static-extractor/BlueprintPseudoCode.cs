@@ -2,7 +2,10 @@ namespace NeonRetroRewind.StaticExtractor;
 
 internal static class BlueprintPseudoCode
 {
-    public static string ExtractFunction(string classPseudoCode, string functionName)
+    public static string ExtractFunction(
+        string classPseudoCode,
+        string functionName,
+        IReadOnlyCollection<string> declaredFunctionNames)
     {
         var normalized = classPseudoCode
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -13,6 +16,7 @@ internal static class BlueprintPseudoCode
             .Select((line, index) => new { Line = line, Index = index })
             .Where(value =>
                 value.Line.Contains(signatureNeedle, StringComparison.Ordinal) &&
+                HasExactFunctionName(value.Line, functionName, declaredFunctionNames) &&
                 LooksLikeFunctionSignature(lines, value.Index))
             .Select(value => value.Index)
             .ToArray();
@@ -35,6 +39,26 @@ internal static class BlueprintPseudoCode
         }
 
         throw new InvalidDataException($"Pseudocode body is incomplete for Blueprint function: {functionName}");
+    }
+
+    // Resolve Blueprint names that are suffixes of longer declarations in the same class.
+    private static bool HasExactFunctionName(
+        string line,
+        string functionName,
+        IReadOnlyCollection<string> declaredFunctionNames)
+    {
+        var parameterListIndex = line.IndexOf('(');
+        if (parameterListIndex < 0)
+        {
+            return false;
+        }
+
+        var signaturePrefix = line[..parameterListIndex].TrimEnd();
+        var matchedName = declaredFunctionNames
+            .Where(name => signaturePrefix.EndsWith(name, StringComparison.Ordinal))
+            .OrderByDescending(name => name.Length)
+            .FirstOrDefault();
+        return string.Equals(matchedName, functionName, StringComparison.Ordinal);
     }
 
     private static bool LooksLikeFunctionSignature(string[] lines, int lineIndex)
