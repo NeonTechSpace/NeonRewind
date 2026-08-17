@@ -3,7 +3,7 @@
 This page shows how to collect focused evidence from the files of a game installation you own.
 The game stays closed during the entire workflow.
 
-[Research overview](research-overview.md) · [Tool setup](portable-tool-setup.md) · [Next: Blueprint analysis](blueprint-analysis-workflow.md)
+[Research overview](/docs/research-overview.md) · [Tool setup](/docs/portable-tool-setup.md) · [Next: Blueprint analysis](/docs/blueprint-analysis-workflow.md)
 
 ## Who needs this page
 
@@ -28,11 +28,11 @@ You need the following items:
 - An internet connection for the first dependency installation unless the packages are already cached.
 - A `.usmap` mapping made for the exact game executable before running any step that reads structured values or Blueprint logic.
 
-The [research overview](research-overview.md) explains game builds, packages, mappings, Blueprints, evidence, and artifacts in plain language.
+The [research overview](/docs/research-overview.md) explains game builds, packages, mappings, Blueprints, evidence, and artifacts in plain language.
 Read it before continuing if any of those terms are unfamiliar.
 
 The recommended setup uses portable tool archives extracted into ignored local directories.
-Follow [Portable local tool setup](portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
+Follow [Portable local tool setup](/docs/portable-tool-setup.md) to install nothing system-wide and change `PATH` only for the current shell process.
 
 The repository does not currently generate the `.usmap` mapping.
 If you do not already have a matching mapping, you can complete the probe, build-manifest, and static-census steps, then stop.
@@ -526,8 +526,50 @@ dotnet run --project "$extractor" -- blueprint-property-reference-trace \
 The command verifies package and input identities before and after tracing, accepts identical existing output, and refuses to overwrite different content.
 The output contains extracted game logic and must remain in the ignored local acquisition directory.
 
+## 7j. Extract Market source evidence
+
+This step reads one Market manager Blueprint class and one Market save structure selected by a private target profile.
+It records mapped fields, function names, defaults, and object references without interpreting the mechanic or making buying recommendations.
+The profile is bound to one build manifest, mapping, and engine configuration.
+It must remain under `projects/game-data-exporter/.local/targets` or another ignored local directory.
+Its format is defined by [`market-evidence-target-profile.schema.json`](/projects/game-data-exporter/schemas/config/market-evidence-target-profile.schema.json).
+
+Set the private profile path before running the command.
+
+```powershell
+$marketTargetProfile = "projects/game-data-exporter/.local/targets/market-evidence-target-profile.json"
+```
+
+```bash
+marketTargetProfile="projects/game-data-exporter/.local/targets/market-evidence-target-profile.json"
+```
+
+```powershell
+dotnet run --project $extractor -- market-evidence `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
+  --mappings $mappings `
+  --target-profile $marketTargetProfile `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "market-evidence.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- market-evidence \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.json" \
+  --mappings "$mappings" \
+  --target-profile "$marketTargetProfile" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/market-evidence.json"
+```
+
+The command verifies the profile, package shapes, and every input identity before and after extraction.
+It accepts identical existing output and refuses to overwrite different content.
+The output records the target-profile identity and contains extracted game data, so it must remain in the ignored local acquisition directory.
+
 ## Next step
 
-Continue with [Blueprint analysis](blueprint-analysis-workflow.md) to extract caller bodies and typed Kismet traces.
+Continue with [Blueprint analysis](/docs/blueprint-analysis-workflow.md) to extract caller bodies and typed Kismet traces.
 
-[Research overview](research-overview.md)
+[Research overview](/docs/research-overview.md)

@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "build": {
+      "type": "object",
+      "properties": {
+        "manifestSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "steamAppId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "steamBuildId": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        }
+      },
+      "required": [
+        "manifestSha256",
+        "steamAppId",
+        "steamBuildId"
+      ],
+      "additionalProperties": false
+    },
+    "engine": {
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "const": "probable"
+        },
+        "cue4ParseProfile": {
+          "const": "GAME_UE5_4"
+        },
+        "source": {
+          "const": "configured"
+        },
+        "version": {
+          "const": "5.4"
+        }
+      },
+      "required": [
+        "confidence",
+        "cue4ParseProfile",
+        "source",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "mappings": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "pattern": "^[^/\\\\]+\\.usmap$",
+          "minLength": 7
+        },
+        "formatVersion": {
+          "const": 4
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "fileName",
+        "formatVersion",
+        "sha256",
+        "sizeBytes"
+      ],
+      "additionalProperties": false
+    },
+    "profileType": {
+      "const": "market-evidence-target-profile"
+    },
+    "targets": {
+      "type": "object",
+      "properties": {
+        "manager": {
+          "type": "object",
+          "properties": {
+            "packagePath": {
+              "type": "string",
+              "pattern": "\\.uasset$",
+              "minLength": 8
+            }
+          },
+          "required": [
+            "packagePath"
+          ],
+          "additionalProperties": false
+        },
+        "save": {
+          "type": "object",
+          "properties": {
+            "packagePath": {
+              "type": "string",
+              "pattern": "\\.uasset$",
+              "minLength": 8
+            }
+          },
+          "required": [
+            "packagePath"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "manager",
+        "save"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "build",
+    "engine",
+    "mappings",
+    "profileType",
+    "targets"
+  ],
+  "additionalProperties": false
+}

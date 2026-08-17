@@ -14,6 +14,7 @@ It is not yet a player-facing product.
 
 The repository contains tools that identify an installed game build, collect focused facts from game files, convert selected evidence into stable project records, and check one bounded movie-return case while the game runs.
 Implemented records cover the film catalog, console returns, membership fees, movie returns, new releases, and level progression.
+A bounded Market source artifact is also implemented, but Market rules and guide recommendations have not yet been compiled.
 
 The generated research artifacts are kept private because they contain information from game files.
 Supported findings can later be written as guide information.

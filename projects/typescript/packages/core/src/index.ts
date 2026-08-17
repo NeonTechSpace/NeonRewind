@@ -4,6 +4,10 @@ export {
   LevelProgressionTargetProfileSchema,
   type LevelProgressionTargetProfile,
 } from "./contracts/config/level-progression-target-profile.ts";
+export {
+  MarketEvidenceTargetProfileSchema,
+  type MarketEvidenceTargetProfile,
+} from "./contracts/config/market-evidence-target-profile.ts";
 
 export {
   BlueprintCallCandidateTraceSchema,
@@ -49,6 +53,10 @@ export {
   LevelProgressionCategoryEnumsSchema,
   type LevelProgressionCategoryEnums,
 } from "./contracts/acquisition/level-progression-category-enums.ts";
+export {
+  MarketEvidenceSchema,
+  type MarketEvidence,
+} from "./contracts/acquisition/market-evidence.ts";
 export {
   RentalBlueprintBodiesSchema,
   type RentalBlueprintBodies,

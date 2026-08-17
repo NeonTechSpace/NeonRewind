@@ -9,7 +9,8 @@
   },
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
-    "generate:level-progression-target-profile-schema": "node src/generate-level-progression-target-profile-schema.ts"
+    "generate:level-progression-target-profile-schema": "node src/generate-level-progression-target-profile-schema.ts",
+    "generate:market-evidence-target-profile-schema": "node src/generate-market-evidence-target-profile-schema.ts"
   },
   "dependencies": {
     "arktype": "2.2.3"

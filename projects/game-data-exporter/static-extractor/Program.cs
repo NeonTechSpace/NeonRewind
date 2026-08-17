@@ -47,6 +47,11 @@ internal static class Program
             return StatisticEvidenceCommand.Run(statisticEvidenceArguments);
         }
 
+        if (args is ["market-evidence", .. var marketEvidenceArguments])
+        {
+            return MarketEvidenceCommand.Run(marketEvidenceArguments);
+        }
+
         if (args is ["gameplay-unlock-enum", .. var gameplayUnlockEnumArguments])
         {
             return GameplayUnlockEnumCommand.Run(gameplayUnlockEnumArguments);
@@ -144,6 +149,7 @@ internal static class Program
         writer.WriteLine("  NeonRetroRewind.StaticExtractor rental-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor statistic-evidence --build-manifest <path> --static-census <path> --mappings <path> --package-directory <path> --output <path>");
+        writer.WriteLine("  NeonRetroRewind.StaticExtractor market-evidence --build-manifest <path> --static-census <path> --mappings <path> --target-profile <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor gameplay-unlock-enum --build-manifest <path> --static-census <path> --mappings <path> --target-profile <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor level-progression-category-enums --build-manifest <path> --static-census <path> --mappings <path> --target-profile <path> --package-directory <path> --output <path>");
         writer.WriteLine("  NeonRetroRewind.StaticExtractor unlockable-function-trace --build-manifest <path> --unlockable-evidence <path> --mappings <path> --package-directory <path> --output <path>");
@@ -168,6 +174,7 @@ internal static class Program
         writer.WriteLine("The rental-evidence command writes mapped class defaults and references for the rental-system package cluster.");
         writer.WriteLine("The unlockable-evidence command writes mapped class defaults and references for the unlockable-system package cluster.");
         writer.WriteLine("The statistic-evidence command writes mapped class defaults and references for the statistic package cluster.");
+        writer.WriteLine("The market-evidence command writes mapped class defaults and references for the Market manager and save packages selected by a private target profile.");
         writer.WriteLine("The gameplay-unlock-enum command writes the exact internal values and display labels from the gameplay-unlock enum.");
         writer.WriteLine("The level-progression-category-enums command writes the exact internal values and display labels from the movie and game category enums used by level progression.");
         writer.WriteLine("The unlockable-function-trace command rereads the four unlock eligibility and mutation functions into typed Kismet nodes without parsing pseudocode.");
