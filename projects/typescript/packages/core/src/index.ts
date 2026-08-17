@@ -153,6 +153,11 @@ export {
   type MarketMechanicsSourceIdentity,
 } from "./contracts/domain/market-mechanics.ts";
 export {
+  MarketGuideFindingsSchema,
+  type MarketGuideFindings,
+  type MarketGuideFindingsSourceIdentity,
+} from "./contracts/domain/market-guide-findings.ts";
+export {
   MarketValueAnalysisSchema,
   type MarketValueAnalysis,
   type MarketValueSourceIdentity,

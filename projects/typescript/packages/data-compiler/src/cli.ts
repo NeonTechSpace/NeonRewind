@@ -24,6 +24,10 @@ import {
   writeMarketMechanicsUsage,
 } from "./market-mechanics-cli.ts";
 import {
+  runMarketGuideFindings,
+  writeMarketGuideFindingsUsage,
+} from "./market-guide-findings-cli.ts";
+import {
   runMarketValueAnalysis,
   writeMarketValueAnalysisUsage,
 } from "./market-value-analysis-cli.ts";
@@ -122,6 +126,11 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "market-guide-findings") {
+    await runMarketGuideFindings(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] === "market-value-analysis") {
     await runMarketValueAnalysis(arguments_.slice(1));
     return;
@@ -129,7 +138,7 @@ async function main(arguments_: readonly string[]): Promise<void> {
 
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, or market-value-analysis command.",
+      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, market-value-analysis, or market-guide-findings command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -385,4 +394,5 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   writeLevelProgressionUsage(stream);
   writeMarketMechanicsUsage(stream);
   writeMarketValueAnalysisUsage(stream);
+  writeMarketGuideFindingsUsage(stream);
 }

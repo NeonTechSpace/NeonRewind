@@ -499,10 +499,47 @@ The compiler reproduces Unreal Engine 5.4 `FRandomStream` integer draws and chec
 It rechecks every input immediately before immutable output.
 The generated artifact remains private and is not committed.
 
+## 28. Compile the Market guide findings
+
+This step combines the normalized Market mechanics and Market value analysis into one source-bound record for future guide content.
+It summarizes daily availability, exact selection exclusions, individual acquisition costs, configured bundle targets, underfilled bundle tier jumps, and purchase failure behavior.
+
+The output labels availability, selection, and acquisition-cost claims as eligible for the studied build.
+It keeps realized bundle composition and delivery conditional until runtime validation and does not infer profit recommendations from inputs that contain no income or demand evidence.
+
+Move into the TypeScript workspace after compiling the Market mechanics and value analysis.
+
+```powershell
+Push-Location projects/typescript
+$marketMechanics = Join-Path $domainDirectory "market-mechanics.json"
+$marketValueAnalysis = Join-Path $domainDirectory "market-value-analysis.json"
+pnpm market-guide-findings `
+  --mechanics $marketMechanics `
+  --values $marketValueAnalysis `
+  --output (Join-Path $domainDirectory "market-guide-findings.json")
+Pop-Location
+```
+
+```bash
+pushd projects/typescript >/dev/null
+marketMechanics="$domainDirectory/market-mechanics.json"
+marketValueAnalysis="$domainDirectory/market-value-analysis.json"
+pnpm market-guide-findings \
+  --mechanics "$marketMechanics" \
+  --values "$marketValueAnalysis" \
+  --output "$domainDirectory/market-guide-findings.json"
+popd >/dev/null
+```
+
+The executable output contract is `MarketGuideFindingsSchema` in `projects/typescript/packages/core/src/contracts/domain/market-guide-findings.ts`.
+The compiler verifies the source identity link between its inputs, their build, film classifications, price summary, probability distributions, and bundle targets.
+It rechecks both inputs immediately before immutable output.
+The generated artifact remains private and is not committed.
+
 ## Next step
 
-Use the normalized Market mechanics and value analysis to write player-facing Market findings with evidence labels.
-Keep value comparisons conditional where unlocked genres or delivery outcomes can change the result.
+Use the Market guide findings for build-labeled availability and acquisition-cost content.
+Research income and demand before turning those cost comparisons into profit or stocking recommendations.
 Runtime collection remains necessary only for claims that require controlled observation.
 See [runtime preparation](/docs/runtime-preparation-workflow.md) and the [movie-return observation case](/docs/movie-return-runtime-observation.md).
 
