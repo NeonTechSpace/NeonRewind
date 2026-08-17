@@ -286,7 +286,36 @@ Use statement indexes and paths from the source trace rather than copying the ex
 The source trace, manifest, mapping, and packages must all have matching identities.
 The output contains game-specific signature and bytecode evidence and must remain in the ignored local acquisition directory.
 
-## 17. Find an exact cooked function declaration
+## 17. Inventory cooked Blueprint functions
+
+This step scans the raw export map of every parsed package that the census reports as containing a `Function` export.
+It records every declaration's object name, owner, flags, parameter signature, bytecode-expression count, superclass, interfaces, and presence in the owner's `Children` and `FuncMap` collections.
+Use the complete inventory to discover exact function names and owners before running focused declaration, call-site, or function-body traces.
+
+```powershell
+dotnet run --project $extractor -- blueprint-function-inventory `
+  --build-manifest (Join-Path $buildDirectory "build-manifest.json") `
+  --static-census (Join-Path $buildDirectory "static-census.json") `
+  --mappings $mappings `
+  --package-directory $packageDirectory `
+  --output (Join-Path $buildDirectory "blueprint-function-inventory.json")
+```
+
+```bash
+dotnet run --project "$extractor" -- blueprint-function-inventory \
+  --build-manifest "$buildDirectory/build-manifest.json" \
+  --static-census "$buildDirectory/static-census.json" \
+  --mappings "$mappings" \
+  --package-directory "$packageDirectory" \
+  --output "$buildDirectory/blueprint-function-inventory.json"
+```
+
+The command requires a complete static census and verifies the manifest, census, mappings, and package files again before writing.
+It reports partial coverage and a nonzero exit code if any candidate package fails to load.
+The build `23896268` inventory covered 604 candidate packages and retained all 7,527 raw function declarations without a package failure.
+The output contains game-specific function names, ownership, signatures, and bytecode metadata and must remain in the ignored local acquisition directory.
+
+## 18. Find an exact cooked function declaration
 
 This step scans the raw export map of every parsed package that the census reports as containing a `Function` export.
 It matches one exact function object name, then records each declaration's owner, flags, parameter signature, bytecode-expression count, superclass, interfaces, and presence in the owner's `Children` and `FuncMap` collections.
@@ -318,7 +347,7 @@ The declaration belongs to a Blueprint function library and is present in both i
 This establishes declaration existence and signature, not how the `ExampleManager_C` local-virtual call resolves to an external function-library owner or what the declaration's body computes.
 The output contains game-specific declaration evidence and must remain in the ignored local acquisition directory.
 
-## 18. Verify and trace an exact call target
+## 19. Verify and trace an exact call target
 
 This step binds one exact call node to one exact cooked declaration and traces the bound function body.
 It accepts an `EX_Context` call with an `EX_ObjectConst` receiver, an `EX_Context` call whose `EX_InstanceVariable` resolves to one scalar object property on the caller class, or an implicit-receiver `EX_LocalVirtualFunction` call whose caller class is the declaration owner.
@@ -474,7 +503,7 @@ For build `23896268`, the caller and target are both owned by `ExampleScheduler_
 The target body contains the 28-day loop, forced first-month entries, seasonal precedence, and new-release counter logic consumed by the domain compiler.
 Both outputs contain game-specific bytecode evidence and must remain in the ignored local acquisition directory.
 
-## 19. Create the typed rental function trace
+## 20. Create the typed rental function trace
 
 This step rereads four exact `ExampleQueueSystem` functions from cooked Kismet bytecode.
 The rental Blueprint-body artifact supplies the expected package, class, function paths, flags, and bytecode-expression counts.

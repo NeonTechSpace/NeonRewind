@@ -11,12 +11,34 @@ internal static class BlueprintFunctionDeclarationScanner
 {
     public const string CandidateRule = "parsed-packages-with-function-exports";
     public const string DeclarationRule = "exact-raw-function-export-object-name";
+    public const string InventoryRule = "all-raw-function-exports";
 
     public static BlueprintFunctionDeclarationScan Scan(
         StaticCensus census,
         string mappingsPath,
         string packageDirectory,
         string targetFunctionName)
+        => ScanWhere(
+            census,
+            mappingsPath,
+            packageDirectory,
+            objectName => objectName == targetFunctionName);
+
+    public static BlueprintFunctionDeclarationScan ScanAll(
+        StaticCensus census,
+        string mappingsPath,
+        string packageDirectory)
+        => ScanWhere(
+            census,
+            mappingsPath,
+            packageDirectory,
+            static _ => true);
+
+    private static BlueprintFunctionDeclarationScan ScanWhere(
+        StaticCensus census,
+        string mappingsPath,
+        string packageDirectory,
+        Func<string, bool> includeDeclaration)
     {
         var versions = new VersionContainer(EGame.GAME_UE5_4);
         using var provider = new DefaultFileProvider(
@@ -65,7 +87,7 @@ internal static class BlueprintFunctionDeclarationScanner
                 var packageScan = ScanPackage(
                     candidate.Path,
                     package,
-                    targetFunctionName);
+                    includeDeclaration);
                 rawFunctionExportCount += packageScan.RawFunctionExportCount;
                 declarations.AddRange(packageScan.Declarations);
             }
@@ -91,7 +113,7 @@ internal static class BlueprintFunctionDeclarationScanner
     private static BlueprintFunctionDeclarationPackageScan ScanPackage(
         string packagePath,
         Package package,
-        string targetFunctionName)
+        Func<string, bool> includeDeclaration)
     {
         var declarations = new List<BlueprintFunctionDeclaration>();
         var rawFunctionExportCount = 0;
@@ -104,16 +126,16 @@ internal static class BlueprintFunctionDeclarationScanner
             }
 
             rawFunctionExportCount++;
-            if (export.ObjectName.Text != targetFunctionName)
+            if (!includeDeclaration(export.ObjectName.Text))
             {
                 continue;
             }
 
             if (((IPackage)package).GetExport(index) is not UFunction function ||
-                function.Name != targetFunctionName)
+                function.Name != export.ObjectName.Text)
             {
                 throw new InvalidDataException(
-                    $"Exact raw function declaration did not load as UFunction: {packagePath} export {index + 1}");
+                    $"Raw function declaration did not load as UFunction: {packagePath} export {index + 1}");
             }
 
             var owner = export.OuterIndex?.ResolvedObject ??
@@ -133,7 +155,7 @@ internal static class BlueprintFunctionDeclarationScanner
                 Flags: function.FunctionFlags.ToString(),
                 BytecodeExpressionCount: function.ScriptBytecode?.Length,
                 Signature: BlueprintFunctionSignatureReader.Read(function),
-                OwnerLinkage: ReadOwnerLinkage(ownerObject, functionPath, targetFunctionName)));
+                OwnerLinkage: ReadOwnerLinkage(ownerObject, functionPath, export.ObjectName.Text)));
         }
 
         return new BlueprintFunctionDeclarationPackageScan(

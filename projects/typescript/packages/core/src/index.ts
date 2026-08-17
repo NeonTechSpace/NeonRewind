@@ -30,6 +30,10 @@ export {
   type BlueprintFunctionDeclarations,
 } from "./contracts/acquisition/blueprint-function-declarations.ts";
 export {
+  BlueprintFunctionInventorySchema,
+  type BlueprintFunctionInventory,
+} from "./contracts/acquisition/blueprint-function-inventory.ts";
+export {
   BlueprintFunctionTraceSchema,
   type BlueprintFunctionTrace,
 } from "./contracts/acquisition/blueprint-function-trace.ts";

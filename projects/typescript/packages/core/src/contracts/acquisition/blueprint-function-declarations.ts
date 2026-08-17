@@ -73,9 +73,9 @@ const $definitionReference = type({
   statementIndex: type("number.integer").atLeast(0),
   "+": "reject",
 }).readonly();
-const $definitionFailure = type({
+export const BlueprintFunctionScanFailureSchema = type({
   packagePath: type("string")
-    .matching(new RegExp("\\.uasset$"))
+    .matching(new RegExp("\\.u(asset|map)$"))
     .atLeastLength(1),
   errorType: type("string")
     .matching(new RegExp("^[A-Za-z][A-Za-z0-9._+`]*$"))
@@ -105,9 +105,9 @@ const $definitionOwnerLinkage = type({
   interfacePaths: withUniqueItems($definitionNonEmptyString.array().readonly()),
   "+": "reject",
 }).readonly();
-const $definitionDeclaration = type({
+export const BlueprintFunctionDeclarationSchema = type({
   packagePath: type("string")
-    .matching(new RegExp("\\.uasset$"))
+    .matching(new RegExp("\\.u(asset|map)$"))
     .atLeastLength(1),
   packageExportIndex: type("number.integer").atLeast(1),
   objectName: $definitionNonEmptyString,
@@ -137,8 +137,10 @@ export const BlueprintFunctionDeclarationsSchema = type.and(
     declarationRule: type.unit("exact-raw-function-export-object-name"),
     coverage: type.enumerated("complete", "partial"),
     totals: $definitionTotals,
-    declarations: withUniqueItems($definitionDeclaration.array().readonly()),
-    failures: withUniqueItems($definitionFailure.array().readonly()),
+    declarations: withUniqueItems(
+      BlueprintFunctionDeclarationSchema.array().readonly(),
+    ),
+    failures: withUniqueItems(BlueprintFunctionScanFailureSchema.array().readonly()),
     "+": "reject",
   }).readonly(),
   type.or(
