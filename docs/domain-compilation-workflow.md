@@ -405,7 +405,7 @@ The command verifies each evidence filename, artifact type, game build, byte len
 The research input records the static interpretations established by the Market acquisition runs.
 
 The output derives the full daily movie-attempt and bundle-count distributions, bundle-size probabilities, and reachable candidate totals.
-It also records saved-Market restoration, first-save-day bundle calls, clearing behavior, bundle price tiers, the individual movie-price formula, and movie and bundle purchase outcomes.
+It also records saved-Market restoration, first-save-day bundle calls, clearing behavior, generated release-date, rarity, and critic-score rules, bundle price tiers, the individual movie-price formula, and movie and bundle purchase outcomes.
 The evidence level is `curated-static-analysis`, and runtime validation remains `not-run`.
 
 Move into the TypeScript workspace and install its locked dependencies.

@@ -39,6 +39,19 @@ test("compiles guide-facing Market odds and reachable candidate totals", () => {
   assert.equal(mechanics.candidates.ordinarySourceRowCount, 30);
   assert.equal(mechanics.candidates.ordinaryReachableRowCount, 28);
   assert.equal(mechanics.candidates.tables[2]?.reachableRowCount, 4);
+  assert.deepEqual(mechanics.generatedMovie.releaseDate, {
+    randomStreamSeed: "sku",
+    streamLifetime: "one-stream-for-all-draws",
+    draws: [
+      { component: "year", minimum: 1930, maximum: 1988 },
+      { component: "day", minimum: 1, maximum: 28 },
+      { component: "month", minimum: 1, maximum: 12 },
+    ],
+    timeOfDay: "midnight",
+    earliest: "1930-01-01",
+    latest: "1988-12-28",
+    priceFormulaBranch: "old-film",
+  });
   assert.equal(MarketMechanicsSchema.allows(mechanics), true);
 });
 
@@ -96,6 +109,36 @@ test("rejects an exact evidence file from another build", () => {
       }],
     ),
     /Evidence identity changed/u,
+  );
+});
+
+test("rejects a gap in generated critic-score bands", () => {
+  const research = createResearch();
+  research.generatedMovie.criticScore.bands[1]!.minimumRemainder = 4;
+
+  assert.throws(
+    () => compileMarketMechanics(research, source),
+    /critic-score bands are not contiguous/u,
+  );
+});
+
+test("rejects a gap in generated rarity bands", () => {
+  const research = createResearch();
+  research.generatedMovie.rarity.bands[1]!.minimumDraw = 3;
+
+  assert.throws(
+    () => compileMarketMechanics(research, source),
+    /Generated movie rarity bands are not contiguous/u,
+  );
+});
+
+test("rejects generated dates that can be invalid", () => {
+  const research = createResearch();
+  research.generatedMovie.releaseDate.draws[1]!.maximum = 31;
+
+  assert.throws(
+    () => compileMarketMechanics(research, source),
+    /date bounds do not guarantee valid dates/u,
   );
 });
 
@@ -168,6 +211,54 @@ function createResearch(): Mutable<MarketMechanicsResearch> {
         { minimumSuccessfulMovies: 21, maximumSuccessfulMovies: null, priceRule: "successful-movie-count-times-price", pricePennies: 1000 },
       ],
       freePricePennies: 0,
+    },
+    generatedMovie: {
+      source: "regular-create-film-data",
+      skuSource: "catalog-row-sku",
+      releaseDate: {
+        randomStreamSeed: "sku",
+        streamLifetime: "one-stream-for-all-draws",
+        draws: [
+          { component: "year", minimum: 1930, maximum: 1988 },
+          { component: "day", minimum: 1, maximum: 28 },
+          { component: "month", minimum: 1, maximum: 12 },
+        ],
+        timeOfDay: "midnight",
+      },
+      rarity: {
+        applicability: "nonzero-sku",
+        randomStreamSeed: "sku",
+        streamLifetime: "new-stream-for-each-tier",
+        tierDrawRelationship: "same-first-draw",
+        drawMinimum: 0,
+        drawMaximum: 100,
+        configuredExclusivePercentage: 0,
+        effectiveExclusiveThreshold: 1,
+        bands: [
+          { minimumDraw: 0, maximumDraw: 1, rarity: "exclusive", enumValue: 3 },
+          { minimumDraw: 2, maximumDraw: 40, rarity: "limited-edition", enumValue: 2 },
+          { minimumDraw: 41, maximumDraw: 50, rarity: "rare", enumValue: 1 },
+          { minimumDraw: 51, maximumDraw: 100, rarity: "common", enumValue: 0 },
+        ],
+      },
+      criticScore: {
+        input: "positive-sku-modulo-100",
+        bands: [
+          { minimumRemainder: 0, maximumRemainder: 0, score: 10 },
+          { minimumRemainder: 1, maximumRemainder: 2, score: 0 },
+          { minimumRemainder: 3, maximumRemainder: 6, score: 1 },
+          { minimumRemainder: 7, maximumRemainder: 12, score: 2 },
+          { minimumRemainder: 13, maximumRemainder: 22, score: 3 },
+          { minimumRemainder: 23, maximumRemainder: 28, score: 4 },
+          { minimumRemainder: 29, maximumRemainder: 35, score: 5 },
+          { minimumRemainder: 36, maximumRemainder: 40, score: 6 },
+          { minimumRemainder: 41, maximumRemainder: 70, score: 7 },
+          { minimumRemainder: 71, maximumRemainder: 90, score: 8 },
+          { minimumRemainder: 91, maximumRemainder: 98, score: 9 },
+          { minimumRemainder: 99, maximumRemainder: 99, score: 10 },
+        ],
+      },
+      customerReviewScore: 0,
     },
     moviePrice: {
       currency: "pennies",

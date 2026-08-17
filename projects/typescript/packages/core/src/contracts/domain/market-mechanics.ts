@@ -2,6 +2,7 @@ import { type } from "arktype";
 
 const sha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
 const nonEmptyString = type("string").atLeastLength(1);
+const isoDate = type("string").matching(new RegExp("^[0-9]{4}-[0-9]{2}-[0-9]{2}$"));
 const positiveInteger = type("number.integer").atLeast(1);
 const nonNegativeInteger = type("number.integer").atLeast(0);
 const probability = type("number").atLeast(0).atMost(1);
@@ -67,6 +68,59 @@ const numericMap = type({
   "+": "reject",
 }).readonly().array().readonly();
 
+const dateDraw = type({
+  component: type.enumerated("year", "day", "month"),
+  minimum: nonNegativeInteger,
+  maximum: positiveInteger,
+  "+": "reject",
+}).readonly();
+
+const rarityBand = type({
+  minimumDraw: nonNegativeInteger,
+  maximumDraw: nonNegativeInteger,
+  rarity: type.enumerated("common", "rare", "limited-edition", "exclusive"),
+  enumValue: nonNegativeInteger,
+  "+": "reject",
+}).readonly();
+
+const criticScoreBand = type({
+  minimumRemainder: nonNegativeInteger,
+  maximumRemainder: nonNegativeInteger,
+  score: nonNegativeInteger,
+  "+": "reject",
+}).readonly();
+
+const generatedMovieResearch = type({
+  source: type.unit("regular-create-film-data"),
+  skuSource: type.unit("catalog-row-sku"),
+  releaseDate: type({
+    randomStreamSeed: type.unit("sku"),
+    streamLifetime: type.unit("one-stream-for-all-draws"),
+    draws: dateDraw.array().readonly().atLeastLength(1),
+    timeOfDay: type.unit("midnight"),
+    "+": "reject",
+  }).readonly(),
+  rarity: type({
+    applicability: type.unit("nonzero-sku"),
+    randomStreamSeed: type.unit("sku"),
+    streamLifetime: type.unit("new-stream-for-each-tier"),
+    tierDrawRelationship: type.unit("same-first-draw"),
+    drawMinimum: type.unit(0),
+    drawMaximum: positiveInteger,
+    configuredExclusivePercentage: type.unit(0),
+    effectiveExclusiveThreshold: positiveInteger,
+    bands: rarityBand.array().readonly().atLeastLength(1),
+    "+": "reject",
+  }).readonly(),
+  criticScore: type({
+    input: type.unit("positive-sku-modulo-100"),
+    bands: criticScoreBand.array().readonly().atLeastLength(1),
+    "+": "reject",
+  }).readonly(),
+  customerReviewScore: type.unit(0),
+  "+": "reject",
+}).readonly();
+
 const purchases = type({
   movie: type({
     fundsCheck: type.unit("negative-price-with-debt-disabled"),
@@ -125,6 +179,7 @@ export const MarketMechanicsResearchSchema = type({
     freePricePennies: type.unit(0),
     "+": "reject",
   }).readonly(),
+  generatedMovie: generatedMovieResearch,
   moviePrice: type({
     currency: type.unit("pennies"),
     dateBoundary: type.unit("1990-01-01"),
@@ -168,6 +223,25 @@ const compiledCandidateTable = type({
   selection: type.enumerated("ordinary", "explicit-only"),
   rowCount: positiveInteger,
   reachableRowCount: nonNegativeInteger,
+  "+": "reject",
+}).readonly();
+
+const generatedMovie = type({
+  source: type.unit("regular-create-film-data"),
+  skuSource: type.unit("catalog-row-sku"),
+  releaseDate: type({
+    randomStreamSeed: type.unit("sku"),
+    streamLifetime: type.unit("one-stream-for-all-draws"),
+    draws: dateDraw.array().readonly().atLeastLength(1),
+    timeOfDay: type.unit("midnight"),
+    earliest: isoDate,
+    latest: isoDate,
+    priceFormulaBranch: type.enumerated("old-film", "modern-film", "mixed"),
+    "+": "reject",
+  }).readonly(),
+  rarity: generatedMovieResearch.get("rarity"),
+  criticScore: generatedMovieResearch.get("criticScore"),
+  customerReviewScore: type.unit(0),
   "+": "reject",
 }).readonly();
 
@@ -219,6 +293,7 @@ export const MarketMechanicsSchema = type({
     freePricePennies: type.unit(0),
     "+": "reject",
   }).readonly(),
+  generatedMovie,
   moviePrice: MarketMechanicsResearchSchema.get("moviePrice"),
   purchases,
   "+": "reject",
