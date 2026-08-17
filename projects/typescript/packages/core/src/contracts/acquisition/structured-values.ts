@@ -4,6 +4,7 @@ import { withUniqueItems } from "../contract-constraints.ts";
 const $definitionSha256 = type("string").matching(new RegExp("^[0-9a-f]{64}$"));
 const $definitionBuildReference = type({
   manifestSha256: $definitionSha256,
+  "manifestSchemaVersion?": type.unit(1),
   steamAppId: type("string").matching(new RegExp("^[0-9]+$")),
   steamBuildId: type("string").matching(new RegExp("^[0-9]+$")),
   "+": "reject",
@@ -18,6 +19,7 @@ const $definitionStructuredIndexIdentity = type({
   ),
   sizeBytes: type("number.integer").atLeast(1),
   sha256: $definitionSha256,
+  "schemaVersion?": type.unit(1),
   "+": "reject",
 }).readonly();
 const $definitionMappingIdentity = type({
@@ -110,6 +112,7 @@ const $definitionCounts = withUniqueItems(
 
 export const StructuredValuesSchema = type({
   artifactType: type.unit("structured-values"),
+  "schemaVersion?": type.unit(1),
   build: $definitionBuildReference,
   structuredIndex: $definitionStructuredIndexIdentity,
   mappings: $definitionMappingIdentity,

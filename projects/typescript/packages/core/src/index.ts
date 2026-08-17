@@ -152,6 +152,11 @@ export {
   type MarketMechanicsResearch,
   type MarketMechanicsSourceIdentity,
 } from "./contracts/domain/market-mechanics.ts";
+export {
+  MarketValueAnalysisSchema,
+  type MarketValueAnalysis,
+  type MarketValueSourceIdentity,
+} from "./contracts/domain/market-value-analysis.ts";
 
 export {
   MovieReturnObservationSchema,

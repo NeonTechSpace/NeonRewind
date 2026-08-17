@@ -462,9 +462,48 @@ Both contracts are TypeScript-only and do not produce standalone JSON Schema.
 The compiler rechecks the research input and every evidence file immediately before immutable output.
 The generated artifacts remain private and are not committed.
 
+## 27. Compile the Market value analysis
+
+This step combines the film catalog, normalized Market mechanics, and the exact structured-values files behind both artifacts.
+The compiler requires one game build and proves that both structured-values files contain the same data-table payload before using source row order.
+
+The output records every regular film's generated release date, rarity, critic score, seeded price inputs, exact price, and Market reachability.
+It also summarizes reachable prices by genre and rarity and calculates the non-free bundle price per successfully delivered movie for every positive possible count.
+
+Move into the TypeScript workspace after compiling the film catalog and Market mechanics.
+
+```powershell
+Push-Location projects/typescript
+pnpm market-value-analysis `
+  --catalog $filmCatalog `
+  --mechanics $marketMechanics `
+  --catalog-structured-values $catalogStructuredValues `
+  --mechanics-structured-values $mechanicsStructuredValues `
+  --output (Join-Path $domainDirectory "market-value-analysis.json")
+Pop-Location
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm market-value-analysis \
+  --catalog "$filmCatalog" \
+  --mechanics "$marketMechanics" \
+  --catalog-structured-values "$catalogStructuredValues" \
+  --mechanics-structured-values "$mechanicsStructuredValues" \
+  --output "$domainDirectory/market-value-analysis.json"
+popd >/dev/null
+```
+
+The executable output contract is `MarketValueAnalysisSchema` in `projects/typescript/packages/core/src/contracts/domain/market-value-analysis.ts`.
+The compiler reproduces Unreal Engine 5.4 `FRandomStream` integer draws and checks source identities, source row coverage, candidate totals, and price mappings.
+It rechecks every input immediately before immutable output.
+The generated artifact remains private and is not committed.
+
 ## Next step
 
-Runtime collection is necessary only for claims that require controlled observation.
-See [runtime preparation](runtime-preparation-workflow.md) and the [movie-return observation case](movie-return-runtime-observation.md).
+Use the normalized Market mechanics and value analysis to write player-facing Market findings with evidence labels.
+Keep value comparisons conditional where unlocked genres or delivery outcomes can change the result.
+Runtime collection remains necessary only for claims that require controlled observation.
+See [runtime preparation](/docs/runtime-preparation-workflow.md) and the [movie-return observation case](/docs/movie-return-runtime-observation.md).
 
-[Research overview](research-overview.md)
+[Research overview](/docs/research-overview.md)
