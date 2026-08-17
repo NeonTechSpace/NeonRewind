@@ -20,6 +20,10 @@ import {
 } from "./level-progression-cli.ts";
 import { compileMembershipFeeMechanics } from "./membership-fee-mechanics.ts";
 import {
+  runMarketMechanics,
+  writeMarketMechanicsUsage,
+} from "./market-mechanics-cli.ts";
+import {
   runNewReleaseMechanics,
   writeNewReleaseUsage,
 } from "./new-release-cli.ts";
@@ -109,9 +113,14 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "market-mechanics") {
+    await runMarketMechanics(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, or level-progression command.",
+      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, or market-mechanics command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -365,4 +374,5 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   writeMovieReturnValidatedMechanicsUsage(stream);
   writeNewReleaseUsage(stream);
   writeLevelProgressionUsage(stream);
+  writeMarketMechanicsUsage(stream);
 }

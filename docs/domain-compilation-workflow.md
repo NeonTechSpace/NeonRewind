@@ -17,7 +17,7 @@ It then writes a normalized record for one area such as movie returns or the fil
 
 Normalized means the record uses a consistent NeonRetroRewind shape instead of copying the layout used inside the game.
 The output is still derived from the game, so it remains private and uncommitted.
-The implemented commands cover the film catalog, console returns, membership fees, movie returns, new releases, and level progression.
+The implemented commands cover the film catalog, console returns, membership fees, movie returns, new releases, level progression, and the daily movie Market.
 
 ## Before you start
 
@@ -397,6 +397,70 @@ The output records the profile filename, byte length, SHA-256 hash, and profile 
 The artifact records `runtimeValidation: not-run` because the normalized state and control flow come from static evidence.
 It does not claim the exact player-visible maximum-level presentation.
 The generated artifact remains private and is not committed.
+
+## 26. Compile the daily movie Market
+
+This step consumes a private reviewed Market research input plus every evidence file named by that input.
+The command verifies each evidence filename, artifact type, game build, byte length, and SHA-256 hash before compilation.
+The research input records the static interpretations established by the Market acquisition runs.
+
+The output derives the full daily movie-attempt and bundle-count distributions, bundle-size probabilities, and reachable candidate totals.
+It also records saved-Market restoration, first-save-day bundle calls, clearing behavior, bundle price tiers, the individual movie-price formula, and movie and bundle purchase outcomes.
+The evidence level is `curated-static-analysis`, and runtime validation remains `not-run`.
+
+Move into the TypeScript workspace and install its locked dependencies.
+
+```powershell
+Push-Location projects/typescript
+pnpm install --frozen-lockfile
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm install --frozen-lockfile
+```
+
+Pass every evidence file listed by the private research input as a repeated `--source` option.
+
+```powershell
+pnpm market-mechanics `
+  --research (Join-Path $domainDirectory "market-mechanics-research.json") `
+  --source $marketEvidence `
+  --source $structuredValues `
+  --source $marketGenerationTrace `
+  --source $marketPricingTrace `
+  --source $marketPurchaseTrace `
+  --output (Join-Path $domainDirectory "market-mechanics.json")
+```
+
+```bash
+pnpm market-mechanics \
+  --research "$domainDirectory/market-mechanics-research.json" \
+  --source "$marketEvidence" \
+  --source "$structuredValues" \
+  --source "$marketGenerationTrace" \
+  --source "$marketPricingTrace" \
+  --source "$marketPurchaseTrace" \
+  --output "$domainDirectory/market-mechanics.json"
+```
+
+The examples abbreviate the source list.
+The real command must provide each file declared by the research input exactly once.
+
+Return to the repository root when the command finishes.
+
+```powershell
+Pop-Location
+```
+
+```bash
+popd >/dev/null
+```
+
+The executable input and output contracts are `MarketMechanicsResearchSchema` and `MarketMechanicsSchema` in `projects/typescript/packages/core/src/contracts/domain/market-mechanics.ts`.
+Both contracts are TypeScript-only and do not produce standalone JSON Schema.
+The compiler rechecks the research input and every evidence file immediately before immutable output.
+The generated artifacts remain private and are not committed.
 
 ## Next step
 

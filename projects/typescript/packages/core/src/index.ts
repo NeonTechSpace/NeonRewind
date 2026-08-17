@@ -145,6 +145,13 @@ export {
   type NewReleaseArtifactIdentity,
   type NewReleaseMechanics,
 } from "./contracts/domain/new-release-mechanics.ts";
+export {
+  MarketMechanicsResearchSchema,
+  MarketMechanicsSchema,
+  type MarketMechanics,
+  type MarketMechanicsResearch,
+  type MarketMechanicsSourceIdentity,
+} from "./contracts/domain/market-mechanics.ts";
 
 export {
   MovieReturnObservationSchema,

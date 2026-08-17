@@ -19,10 +19,11 @@ The later research command guides are separate because they require a licensed g
 |---|---|
 | Public guide and website | Not built |
 | Reading game files while the game is closed | Implemented for focused data and selected game logic |
-| Stable NeonRetroRewind research records | Film catalog, console-return, membership-fee, movie-return, new-release, and level-progression compilers exist |
+| Stable NeonRetroRewind research records | Film catalog, console-return, membership-fee, movie-return, new-release, level-progression, and daily movie Market compilers exist |
 | Checking behavior while the game runs | One bounded movie-return collector and validator exist, with one passing user-operated observation |
 | Level progression | A normalized compiler records XP thresholds, gameplay, movie-category, and game-category unlock labels, capped experience updates, requirement lookup, and end-of-day level transitions from typed evidence |
-| Market source evidence | A build-bound extractor records the selected manager and save shapes, while Market rules and guide recommendations remain uncompiled |
+| Daily movie Market | A normalized compiler records daily supply odds, reachable candidate counts, bundle sizes and prices, movie pricing, and purchase outcomes from a private reviewed research input bound to exact evidence files |
+| Market source evidence | A build-bound extractor records the selected manager and save shapes that feed the normalized Market compiler, while player recommendations remain unwritten |
 | Public calculator | Not planned as part of the current read-only guide |
 
 The repository is useful today as a research and validation codebase.
