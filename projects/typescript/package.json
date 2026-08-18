@@ -6,6 +6,7 @@
     "build": "pnpm --recursive --if-present build",
     "check": "pnpm --recursive --if-present check",
     "console-return-mechanics": "node packages/data-compiler/src/cli.ts console-return-mechanics",
+    "checkout-income": "node packages/data-compiler/src/cli.ts checkout-income",
     "film-catalog": "node packages/data-compiler/src/cli.ts film-catalog",
     "level-progression": "node packages/data-compiler/src/cli.ts level-progression",
     "market-guide-findings": "node packages/data-compiler/src/cli.ts market-guide-findings",

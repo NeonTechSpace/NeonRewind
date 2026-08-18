@@ -118,6 +118,13 @@ export {
   type RentalArtifactIdentity,
 } from "./contracts/domain/console-return-mechanics.ts";
 export {
+  CheckoutIncomeResearchSchema,
+  CheckoutIncomeSchema,
+  type CheckoutIncome,
+  type CheckoutIncomeResearch,
+  type CheckoutIncomeSourceIdentity,
+} from "./contracts/domain/checkout-income.ts";
+export {
   FilmCatalogSchema,
   filmGenres,
   type AcquisitionArtifactIdentity,

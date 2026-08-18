@@ -17,7 +17,7 @@ It then writes a normalized record for one area such as movie returns or the fil
 
 Normalized means the record uses a consistent NeonRetroRewind shape instead of copying the layout used inside the game.
 The output is still derived from the game, so it remains private and uncommitted.
-The implemented commands cover the film catalog, console returns, membership fees, movie returns, new releases, level progression, and the daily movie Market.
+The implemented commands cover the film catalog, console returns, membership fees, movie returns, new releases, level progression, the daily movie Market, and checkout income.
 
 ## Before you start
 
@@ -536,10 +536,48 @@ The compiler verifies the source identity link between its inputs, their build, 
 It rechecks both inputs immediately before immutable output.
 The generated artifact remains private and is not committed.
 
+## 29. Compile checkout income
+
+This step consumes a private reviewed checkout research input and the exact selected-function traces named by that input.
+The command validates each trace with its canonical contract, then verifies every filename, artifact type, build, byte length, and SHA-256 hash.
+
+The output derives cartridge rental prices in pennies, the complete tender probability distribution, available returned-cash denominations, balance mutations, transaction-finalization behavior, and the completed net-income rule.
+It records that exact change makes net revenue equal the bill and that excess change is accepted and can reduce core money below zero.
+It preserves cartridge base-price precedence and marks the raw special-genre label unresolved instead of inventing a player-facing name.
+Runtime presentation remains conditional until controlled validation.
+
+Move into the TypeScript workspace after producing the checkout traces and private research input.
+
+```powershell
+Push-Location projects/typescript
+$checkoutResearch = Join-Path $domainDirectory "checkout-income-research.json"
+pnpm checkout-income `
+  --research $checkoutResearch `
+  --source $checkoutPriceTrace `
+  --source $checkoutCashTrace `
+  --output (Join-Path $domainDirectory "checkout-income.json")
+Pop-Location
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm checkout-income \
+  --research "$domainDirectory/checkout-income-research.json" \
+  --source "$checkoutPriceTrace" \
+  --source "$checkoutCashTrace" \
+  --output "$domainDirectory/checkout-income.json"
+popd >/dev/null
+```
+
+The executable input and output contracts are `CheckoutIncomeResearchSchema` and `CheckoutIncomeSchema` in `projects/typescript/packages/core/src/contracts/domain/checkout-income.ts`.
+The compiler derives unconditional tender probabilities from the conditional decision tree and checks that the probabilities total one.
+It rejects duplicate evidence, duplicate denominations, an incomplete tender fallback, unavailable rounded denominations, changed finalization order, changed source identities, or inputs from another build.
+The generated artifacts remain private and are not committed.
+
 ## Next step
 
-Use the Market guide findings for build-labeled availability and acquisition-cost content.
-Research income and demand before turning those cost comparisons into profit or stocking recommendations.
+Join normalized checkout income with the Market guide findings for build-labeled acquisition-cost and rental-income analysis.
+Research demand and rental frequency before turning that comparison into profit or stocking recommendations.
 Runtime collection remains necessary only for claims that require controlled observation.
 See [runtime preparation](/docs/runtime-preparation-workflow.md) and the [movie-return observation case](/docs/movie-return-runtime-observation.md).
 

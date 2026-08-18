@@ -12,6 +12,10 @@ import {
 } from "@neonretrorewind/core";
 
 import { compileConsoleReturnMechanics } from "./console-return-mechanics.ts";
+import {
+  runCheckoutIncome,
+  writeCheckoutIncomeUsage,
+} from "./checkout-income-cli.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import {
@@ -91,6 +95,11 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "checkout-income") {
+    await runCheckoutIncome(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] === "membership-fee-mechanics") {
     await runRentalMechanic(arguments_.slice(1), {
       name: "membership-fee-mechanics",
@@ -138,7 +147,7 @@ async function main(arguments_: readonly string[]): Promise<void> {
 
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, market-value-analysis, or market-guide-findings command.",
+      "Expected the film-catalog, console-return-mechanics, checkout-income, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, market-value-analysis, or market-guide-findings command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -395,4 +404,5 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   writeMarketMechanicsUsage(stream);
   writeMarketValueAnalysisUsage(stream);
   writeMarketGuideFindingsUsage(stream);
+  writeCheckoutIncomeUsage(stream);
 }
