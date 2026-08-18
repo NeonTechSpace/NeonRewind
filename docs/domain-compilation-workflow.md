@@ -637,10 +637,68 @@ The executable input and output contracts are `MarketRentalEconomicsResearchSche
 The compiler verifies all four normalized inputs are from one build, verifies that the guide findings identify the supplied value analysis, validates all eight classification sources through their canonical contracts, and rechecks every input immediately before immutable output.
 The generated artifacts remain private and are not committed.
 
+## 31. Compile customer shopping mechanics
+
+This step combines the customer arrival, shelf selection, cartridge selection, pickup, cart continuation, failure, and rental-handoff evidence into one normalized record.
+It consumes a private reviewed research input and the ten exact evidence files named by that input.
+
+The output records the one-second arrival-attempt rules, shelf-route priorities, cartridge filtering, pickup chances, conditional cart-completion distributions, failure stages, and the successful rental-registration boundary.
+It derives eight no-sale shelf-route scenarios, twelve pickup scenarios, and four cart-completion scenarios.
+The cart scenarios start from zero held products and are conditional on enough successful pickups occurring before a task failure.
+
+The artifact does not publish a visit-to-rental conversion rate.
+The arrival weight and unclamped clearance-sale weight can exceed the documented input range, store inventory and reservations change during play, several failure frequencies remain unobserved, `AI Throw` can stop the handoff, and the behavior-tree topology has not been extracted.
+
+Move into the TypeScript workspace after producing the reviewed research input and its exact evidence files.
+
+```powershell
+Push-Location projects/typescript
+$shoppingResearch = Join-Path $domainDirectory "customer-shopping-mechanics-research.json"
+pnpm customer-shopping-mechanics `
+  --research $shoppingResearch `
+  --source $demandEntryTrace `
+  --source $dayCalendarEnums `
+  --source $dayWeatherEnums `
+  --source $productSelectionTrace `
+  --source $rentalHandoffTrace `
+  --source $rentalHandoffCallSites `
+  --source $shelfEnums `
+  --source $taskEnums `
+  --source $customerDefaultsProbe `
+  --source $shelfDefaultsProbe `
+  --output (Join-Path $domainDirectory "customer-shopping-mechanics.json")
+Pop-Location
+```
+
+```bash
+pushd projects/typescript >/dev/null
+pnpm customer-shopping-mechanics \
+  --research "$domainDirectory/customer-shopping-mechanics-research.json" \
+  --source "$demandEntryTrace" \
+  --source "$dayCalendarEnums" \
+  --source "$dayWeatherEnums" \
+  --source "$productSelectionTrace" \
+  --source "$rentalHandoffTrace" \
+  --source "$rentalHandoffCallSites" \
+  --source "$shelfEnums" \
+  --source "$taskEnums" \
+  --source "$customerDefaultsProbe" \
+  --source "$shelfDefaultsProbe" \
+  --output "$domainDirectory/customer-shopping-mechanics.json"
+popd >/dev/null
+```
+
+The executable input and output contracts are `CustomerShoppingMechanicsResearchSchema` and `CustomerShoppingMechanicsSchema` in `projects/typescript/packages/core/src/contracts/domain/customer-shopping-mechanics.ts`.
+The compiler validates the selected-function traces, call-site scan, and enum files through their canonical contracts.
+The two private class-default probes are checked by build identity and exact filename, byte length, and SHA-256 hash because they intentionally have no public acquisition contract.
+The compiler rejects incomplete arrival schedules, event factors, shelf-count bands, cart buckets, probability distributions, failure stages, source identities, or mixed builds.
+It rechecks every input immediately before immutable output.
+The generated artifacts remain private and are not committed.
+
 ## Next step
 
-Research demand and rental frequency before turning acquisition-cost recovery into profit or stocking recommendations.
-Runtime collection remains necessary only for claims that require controlled observation.
+Extract the customer behavior-tree topology that connects the resolved task bodies.
+Then design controlled observations for the remaining runtime-dependent failure and conversion frequencies before making profit or stocking recommendations.
 See [runtime preparation](/docs/runtime-preparation-workflow.md) and the [movie-return observation case](/docs/movie-return-runtime-observation.md).
 
 [Research overview](/docs/research-overview.md)

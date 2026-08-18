@@ -16,6 +16,10 @@ import {
   runCheckoutIncome,
   writeCheckoutIncomeUsage,
 } from "./checkout-income-cli.ts";
+import {
+  runCustomerShoppingMechanics,
+  writeCustomerShoppingMechanicsUsage,
+} from "./customer-shopping-mechanics-cli.ts";
 import { compileFilmCatalog } from "./film-catalog.ts";
 import { writeImmutableArtifact } from "./immutable-artifact.ts";
 import {
@@ -104,6 +108,11 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "customer-shopping-mechanics") {
+    await runCustomerShoppingMechanics(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] === "membership-fee-mechanics") {
     await runRentalMechanic(arguments_.slice(1), {
       name: "membership-fee-mechanics",
@@ -156,7 +165,7 @@ async function main(arguments_: readonly string[]): Promise<void> {
 
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, checkout-income, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, market-value-analysis, market-guide-findings, or market-rental-economics command.",
+      "Expected the film-catalog, console-return-mechanics, checkout-income, customer-shopping-mechanics, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, market-value-analysis, market-guide-findings, or market-rental-economics command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -415,4 +424,5 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   writeMarketGuideFindingsUsage(stream);
   writeMarketRentalEconomicsUsage(stream);
   writeCheckoutIncomeUsage(stream);
+  writeCustomerShoppingMechanicsUsage(stream);
 }

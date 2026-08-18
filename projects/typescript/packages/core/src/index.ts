@@ -125,6 +125,14 @@ export {
   type CheckoutIncomeSourceIdentity,
 } from "./contracts/domain/checkout-income.ts";
 export {
+  CustomerShoppingMechanicsResearchSchema,
+  CustomerShoppingMechanicsSchema,
+  type CustomerShoppingEvidenceIdentity,
+  type CustomerShoppingMechanics,
+  type CustomerShoppingMechanicsResearch,
+  type CustomerShoppingSourceIdentity,
+} from "./contracts/domain/customer-shopping-mechanics.ts";
+export {
   FilmCatalogSchema,
   filmGenres,
   type AcquisitionArtifactIdentity,
