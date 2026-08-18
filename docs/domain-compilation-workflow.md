@@ -17,7 +17,7 @@ It then writes a normalized record for one area such as movie returns or the fil
 
 Normalized means the record uses a consistent NeonRetroRewind shape instead of copying the layout used inside the game.
 The output is still derived from the game, so it remains private and uncommitted.
-The implemented commands cover the film catalog, console returns, membership fees, movie returns, new releases, level progression, the daily movie Market, and checkout income.
+The implemented commands cover the film catalog, console returns, membership fees, movie returns, new releases, level progression, the daily movie Market, checkout income, and Market rental economics.
 
 ## Before you start
 
@@ -574,10 +574,72 @@ The compiler derives unconditional tender probabilities from the conditional dec
 It rejects duplicate evidence, duplicate denominations, an incomplete tender fallback, unavailable rounded denominations, changed finalization order, changed source identities, or inputs from another build.
 The generated artifacts remain private and are not committed.
 
+## 30. Compile Market rental economics
+
+This step joins normalized per-SKU Market values, Market guide findings, checkout income, and a private reviewed classification record.
+The classification record binds the exact film-to-cartridge traces, complete property and call-site scans, and movie-genre enum by filename, artifact type, build, byte length, and SHA-256 hash.
+
+The output includes every reachable regular Market film from the ordinary and explicit-only routes.
+For each SKU, it records acquisition cost, the checkout base-price branch, the exclusive-print surcharge, exact-change rental revenue, and the number of exact-change rentals needed to recover the acquisition cost.
+It preserves the Adult branch priority over the old-film branch.
+
+The recovery count is a cost-recovery scenario, not an expected-profit forecast.
+The inputs do not establish how often a film is rented or how much change the player actually returns.
+
+Move into the TypeScript workspace after producing the classification evidence and private research input.
+
+```powershell
+Push-Location projects/typescript
+$rentalResearch = Join-Path $domainDirectory "market-rental-economics-research.json"
+$marketValueAnalysis = Join-Path $domainDirectory "market-value-analysis.json"
+$marketGuideFindings = Join-Path $domainDirectory "market-guide-findings.json"
+$checkoutIncome = Join-Path $domainDirectory "checkout-income.json"
+pnpm market-rental-economics `
+  --research $rentalResearch `
+  --values $marketValueAnalysis `
+  --findings $marketGuideFindings `
+  --income $checkoutIncome `
+  --source $classificationReaders `
+  --source $filmIsNewTrace `
+  --source $productStructureReferences `
+  --source $cartridgeProductPath `
+  --source $spawnMovieCallSites `
+  --source $marketPurchaseSpawn `
+  --source $createFilmDataTrace `
+  --source $movieGenreEnum `
+  --output (Join-Path $domainDirectory "market-rental-economics.json")
+Pop-Location
+```
+
+```bash
+pushd projects/typescript >/dev/null
+marketValueAnalysis="$domainDirectory/market-value-analysis.json"
+marketGuideFindings="$domainDirectory/market-guide-findings.json"
+checkoutIncome="$domainDirectory/checkout-income.json"
+pnpm market-rental-economics \
+  --research "$domainDirectory/market-rental-economics-research.json" \
+  --values "$marketValueAnalysis" \
+  --findings "$marketGuideFindings" \
+  --income "$checkoutIncome" \
+  --source "$classificationReaders" \
+  --source "$filmIsNewTrace" \
+  --source "$productStructureReferences" \
+  --source "$cartridgeProductPath" \
+  --source "$spawnMovieCallSites" \
+  --source "$marketPurchaseSpawn" \
+  --source "$createFilmDataTrace" \
+  --source "$movieGenreEnum" \
+  --output "$domainDirectory/market-rental-economics.json"
+popd >/dev/null
+```
+
+The executable input and output contracts are `MarketRentalEconomicsResearchSchema` and `MarketRentalEconomicsSchema` in `projects/typescript/packages/core/src/contracts/domain/market-rental-economics.ts`.
+The compiler verifies all four normalized inputs are from one build, verifies that the guide findings identify the supplied value analysis, validates all eight classification sources through their canonical contracts, and rechecks every input immediately before immutable output.
+The generated artifacts remain private and are not committed.
+
 ## Next step
 
-Join normalized checkout income with the Market guide findings for build-labeled acquisition-cost and rental-income analysis.
-Research demand and rental frequency before turning that comparison into profit or stocking recommendations.
+Research demand and rental frequency before turning acquisition-cost recovery into profit or stocking recommendations.
 Runtime collection remains necessary only for claims that require controlled observation.
 See [runtime preparation](/docs/runtime-preparation-workflow.md) and the [movie-return observation case](/docs/movie-return-runtime-observation.md).
 

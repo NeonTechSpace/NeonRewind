@@ -19,13 +19,14 @@ The later research command guides are separate because they require a licensed g
 |---|---|
 | Public guide and website | Not built |
 | Reading game files while the game is closed | Implemented for focused data and selected game logic |
-| Stable NeonRetroRewind research records | Film catalog, console-return, membership-fee, movie-return, new-release, level-progression, daily movie Market, Market value, Market guide-findings, and checkout-income compilers exist |
+| Stable NeonRetroRewind research records | Film catalog, console-return, membership-fee, movie-return, new-release, level-progression, daily movie Market, Market value, Market guide-findings, checkout-income, and Market rental-economics compilers exist |
 | Checking behavior while the game runs | One bounded movie-return collector and validator exist, with one passing user-operated observation |
 | Level progression | A normalized compiler records XP thresholds, gameplay, movie-category, and game-category unlock labels, capped experience updates, requirement lookup, and end-of-day level transitions from typed evidence |
 | Daily movie Market | A normalized compiler records daily supply odds, reachable candidate counts, generated release-date, rarity, and critic-score rules, bundle sizes and prices, movie pricing, and purchase outcomes from a private reviewed research input bound to exact evidence files |
 | Market value analysis | A private compiler reproduces Unreal Engine 5.4 seeded film values, identifies unreachable final source rows, summarizes reachable prices, and calculates bundle cost per successfully delivered movie |
 | Market guide findings | A private compiler turns normalized Market mechanics and value analysis into build-labeled availability and acquisition-cost facts while keeping delivery and profitability limits explicit |
 | Checkout income | A private compiler turns exact checkout pricing and cash-flow evidence into build-labeled bill, tender, returned-cash, and completed-income facts while keeping runtime presentation and demand limits explicit |
+| Market rental economics | A private compiler joins reachable per-SKU acquisition costs to checkout classification and exact-change rental income while keeping demand-dependent profit and stocking claims unsupported |
 | Market source evidence | A build-bound extractor records the selected manager and save shapes that feed the normalized Market compiler, while player recommendations remain unwritten |
 | Public calculator | Not planned as part of the current read-only guide |
 

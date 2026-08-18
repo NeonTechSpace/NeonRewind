@@ -36,6 +36,10 @@ import {
   writeMarketValueAnalysisUsage,
 } from "./market-value-analysis-cli.ts";
 import {
+  runMarketRentalEconomics,
+  writeMarketRentalEconomicsUsage,
+} from "./market-rental-economics-cli.ts";
+import {
   runNewReleaseMechanics,
   writeNewReleaseUsage,
 } from "./new-release-cli.ts";
@@ -145,9 +149,14 @@ async function main(arguments_: readonly string[]): Promise<void> {
     return;
   }
 
+  if (arguments_[0] === "market-rental-economics") {
+    await runMarketRentalEconomics(arguments_.slice(1));
+    return;
+  }
+
   if (arguments_[0] !== "film-catalog") {
     console.error(
-      "Expected the film-catalog, console-return-mechanics, checkout-income, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, market-value-analysis, or market-guide-findings command.",
+      "Expected the film-catalog, console-return-mechanics, checkout-income, membership-fee-mechanics, movie-return-mechanics, movie-return-validated-mechanics, new-release-mechanics, level-progression, market-mechanics, market-value-analysis, market-guide-findings, or market-rental-economics command.",
     );
     writeUsage(process.stderr);
     process.exitCode = invalidArgumentsExitCode;
@@ -404,5 +413,6 @@ function writeUsage(stream: NodeJS.WritableStream): void {
   writeMarketMechanicsUsage(stream);
   writeMarketValueAnalysisUsage(stream);
   writeMarketGuideFindingsUsage(stream);
+  writeMarketRentalEconomicsUsage(stream);
   writeCheckoutIncomeUsage(stream);
 }

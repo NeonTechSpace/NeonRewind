@@ -13,7 +13,7 @@ NeonRetroRewind is currently a research and validation codebase.
 It is not yet a player-facing product.
 
 The repository contains tools that identify an installed game build, collect focused facts from game files, convert selected evidence into stable project records, and check one bounded movie-return case while the game runs.
-Implemented records cover the film catalog, console returns, membership fees, movie returns, new releases, level progression, the daily movie Market, and guide-ready Market acquisition-cost findings.
+Implemented records cover the film catalog, console returns, membership fees, movie returns, new releases, level progression, the daily movie Market, guide-ready acquisition costs, checkout income, and per-SKU exact-change rental recovery.
 The daily Market record is compiled from reviewed private research bound to exact source artifacts.
 
 The generated research artifacts are kept private because they contain information from game files.

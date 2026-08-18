@@ -177,6 +177,14 @@ export {
   type MarketValueAnalysis,
   type MarketValueSourceIdentity,
 } from "./contracts/domain/market-value-analysis.ts";
+export {
+  MarketRentalEconomicsResearchSchema,
+  MarketRentalEconomicsSchema,
+  type MarketRentalEconomics,
+  type MarketRentalEconomicsEvidenceIdentity,
+  type MarketRentalEconomicsResearch,
+  type MarketRentalEconomicsSourceIdentity,
+} from "./contracts/domain/market-rental-economics.ts";
 
 export {
   MovieReturnObservationSchema,
